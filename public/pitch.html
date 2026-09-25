@@ -3,853 +3,851 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SEPuente — SPEI ⇄ Stellar</title>
-<meta name="description" content="Gateway open-source SEP-24 que conecta rampas SPEI con Stellar. No custodial · Serverless · MIT.">
+<title>SEPuente — Presentación</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-/* ─── TOKENS ───────────────────────────────────────── */
-:root {
-  --ink:     #050D1A;
-  --ink2:    #0B1A30;
-  --gold:    #D4A843;
-  --gold2:   #F0C855;
-  --sky:     #4F9EF8;
-  --green:   #2FBF71;
-  --red:     #E05555;
-  --cream:   #EDE8DB;
-  --muted:   #6A7F99;
-  --border:  rgba(79,158,248,.1);
-  --border2: rgba(212,168,67,.15);
-  color-scheme: dark;
-}
+/* ─── RESET ───────────────────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;font-size:16px}
-body{
-  background:var(--ink);
-  color:var(--cream);
-  font-family:'Inter',system-ui,sans-serif;
-  line-height:1.6;
-  overflow-x:hidden;
-}
-a{color:var(--gold);text-decoration:none}
-a:hover{text-decoration:underline}
+html,body{width:100%;height:100%;overflow:hidden;font-size:16px}
+body{background:#050D1A;color:#EDE8DB;font-family:'Inter',system-ui,sans-serif}
 
-/* ─── UTILITY ──────────────────────────────────────── */
-.mono{font-family:'JetBrains Mono',monospace}
-.tag{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:4px 12px;border-radius:100px;
-  font-size:.72rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;
-  border:1px solid var(--border);color:var(--muted);
+/* ─── TOKENS ──────────────────────────── */
+:root{
+  --ink:#050D1A;
+  --ink2:#0B1A30;
+  --gold:#D4A843;
+  --gold2:#F0C855;
+  --sky:#4F9EF8;
+  --green:#2FBF71;
+  --red:#E05555;
+  --cream:#EDE8DB;
+  --muted:#6A7F99;
+  --border:rgba(79,158,248,.1);
+  --border-g:rgba(212,168,67,.2);
 }
-.tag.live{border-color:rgba(47,191,113,.25);color:var(--green)}
-.dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
-.divider{border:none;border-top:1px solid var(--border);margin:0}
 
-/* ─── NAV ──────────────────────────────────────────── */
-nav{
-  position:fixed;inset:0 0 auto 0;
-  z-index:200;
+/* ─── DECK CONTAINER ──────────────────── */
+#deck{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;
+}
+
+/* ─── SLIDES ──────────────────────────── */
+.slides-wrap{
+  flex:1;overflow:hidden;position:relative;
+}
+.slide{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  padding:80px 60px 80px;
+  opacity:0;pointer-events:none;
+  transition:opacity .45s cubic-bezier(.4,0,.2,1),transform .45s cubic-bezier(.4,0,.2,1);
+  transform:translateX(60px);
+  will-change:opacity,transform;
+}
+.slide.active{
+  opacity:1;pointer-events:all;transform:translateX(0);
+}
+.slide.exit-left{
+  opacity:0;transform:translateX(-60px);
+}
+
+/* ─── NAV BAR ─────────────────────────── */
+#nav-bar{
+  flex:0 0 60px;
   display:flex;align-items:center;justify-content:space-between;
-  padding:0 40px;height:60px;
-  background:rgba(5,13,26,.7);
-  backdrop-filter:blur(20px);
-  border-bottom:1px solid var(--border);
+  padding:0 32px;
+  border-top:1px solid var(--border);
+  background:rgba(5,13,26,.9);
+  backdrop-filter:blur(12px);
 }
 .nav-brand{
-  display:flex;align-items:center;gap:10px;
-  font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:.95rem;
   color:var(--gold);letter-spacing:.02em;
+  display:flex;align-items:center;gap:8px;
 }
-.nav-sym{font-size:1.5rem;line-height:1}
-.nav-center{display:flex;gap:32px}
-.nav-center a{
-  font-size:.78rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;
-  color:var(--muted);transition:color .15s;
+.nav-sym{font-size:1.3rem}
+.nav-controls{display:flex;align-items:center;gap:16px}
+.nav-btn{
+  width:36px;height:36px;border-radius:8px;
+  border:1px solid var(--border);background:transparent;
+  color:var(--muted);cursor:pointer;font-size:1rem;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
 }
-.nav-center a:hover{color:var(--cream);text-decoration:none}
+.nav-btn:hover:not(:disabled){border-color:var(--muted);color:var(--cream)}
+.nav-btn:disabled{opacity:.3;cursor:default}
+.slide-counter{
+  font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--muted);
+  min-width:50px;text-align:center;
+}
+/* dots */
+.dots{display:flex;gap:6px;align-items:center}
+.dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--muted);opacity:.35;
+  transition:all .2s;cursor:pointer;
+}
+.dot.active{width:20px;border-radius:3px;background:var(--gold);opacity:1}
+.dot:hover{opacity:.7}
+/* gh link */
 .nav-gh{
   display:flex;align-items:center;gap:6px;
-  padding:6px 16px;border-radius:8px;
-  border:1.5px solid var(--border2);
-  font-size:.78rem;font-weight:600;color:var(--gold);
-  transition:background .15s;
+  padding:6px 14px;border-radius:7px;
+  border:1px solid var(--border-g);
+  font-size:.75rem;font-weight:600;color:var(--gold);
+  transition:background .15s;text-decoration:none;
 }
-.nav-gh:hover{background:rgba(212,168,67,.08);text-decoration:none}
+.nav-gh:hover{background:rgba(212,168,67,.08)}
 
-/* ─── HERO ─────────────────────────────────────────── */
-#hero{
-  min-height:100vh;
-  display:grid;grid-template-columns:1fr 1fr;
-  align-items:center;
-  padding:100px 0 80px;
-  position:relative;overflow:hidden;
-  max-width:1200px;margin:0 auto;
-}
-.hero-left{padding:0 40px 0 40px}
-.hero-right{padding:0 40px 0 20px;display:flex;align-items:center;justify-content:center}
-.hero-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px}
-.hero-h{
-  font-family:'Syne',sans-serif;
-  font-size:clamp(2.8rem,5.5vw,5rem);
-  font-weight:800;line-height:1.05;
-  letter-spacing:-.02em;
-  text-wrap:balance;
-  margin-bottom:24px;
-}
-.hero-h .accent{
-  background:linear-gradient(90deg,var(--gold) 0%,var(--gold2) 50%,var(--sky) 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  background-clip:text;
-}
-.hero-h .accent2{color:var(--sky)}
-.hero-p{
-  font-size:1.05rem;color:var(--muted);line-height:1.7;
-  max-width:460px;margin-bottom:36px;
-}
-.hero-actions{display:flex;gap:12px;flex-wrap:wrap}
-.btn-gold{
-  padding:12px 28px;border-radius:10px;
-  background:var(--gold);color:var(--ink);
-  font-size:.9rem;font-weight:700;
-  transition:all .15s;border:none;cursor:pointer;
-}
-.btn-gold:hover{background:var(--gold2);transform:translateY(-1px);text-decoration:none;color:var(--ink)}
-.btn-outline{
-  padding:12px 28px;border-radius:10px;
-  background:transparent;color:var(--cream);
-  font-size:.9rem;font-weight:600;
-  border:1.5px solid var(--border);
-  transition:border-color .15s;cursor:pointer;
-}
-.btn-outline:hover{border-color:var(--muted);text-decoration:none;color:var(--cream)}
-
-/* bridge SVG diagram */
-.bridge-svg-wrap{
-  position:relative;width:100%;max-width:480px;
-}
-.bridge-svg{width:100%;height:auto}
-
-/* ─── HERO GRID BACKGROUND ─────────────────────────── */
-#hero::before{
-  content:'';
-  position:absolute;inset:0;
-  background-image:
-    linear-gradient(rgba(79,158,248,.04) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(79,158,248,.04) 1px,transparent 1px);
-  background-size:60px 60px;
-  mask-image:radial-gradient(ellipse 60% 80% at 70% 50%,black 0%,transparent 70%);
-  pointer-events:none;
+/* ─── SLIDE PROGRESS LINE ─────────────── */
+#progress-line{
+  position:fixed;top:0;left:0;height:2px;
+  background:linear-gradient(90deg,var(--gold),var(--sky));
+  transition:width .4s cubic-bezier(.4,0,.2,1);
+  z-index:1000;
 }
 
-/* ─── MARQUEE STRIP ─────────────────────────────────── */
-.marquee-wrap{
-  border-top:1px solid var(--border);
-  border-bottom:1px solid var(--border);
-  background:var(--ink2);
-  overflow:hidden;
-  padding:14px 0;
-}
-.marquee-track{
-  display:flex;gap:0;
-  animation:marquee 28s linear infinite;
-  width:max-content;
-}
-.marquee-item{
-  display:flex;align-items:center;gap:8px;
-  padding:0 32px;
-  font-size:.75rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--muted);white-space:nowrap;
-}
-.marquee-item span{color:var(--gold)}
-.marquee-sep{color:var(--border);user-select:none}
-@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-
-/* ─── SECTION BASE ──────────────────────────────────── */
-.section{
-  max-width:1200px;margin:0 auto;
-  padding:96px 40px;
-}
-.section-num{
+/* ─── SLIDE LAYOUT HELPERS ────────────── */
+.slide-inner{width:100%;max-width:1100px;margin:0 auto}
+.slide-label{
   font-family:'JetBrains Mono',monospace;
-  font-size:.72rem;color:var(--gold);
-  letter-spacing:.2em;margin-bottom:12px;opacity:.7;
+  font-size:.72rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:20px;opacity:.8;
 }
-.section-h{
+.slide-h{
   font-family:'Syne',sans-serif;
-  font-size:clamp(1.8rem,3.5vw,3rem);
-  font-weight:800;line-height:1.1;
-  letter-spacing:-.02em;text-wrap:balance;
+  font-size:clamp(2.8rem,5vw,4.8rem);
+  font-weight:800;line-height:1.05;letter-spacing:-.025em;
+  text-wrap:balance;
+}
+.slide-h .g{
+  background:linear-gradient(90deg,var(--gold),var(--gold2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.slide-h .b{color:var(--sky)}
+.slide-sub{
+  font-size:1.05rem;color:var(--muted);line-height:1.7;max-width:600px;
+}
+.mono{font-family:'JetBrains Mono',monospace;color:var(--sky)}
+
+/* ─── SLIDE 1 · TITLE ─────────────────── */
+#s1{background:radial-gradient(ellipse 80% 70% at 50% 50%,#0D1E35 0%,#050D1A 70%)}
+#s1 .symbol{
+  font-size:clamp(80px,14vw,160px);
+  line-height:1;color:transparent;
+  -webkit-text-stroke:2px rgba(212,168,67,.3);
+  font-family:'Syne',sans-serif;font-weight:800;
+  margin-bottom:24px;
+  animation:breathe 4s ease-in-out infinite;
+}
+@keyframes breathe{0%,100%{-webkit-text-stroke-color:rgba(212,168,67,.25)}50%{-webkit-text-stroke-color:rgba(212,168,67,.6)}}
+#s1 .title{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:clamp(2.8rem,6vw,5.5rem);
+  line-height:1;letter-spacing:-.03em;
   margin-bottom:16px;
 }
-.section-sub{
-  font-size:1rem;color:var(--muted);line-height:1.7;
-  max-width:540px;margin-bottom:64px;
+#s1 .subtitle{
+  font-size:1.15rem;color:var(--muted);
+  margin-bottom:40px;max-width:500px;
+  text-align:center;line-height:1.6;
 }
+#s1 .tags{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+#s1 .tag{
+  padding:5px 14px;border-radius:100px;
+  border:1px solid var(--border);
+  font-size:.72rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);
+}
+#s1 .tag.hi{border-color:rgba(47,191,113,.3);color:var(--green)}
+/* Grid bg */
+#s1::before{
+  content:'';position:absolute;inset:0;
+  background-image:linear-gradient(rgba(79,158,248,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(79,158,248,.035) 1px,transparent 1px);
+  background-size:64px 64px;
+  mask-image:radial-gradient(ellipse 70% 80% at 50% 50%,black 0%,transparent 75%);
+  pointer-events:none;
+}
+#s1{text-align:center;align-items:center}
 
-/* ─── PROBLEM ───────────────────────────────────────── */
-#problem{background:var(--ink2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
-#problem .inner{
-  max-width:1200px;margin:0 auto;
-  padding:80px 40px;
-  display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;
+/* ─── SLIDE 2 · PROBLEMA ─────────────── */
+#s2{background:linear-gradient(135deg,#050D1A 0%,#080F1E 100%)}
+#s2 .grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:48px;align-items:start;margin-top:48px;
 }
-.problem-ql{
-  font-family:'Syne',sans-serif;
-  font-size:clamp(1.6rem,3vw,2.4rem);font-weight:700;
-  line-height:1.25;color:var(--cream);
+#s2 .quote{
+  font-family:'Syne',sans-serif;font-size:clamp(1.8rem,3vw,2.6rem);
+  font-weight:700;line-height:1.25;color:var(--cream);
 }
-.problem-ql em{
+#s2 .quote em{
   font-style:italic;
   background:linear-gradient(90deg,var(--gold),var(--gold2));
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
-.pain-list{list-style:none;display:flex;flex-direction:column;gap:0}
-.pain-item{
+.pain-items{display:flex;flex-direction:column;gap:0}
+.pain{
   display:flex;align-items:flex-start;gap:16px;
   padding:20px 0;border-bottom:1px solid var(--border);
 }
-.pain-item:first-child{border-top:1px solid var(--border)}
-.pain-icon{flex-shrink:0;margin-top:2px;font-size:1rem}
-.pain-text{font-size:.9rem;color:var(--muted);line-height:1.55}
-.pain-text strong{color:var(--cream);font-weight:600}
-
-/* ─── HOW IT WORKS ──────────────────────────────────── */
-.protocol-steps{
-  display:grid;grid-template-columns:repeat(5,1fr);
-  position:relative;gap:0;margin-top:0;
-}
-.protocol-steps::before{
-  content:'';
-  position:absolute;top:36px;left:5%;right:5%;height:1px;
-  background:linear-gradient(90deg,transparent,var(--border2),var(--gold),var(--border2),transparent);
-  z-index:0;
-}
-.proto-step{
-  display:flex;flex-direction:column;align-items:center;
-  text-align:center;padding:0 16px;position:relative;z-index:1;
-}
-.proto-icon{
-  width:72px;height:72px;border-radius:20px;
-  background:var(--ink2);border:1.5px solid var(--border2);
+.pain:first-child{border-top:1px solid var(--border)}
+.pain-x{
+  flex-shrink:0;width:28px;height:28px;border-radius:8px;
   display:flex;align-items:center;justify-content:center;
-  font-size:1.6rem;margin-bottom:20px;flex-shrink:0;
-  position:relative;
+  font-size:.75rem;font-weight:700;margin-top:1px;
 }
-.proto-icon::after{
-  content:attr(data-n);
+.pain-x.no{background:rgba(224,85,85,.1);color:var(--red)}
+.pain-x.yes{background:rgba(47,191,113,.1);color:var(--green)}
+.pain-t{font-size:.92rem;color:var(--muted);line-height:1.6}
+.pain-t strong{color:var(--cream);font-weight:600}
+
+/* ─── SLIDE 3 · SOLUCIÓN ─────────────── */
+#s3{background:#050D1A;text-align:center;align-items:center}
+#s3 .big{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:clamp(1.3rem,2.5vw,2rem);
+  color:var(--muted);line-height:1.5;max-width:720px;
+  margin-top:32px;margin-bottom:48px;
+}
+#s3 .big strong{color:var(--cream)}
+#s3 .big .hi{
+  background:linear-gradient(90deg,var(--gold),var(--gold2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  font-style:italic;
+}
+#s3 .attrs{
+  display:flex;gap:24px;flex-wrap:wrap;justify-content:center;
+}
+.attr{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:24px 32px;border-radius:16px;
+  border:1px solid var(--border);background:var(--ink2);
+  min-width:160px;
+}
+.attr-icon{font-size:2rem}
+.attr-label{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;color:var(--cream)}
+.attr-sub{font-size:.72rem;color:var(--muted);text-align:center;line-height:1.4}
+
+/* ─── SLIDE 4 · CÓMO FUNCIONA ─────────── */
+#s4 .flow{
+  display:flex;align-items:flex-start;gap:0;
+  margin-top:48px;position:relative;
+}
+#s4 .flow::before{
+  content:'';position:absolute;
+  top:36px;left:36px;right:36px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--border-g),var(--gold),var(--border-g),transparent);
+}
+.step{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  text-align:center;padding:0 12px;position:relative;
+}
+.step-n{
+  width:72px;height:72px;border-radius:20px;
+  background:var(--ink2);border:1.5px solid var(--border-g);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.6rem;margin-bottom:16px;flex-shrink:0;
+  position:relative;z-index:1;
+}
+.step-badge{
   position:absolute;top:-8px;right:-8px;
-  width:20px;height:20px;border-radius:50%;
+  width:22px;height:22px;border-radius:50%;
   background:var(--gold);color:var(--ink);
   font-family:'Syne',sans-serif;font-size:.65rem;font-weight:800;
   display:flex;align-items:center;justify-content:center;
 }
-.proto-label{
-  font-family:'Syne',sans-serif;
-  font-size:.8rem;font-weight:700;letter-spacing:.04em;
-  text-transform:uppercase;color:var(--gold);margin-bottom:8px;
+.step-title{
+  font-family:'Syne',sans-serif;font-weight:700;
+  font-size:.8rem;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:8px;
 }
-.proto-desc{font-size:.78rem;color:var(--muted);line-height:1.5}
+.step-desc{font-size:.78rem;color:var(--muted);line-height:1.55}
+.step-code{
+  display:inline-block;margin-top:6px;
+  font-family:'JetBrains Mono',monospace;font-size:.65rem;
+  color:var(--sky);background:rgba(79,158,248,.06);
+  padding:2px 7px;border-radius:4px;border:1px solid rgba(79,158,248,.12);
+}
 
-/* ─── ARCHITECTURE DIAGRAM ──────────────────────────── */
-.arch-bg{
+/* ─── SLIDE 5 · ARQUITECTURA ──────────── */
+#s5 .diag{
+  margin-top:40px;
   background:var(--ink2);border:1px solid var(--border);
-  border-radius:20px;padding:48px;margin-top:0;overflow-x:auto;
+  border-radius:20px;padding:36px;overflow-x:auto;
 }
-.arch-row{
-  display:flex;align-items:center;gap:0;
-  min-width:640px;
-}
-.arch-node{
-  flex:1;background:rgba(11,26,48,.8);
+.d-row{display:flex;align-items:center;gap:0;min-width:640px}
+.d-node{
+  flex:1;background:rgba(11,26,48,.9);
   border:1px solid var(--border);border-radius:14px;
-  padding:20px 16px;text-align:center;
+  padding:18px 14px;text-align:center;
 }
-.arch-node.center{
-  background:linear-gradient(135deg,rgba(212,168,67,.12),rgba(79,158,248,.06));
-  border-color:rgba(212,168,67,.3);
-  flex:1.3;
+.d-node.center{
+  background:linear-gradient(135deg,rgba(212,168,67,.1),rgba(79,158,248,.05));
+  border-color:rgba(212,168,67,.3);flex:1.4;
 }
-.arch-node-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;color:var(--cream)}
-.arch-node-sub{font-size:.68rem;color:var(--muted);margin-top:4px;line-height:1.4}
-.arch-node-badge{
-  display:inline-block;margin-top:8px;
-  padding:2px 8px;border-radius:4px;
-  background:rgba(212,168,67,.12);border:1px solid rgba(212,168,67,.2);
-  font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--gold);
+.d-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;color:var(--cream)}
+.d-sub{font-size:.68rem;color:var(--muted);margin-top:4px;line-height:1.4}
+.d-badges{display:flex;gap:4px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+.d-badge{
+  padding:2px 7px;border-radius:4px;
+  font-family:'JetBrains Mono',monospace;font-size:.6rem;
+  background:rgba(79,158,248,.08);border:1px solid rgba(79,158,248,.15);color:var(--sky);
 }
-.arch-connector{
-  flex:0 0 auto;
-  display:flex;flex-direction:column;align-items:center;padding:0 6px;gap:3px;
+.d-arr{
+  flex:0 0 auto;padding:0 8px;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
 }
-.arch-arr{color:var(--gold);font-size:.9rem;opacity:.7}
-.arch-proto{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--sky);white-space:nowrap}
+.d-arr-sym{color:var(--gold);opacity:.6;font-size:.9rem}
+.d-arr-label{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--muted);white-space:nowrap}
 
-/* ─── STANDARDS ─────────────────────────────────────── */
-.sep-row{
+/* ─── SLIDE 6 · ESTÁNDARES ────────────── */
+#s6 .seps{
   display:grid;grid-template-columns:repeat(4,1fr);
-  gap:1px;background:var(--border);border:1px solid var(--border);
-  border-radius:16px;overflow:hidden;
+  gap:16px;margin-top:48px;
 }
-.sep-cell{
-  background:var(--ink2);
-  padding:32px 24px;
+.sep{
+  border:1px solid var(--border);border-radius:16px;
+  padding:28px 20px;background:var(--ink2);
   position:relative;overflow:hidden;
-  transition:background .2s;
+  transition:border-color .2s,transform .2s;
+  cursor:default;
 }
-.sep-cell:hover{background:rgba(11,26,48,1)}
-.sep-cell::before{
-  content:'';
-  position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,var(--gold),var(--sky));
-}
+.sep:hover{border-color:rgba(212,168,67,.3);transform:translateY(-3px)}
+.sep::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--sky))}
 .sep-n{
   font-family:'Syne',sans-serif;font-weight:800;
-  font-size:2.4rem;color:transparent;line-height:1;
-  -webkit-text-stroke:1.5px rgba(212,168,67,.3);
-  margin-bottom:12px;transition:-webkit-text-stroke .2s;
+  font-size:2.2rem;line-height:1;
+  color:transparent;-webkit-text-stroke:1.5px rgba(212,168,67,.25);
+  margin-bottom:10px;
 }
-.sep-cell:hover .sep-n{-webkit-text-stroke-color:var(--gold)}
-.sep-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;margin-bottom:10px;color:var(--cream)}
-.sep-desc{font-size:.78rem;color:var(--muted);line-height:1.55}
-.sep-tag{
-  display:inline-block;margin-top:12px;
+.sep:hover .sep-n{-webkit-text-stroke-color:var(--gold)}
+.sep-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;color:var(--cream);margin-bottom:8px}
+.sep-desc{font-size:.76rem;color:var(--muted);line-height:1.55}
+.sep-check{
+  display:inline-block;margin-top:10px;
   padding:2px 8px;border-radius:4px;
-  font-family:'JetBrains Mono',monospace;font-size:.62rem;
+  font-size:.65rem;font-weight:600;
   background:rgba(47,191,113,.08);border:1px solid rgba(47,191,113,.2);color:var(--green);
 }
 
-/* ─── COMPARISON ────────────────────────────────────── */
-.comp-table{width:100%;border-collapse:collapse;font-size:.85rem}
-.comp-table thead th{
-  padding:14px 20px;text-align:left;
-  font-size:.7rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+/* ─── SLIDE 7 · COMPARATIVA ───────────── */
+#s7 .table-wrap{overflow-x:auto;margin-top:40px}
+.ctable{width:100%;border-collapse:collapse;font-size:.85rem}
+.ctable thead th{
+  padding:12px 20px;text-align:left;
+  font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
   color:var(--muted);border-bottom:1px solid var(--border);
 }
-.comp-table tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
-.comp-table tbody tr:hover{background:rgba(255,255,255,.02)}
-.comp-table td{padding:16px 20px;color:var(--muted);line-height:1.5;vertical-align:middle}
-.comp-table td:first-child{font-weight:600;color:var(--cream)}
-.comp-table .hl{background:rgba(212,168,67,.07)}
-.comp-table .hl td:first-child{color:var(--gold)}
-.icon-yes{color:var(--green);font-weight:700}
-.icon-no{color:var(--muted)}
+.ctable tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
+.ctable tbody tr:hover{background:rgba(255,255,255,.02)}
+.ctable td{padding:14px 20px;color:var(--muted);line-height:1.5;vertical-align:middle}
+.ctable td:first-child{font-weight:600;color:var(--cream)}
+.ctable .hl{background:rgba(212,168,67,.06)}
+.ctable .hl td:first-child{color:var(--gold)}
+.y{color:var(--green);font-weight:600}
+.n{color:rgba(106,127,153,.5)}
 
-/* ─── STATS ROW ─────────────────────────────────────── */
-.stats-row{
-  display:grid;grid-template-columns:repeat(3,1fr);
-  gap:1px;background:var(--border);
-  border:1px solid var(--border);border-radius:16px;overflow:hidden;
-  margin-top:64px;
+/* ─── SLIDE 8 · STACK ─────────────────── */
+#s8{text-align:center;align-items:center}
+#s8 .stack-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:16px;margin-top:48px;max-width:800px;
 }
-.stat{
-  background:var(--ink2);padding:40px 36px;
-  position:relative;overflow:hidden;
+.tech{
+  background:var(--ink2);border:1px solid var(--border);
+  border-radius:14px;padding:24px 20px;text-align:center;
+  transition:border-color .2s,transform .2s;
 }
-.stat::before{
-  content:'';
-  position:absolute;bottom:-20px;right:-20px;
-  width:80px;height:80px;border-radius:50%;
-  background:radial-gradient(circle,rgba(212,168,67,.08) 0%,transparent 70%);
-}
-.stat-num{
-  font-family:'Syne',sans-serif;font-weight:800;
-  font-size:3.5rem;line-height:1;color:var(--gold);
-  margin-bottom:8px;
-  font-variant-numeric:tabular-nums;
-}
-.stat-label{font-size:.82rem;color:var(--muted)}
-.stat-sub{font-size:.72rem;color:rgba(106,127,153,.6);margin-top:4px}
+.tech:hover{border-color:var(--border-g);transform:translateY(-2px)}
+.tech-icon{font-size:2rem;margin-bottom:10px}
+.tech-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;color:var(--cream);margin-bottom:4px}
+.tech-role{font-size:.72rem;color:var(--muted)}
 
-/* ─── CTA ───────────────────────────────────────────── */
-#cta{
-  position:relative;overflow:hidden;
-  border-top:1px solid var(--border);
-}
-#cta .inner{
-  max-width:1200px;margin:0 auto;
-  padding:96px 40px 120px;
-  display:grid;grid-template-columns:1fr auto;
-  align-items:center;gap:48px;
-}
-#cta::before{
+/* ─── SLIDE 9 · CTA ───────────────────── */
+#s9{background:radial-gradient(ellipse 90% 80% at 50% 50%,#0D1E35 0%,#050D1A 70%);text-align:center;align-items:center}
+#s9::before{
   content:'⟴';
-  position:absolute;right:-60px;top:50%;transform:translateY(-50%);
-  font-size:300px;line-height:1;color:rgba(212,168,67,.04);
-  font-family:'Syne',sans-serif;pointer-events:none;user-select:none;
+  position:absolute;font-size:400px;
+  color:rgba(212,168,67,.03);
+  font-family:'Syne',sans-serif;font-weight:800;
+  pointer-events:none;user-select:none;
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  line-height:1;
 }
-.cta-links{display:flex;flex-direction:column;gap:10px;flex-shrink:0}
-.cta-btn{
-  display:flex;align-items:center;gap:10px;
-  padding:14px 24px;border-radius:10px;
-  font-size:.88rem;font-weight:600;
-  border:1.5px solid var(--border);color:var(--muted);
-  transition:all .15s;white-space:nowrap;
-  min-width:200px;
+#s9 .domain{
+  font-family:'JetBrains Mono',monospace;
+  font-size:clamp(.9rem,1.5vw,1.15rem);
+  color:var(--sky);margin:28px 0 40px;
+  padding:12px 24px;border-radius:10px;
+  background:rgba(79,158,248,.06);border:1px solid rgba(79,158,248,.15);
+  display:inline-block;
 }
-.cta-btn:hover{border-color:var(--muted);color:var(--cream);text-decoration:none}
-.cta-btn-primary{background:var(--gold);border-color:var(--gold);color:var(--ink)}
-.cta-btn-primary:hover{background:var(--gold2);border-color:var(--gold2);color:var(--ink)}
-.cta-btn-icon{flex-shrink:0;font-size:1rem}
+#s9 .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-p{
+  display:flex;align-items:center;gap:8px;
+  padding:14px 28px;border-radius:10px;
+  font-size:.9rem;font-weight:700;cursor:pointer;
+  transition:all .15s;text-decoration:none;
+}
+.btn-gold-fill{background:var(--gold);color:var(--ink);border:none}
+.btn-gold-fill:hover{background:var(--gold2);transform:translateY(-1px)}
+.btn-border{background:transparent;color:var(--cream);border:1.5px solid var(--border)}
+.btn-border:hover{border-color:var(--muted)}
 
-/* ─── FOOTER ─────────────────────────────────────────── */
-footer{
-  border-top:1px solid var(--border);
-  padding:28px 40px;
-  display:flex;align-items:center;justify-content:space-between;
-  flex-wrap:wrap;gap:12px;
-  max-width:1200px;margin:0 auto;
-  font-size:.76rem;color:var(--muted);
-}
-footer a{color:var(--muted)}
-footer a:hover{color:var(--cream)}
+/* ─── SLIDE 3 BIG NUM ─────────────────── */
+#s3 .stat-row{display:flex;gap:40px;justify-content:center;margin-top:48px;flex-wrap:wrap}
+.big-stat{text-align:center}
+.big-stat-n{font-family:'Syne',sans-serif;font-weight:800;font-size:4rem;color:var(--gold);line-height:1}
+.big-stat-l{font-size:.78rem;color:var(--muted);margin-top:4px}
 
-/* ─── FADE IN ─────────────────────────────────────────── */
-.fade-in{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
-.fade-in.visible{opacity:1;transform:none}
-
-/* ─── RESPONSIVE ─────────────────────────────────────── */
-@media(max-width:900px){
-  #hero{grid-template-columns:1fr;min-height:auto;padding:100px 0 60px}
-  .hero-right{display:none}
-  nav .nav-center{display:none}
-  #problem .inner{grid-template-columns:1fr;gap:40px}
-  .protocol-steps{grid-template-columns:1fr 1fr;gap:24px}
-  .protocol-steps::before{display:none}
-  .sep-row{grid-template-columns:1fr 1fr}
-  .stats-row{grid-template-columns:1fr}
-  #cta .inner{grid-template-columns:1fr;gap:32px}
+/* ─── KEYBOARD HINT ───────────────────── */
+#hint{
+  position:fixed;bottom:72px;right:20px;
+  font-size:.7rem;color:rgba(106,127,153,.5);
+  font-family:'JetBrains Mono',monospace;
+  pointer-events:none;
+  animation:fadeout 4s ease forwards 3s;
 }
-@media(max-width:600px){
-  nav{padding:0 20px}
-  .section{padding:64px 20px}
-  .hero-left{padding:0 20px}
-  #problem .inner{padding:60px 20px}
-  .sep-row{grid-template-columns:1fr}
-  .protocol-steps{grid-template-columns:1fr}
-  .arch-bg{padding:24px}
-  #cta .inner{padding:64px 20px 80px}
-  footer{padding:24px 20px}
+@keyframes fadeout{to{opacity:0}}
+
+/* ─── RESPONSIVE ──────────────────────── */
+@media(max-width:800px){
+  .slide{padding:80px 24px 80px}
+  #s2 .grid{grid-template-columns:1fr;gap:28px}
+  #s4 .flow{flex-direction:column;gap:16px}
+  #s4 .flow::before{display:none}
+  #s6 .seps{grid-template-columns:1fr 1fr}
+  #s8 .stack-grid{grid-template-columns:1fr 1fr}
+  #s7 .table-wrap{font-size:.78rem}
+  #s3 .attrs{gap:12px}
+  .attr{padding:16px 20px;min-width:120px}
+}
+@media(max-width:500px){
+  #s6 .seps{grid-template-columns:1fr}
+  #s8 .stack-grid{grid-template-columns:repeat(2,1fr)}
+  .slide-h{font-size:2.2rem}
 }
 </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav>
-  <div class="nav-brand"><span class="nav-sym">⟴</span> SEPuente</div>
-  <div class="nav-center">
-    <a href="#problem">Problema</a>
-    <a href="#how">Protocolo</a>
-    <a href="#seps">SEPs</a>
-    <a href="#compare">Comparativa</a>
-  </div>
-  <a href="https://github.com/ALFA117/sepuente" target="_blank" class="nav-gh">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-    GitHub ↗
-  </a>
-</nav>
+<div id="progress-line" style="width:11.11%"></div>
 
-<!-- HERO -->
-<div style="max-width:1200px;margin:0 auto">
-  <section id="hero" style="max-width:100%;margin:0">
-    <div class="hero-left">
-      <div class="hero-tags">
-        <span class="tag live"><span class="dot"></span>Stellar Testnet</span>
+<div id="deck">
+  <div class="slides-wrap">
+
+    <!-- ── SLIDE 1: TITLE ─────────────────────── -->
+    <section class="slide active" id="s1">
+      <div class="symbol">⟴</div>
+      <div class="title"><span style="background:linear-gradient(90deg,#D4A843,#F0C855,#4F9EF8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">SEPuente</span></div>
+      <p class="subtitle">El gateway open-source que conecta SPEI con Stellar</p>
+      <div class="tags">
+        <span class="tag hi">✓ Stellar Testnet</span>
         <span class="tag">Open Source · MIT</span>
-        <span class="tag">SEP-1/10/24/38</span>
+        <span class="tag">No custodial</span>
+        <span class="tag">Serverless</span>
       </div>
-      <h1 class="hero-h">
-        Un <span class="accent">puente</span><br>
-        entre el banco<br>
-        y <span class="accent2">Stellar</span>
-      </h1>
-      <p class="hero-p">SEPuente es una capa de protocolo open-source que convierte cualquier rampa SPEI en un anchor SEP-24 estándar. No custodia fondos. No requiere KYC propio. Funciona con cualquier wallet Stellar.</p>
-      <div class="hero-actions">
-        <a href="https://github.com/ALFA117/sepuente" target="_blank"><button class="btn-gold">Ver en GitHub →</button></a>
-        <a href="https://demo-wallet.stellar.org" target="_blank"><button class="btn-outline">Demo Wallet SDF ↗</button></a>
+    </section>
+
+    <!-- ── SLIDE 2: PROBLEMA ──────────────────── -->
+    <section class="slide" id="s2">
+      <div class="slide-inner">
+        <div class="slide-label">// El problema</div>
+        <h2 class="slide-h">Rampas SPEI sin<br><span class="g">estándar común</span></h2>
+        <div class="grid">
+          <blockquote class="quote">
+            Cada rampa MXN tiene su propia API.<br>
+            Cada wallet tiene que integrarlas <em>una por una.</em>
+          </blockquote>
+          <div class="pain-items">
+            <div class="pain">
+              <div class="pain-x no">✕</div>
+              <div class="pain-t"><strong>Sin estándar</strong> — Etherfuse, Bitso, Kushki exponen APIs propietarias incompatibles</div>
+            </div>
+            <div class="pain">
+              <div class="pain-x no">✕</div>
+              <div class="pain-t"><strong>Descubrimiento manual</strong> — las wallets Stellar no pueden encontrar rampas MXN automáticamente</div>
+            </div>
+            <div class="pain">
+              <div class="pain-x no">✕</div>
+              <div class="pain-t"><strong>Vendor lock-in</strong> — una sola rampa ata al usuario a un único proveedor regulado</div>
+            </div>
+            <div class="pain">
+              <div class="pain-x yes">✓</div>
+              <div class="pain-t"><strong style="color:#2FBF71">SEPuente</strong> — una integración para cualquier proveedor SPEI</div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <div class="hero-right">
-      <!-- Animated architecture SVG -->
-      <div class="bridge-svg-wrap">
-        <svg class="bridge-svg" viewBox="0 0 420 460" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- Grid background lines -->
-          <defs>
-            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(79,158,248,0.06)" stroke-width="1"/>
-            </pattern>
-            <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" style="stop-color:#4F9EF8;stop-opacity:.4"/>
-              <stop offset="50%" style="stop-color:#D4A843;stop-opacity:.8"/>
-              <stop offset="100%" style="stop-color:#4F9EF8;stop-opacity:.4"/>
-            </linearGradient>
-            <linearGradient id="nodeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#D4A843;stop-opacity:.15"/>
-              <stop offset="100%" style="stop-color:#4F9EF8;stop-opacity:.05"/>
-            </linearGradient>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-              <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-          </defs>
-
-          <rect width="420" height="460" fill="url(#grid)" rx="16"/>
-          <rect width="420" height="460" fill="linear-gradient(135deg,rgba(11,26,48,0.9),rgba(5,13,26,0.6))" rx="16" opacity=".7"/>
-
-          <!-- Top node: Wallet -->
-          <rect x="130" y="20" width="160" height="64" rx="12" fill="#0B1A30" stroke="rgba(79,158,248,0.2)" stroke-width="1.5"/>
-          <text x="210" y="46" text-anchor="middle" fill="#EDE8DB" font-family="Syne,sans-serif" font-weight="700" font-size="12">WALLET</text>
-          <text x="210" y="63" text-anchor="middle" fill="#6A7F99" font-family="JetBrains Mono,monospace" font-size="9">Freighter · Demo Wallet</text>
-
-          <!-- Arrow down from wallet -->
-          <line x1="210" y1="84" x2="210" y2="126" stroke="url(#lineGrad)" stroke-width="1.5" stroke-dasharray="4 3">
-            <animate attributeName="stroke-dashoffset" from="14" to="0" dur="1.2s" repeatCount="indefinite"/>
-          </line>
-          <polygon points="204,124 210,136 216,124" fill="#D4A843" opacity=".7"/>
-
-          <!-- Center node: SEPuente -->
-          <rect x="60" y="136" width="300" height="88" rx="14" fill="url(#nodeGrad)" stroke="rgba(212,168,67,0.35)" stroke-width="1.5"/>
-          <text x="105" y="166" fill="#D4A843" font-family="Syne,sans-serif" font-weight="800" font-size="22">⟴</text>
-          <text x="140" y="166" fill="#D4A843" font-family="Syne,sans-serif" font-weight="700" font-size="14">SEPuente</text>
-          <rect x="80" y="178" width="60" height="16" rx="4" fill="rgba(79,158,248,0.08)" stroke="rgba(79,158,248,0.15)" stroke-width="1"/>
-          <text x="110" y="190" text-anchor="middle" fill="#4F9EF8" font-family="JetBrains Mono,monospace" font-size="8">SEP-10</text>
-          <rect x="148" y="178" width="60" height="16" rx="4" fill="rgba(79,158,248,0.08)" stroke="rgba(79,158,248,0.15)" stroke-width="1"/>
-          <text x="178" y="190" text-anchor="middle" fill="#4F9EF8" font-family="JetBrains Mono,monospace" font-size="8">SEP-24</text>
-          <rect x="216" y="178" width="60" height="16" rx="4" fill="rgba(79,158,248,0.08)" stroke="rgba(79,158,248,0.15)" stroke-width="1"/>
-          <text x="246" y="190" text-anchor="middle" fill="#4F9EF8" font-family="JetBrains Mono,monospace" font-size="8">SEP-38</text>
-          <text x="210" y="218" text-anchor="middle" fill="#6A7F99" font-family="JetBrains Mono,monospace" font-size="9">Serverless · No custodial</text>
-
-          <!-- Arrow down to driver -->
-          <line x1="210" y1="224" x2="210" y2="266" stroke="url(#lineGrad)" stroke-width="1.5" stroke-dasharray="4 3">
-            <animate attributeName="stroke-dashoffset" from="14" to="0" dur="1.2s" repeatCount="indefinite" begin="0.3s"/>
-          </line>
-          <polygon points="204,264 210,276 216,264" fill="#D4A843" opacity=".7"/>
-
-          <!-- RampDriver row -->
-          <rect x="40" y="276" width="152" height="64" rx="12" fill="#0B1A30" stroke="rgba(212,168,67,0.15)" stroke-width="1.5"/>
-          <text x="116" y="300" text-anchor="middle" fill="#EDE8DB" font-family="Syne,sans-serif" font-weight="700" font-size="11">ETHERFUSE</text>
-          <text x="116" y="318" text-anchor="middle" fill="#6A7F99" font-family="JetBrains Mono,monospace" font-size="9">Sandbox API</text>
-          <rect x="228" y="276" width="152" height="64" rx="12" fill="#0B1A30" stroke="rgba(212,168,67,0.15)" stroke-width="1.5" stroke-dasharray="4 3"/>
-          <text x="304" y="300" text-anchor="middle" fill="#EDE8DB" font-family="Syne,sans-serif" font-weight="700" font-size="11">MOCKDRIVER</text>
-          <text x="304" y="318" text-anchor="middle" fill="#6A7F99" font-family="JetBrains Mono,monospace" font-size="9">Testnet · 1:1 MXN</text>
-
-          <!-- Arrows down from drivers -->
-          <line x1="116" y1="340" x2="116" y2="382" stroke="rgba(79,158,248,0.4)" stroke-width="1.5" stroke-dasharray="4 3">
-            <animate attributeName="stroke-dashoffset" from="14" to="0" dur="1.2s" repeatCount="indefinite" begin="0.6s"/>
-          </line>
-          <line x1="304" y1="340" x2="304" y2="382" stroke="rgba(79,158,248,0.2)" stroke-width="1.5" stroke-dasharray="4 3">
-            <animate attributeName="stroke-dashoffset" from="14" to="0" dur="1.2s" repeatCount="indefinite" begin="0.6s"/>
-          </line>
-          <polygon points="110,380 116,392 122,380" fill="#4F9EF8" opacity=".5"/>
-
-          <!-- Bottom node: Bank / SPEI -->
-          <rect x="40" y="392" width="152" height="52" rx="12" fill="#0B1A30" stroke="rgba(79,158,248,0.15)" stroke-width="1.5"/>
-          <text x="116" y="416" text-anchor="middle" fill="#EDE8DB" font-family="Syne,sans-serif" font-weight="700" font-size="11">BANCO / SPEI</text>
-          <text x="116" y="432" text-anchor="middle" fill="#6A7F99" font-family="JetBrains Mono,monospace" font-size="9">CLABE · transferencia</text>
-          <rect x="228" y="392" width="152" height="52" rx="12" fill="#0B1A30" stroke="rgba(79,158,248,0.1)" stroke-width="1" stroke-dasharray="4 3"/>
-          <text x="304" y="416" text-anchor="middle" fill="#6A7F99" font-family="Syne,sans-serif" font-weight="700" font-size="11">TESTNET XLM</text>
-          <text x="304" y="432" text-anchor="middle" fill="#6A7F99" font-family="JetBrains Mono,monospace" font-size="9">Friendbot funded</text>
-
-          <!-- Glow dot top -->
-          <circle cx="210" cy="84" r="4" fill="#D4A843" filter="url(#glow)" opacity=".8">
-            <animate attributeName="opacity" values=".8;.3;.8" dur="2s" repeatCount="indefinite"/>
-          </circle>
-          <circle cx="210" cy="224" r="4" fill="#D4A843" filter="url(#glow)" opacity=".8">
-            <animate attributeName="opacity" values=".8;.3;.8" dur="2s" repeatCount="indefinite" begin="0.4s"/>
-          </circle>
-        </svg>
+    <!-- ── SLIDE 3: SOLUCIÓN ──────────────────── -->
+    <section class="slide" id="s3">
+      <div class="slide-label">// La solución</div>
+      <h2 class="slide-h">Una capa de <span class="g">protocolo</span>,<br>no una rampa nueva</h2>
+      <p class="big">
+        SEPuente <strong>traduce el protocolo</strong>. El KYC y el dinero se quedan en el proveedor regulado.<br>
+        SEPuente solo convierte la <span class="hi">interfaz</span>.
+      </p>
+      <div class="attrs">
+        <div class="attr">
+          <div class="attr-icon">🔓</div>
+          <div class="attr-label">No custodial</div>
+          <div class="attr-sub">Nunca toca fondos ni llaves de usuarios</div>
+        </div>
+        <div class="attr">
+          <div class="attr-icon">🌐</div>
+          <div class="attr-label">Open source</div>
+          <div class="attr-sub">MIT · forkeable · auditable</div>
+        </div>
+        <div class="attr">
+          <div class="attr-icon">☁️</div>
+          <div class="attr-label">Serverless</div>
+          <div class="attr-sub">Sin background jobs · todo pull-on-read</div>
+        </div>
+        <div class="attr">
+          <div class="attr-icon">🔌</div>
+          <div class="attr-label">Plug & play</div>
+          <div class="attr-sub">Interfaz RampDriver · cualquier proveedor</div>
+        </div>
       </div>
-    </div>
-  </section>
-</div>
+    </section>
 
-<!-- MARQUEE -->
-<div class="marquee-wrap">
-  <div class="marquee-track">
-    <!-- Duplicated for seamless loop -->
-    <div class="marquee-item"><span>SEP-1</span> stellar.toml</div>
-    <div class="marquee-item marquee-sep">·</div>
-    <div class="marquee-item"><span>SEP-10</span> Web Auth</div>
-    <div class="marquee-item marquee-sep">·</div>
-    <div class="marquee-item"><span>SEP-24</span> Hosted Deposit &amp; Withdrawal</div>
-    <div class="marquee-item marquee-sep">·</div>
-    <div class="marquee-item"><span>SEP-38</span> Anchor RFQ</div>
-    <div class="marquee-item marquee-sep">·</div>
-    <div class="marquee-item"><span>DRIVER</span> Etherfuse · MockDriver</div>
-    <div class="marquee-item marquee-sep">·</div>
-    <div class="marquee-item"><span>STACK</span> Next.js 15 · Supabase · Vercel</div>
-    <div class="marquee-item marquee-sep">·</div>
-    <div class="marquee-item"><span>MIT</span> Open Source</div>
-    <div class="marquee-item marquee-sep">·</div>
-    <!-- duplicate -->
-    <div class="marquee-item"><span>SEP-1</span> stellar.toml</div>
-    <div class="marquee-item marquee-sep">·</div>
-    <div class="marquee-item"><span>SEP-10</span> Web Auth</div>
-    <div class="marquee-item marquee-sep">·</div>
-    <div class="marquee-item"><span>SEP-24</span> Hosted Deposit &amp; Withdrawal</div>
-    <div class="marquee-item marquee-sep">·</div>
-    <div class="marquee-item"><span>SEP-38</span> Anchor RFQ</div>
-    <div class="marquee-item marquee-sep">·</div>
-    <div class="marquee-item"><span>DRIVER</span> Etherfuse · MockDriver</div>
-    <div class="marquee-item marquee-sep">·</div>
-    <div class="marquee-item"><span>STACK</span> Next.js 15 · Supabase · Vercel</div>
-    <div class="marquee-item marquee-sep">·</div>
-    <div class="marquee-item"><span>MIT</span> Open Source</div>
-    <div class="marquee-item marquee-sep">·</div>
-  </div>
-</div>
-
-<!-- PROBLEM -->
-<div id="problem">
-  <div class="inner fade-in">
-    <blockquote class="problem-ql">
-      Cada rampa SPEI tiene<br>su propia API.<br>
-      Cada wallet tiene que<br>integrarlas <em>una por una.</em>
-    </blockquote>
-    <div>
-      <ul class="pain-list">
-        <li class="pain-item">
-          <span class="pain-icon">✕</span>
-          <span class="pain-text"><strong>Sin estándar común</strong> — Etherfuse, Bitso, Kushki exponen APIs propietarias incompatibles entre sí</span>
-        </li>
-        <li class="pain-item">
-          <span class="pain-icon">✕</span>
-          <span class="pain-text"><strong>Descubrimiento manual</strong> — las wallets Stellar no tienen mecanismo para encontrar rampas MXN automáticamente</span>
-        </li>
-        <li class="pain-item">
-          <span class="pain-icon">✕</span>
-          <span class="pain-text"><strong>Vendor lock-in</strong> — anclar a una sola rampa ata al usuario a un único proveedor regulado</span>
-        </li>
-        <li class="pain-item" style="border-bottom:none">
-          <span class="pain-icon" style="color:var(--green)">✓</span>
-          <span class="pain-text"><strong style="color:var(--green)">SEPuente</strong> — expone <em>cualquier</em> rampa como anchor SEP-24 estándar. Una integración, cualquier proveedor.</span>
-        </li>
-      </ul>
-    </div>
-  </div>
-</div>
-
-<!-- HOW IT WORKS -->
-<div class="section fade-in" id="how">
-  <div class="section-num">// 01 — PROTOCOLO</div>
-  <h2 class="section-h">Cómo funciona</h2>
-  <p class="section-sub">SEPuente traduce el protocolo — el dinero y el KYC se quedan en el proveedor regulado.</p>
-
-  <div class="protocol-steps">
-    <div class="proto-step">
-      <div class="proto-icon" data-n="1">🔍</div>
-      <div class="proto-label">Descubrimiento</div>
-      <p class="proto-desc">La wallet lee <span class="mono" style="color:var(--sky);font-size:.72rem">stellar.toml</span> y encuentra los endpoints automáticamente</p>
-    </div>
-    <div class="proto-step">
-      <div class="proto-icon" data-n="2">🔑</div>
-      <div class="proto-label">Auth SEP-10</div>
-      <p class="proto-desc">Challenge tx firmada en la wallet. JWT propio HS256, 24 h, sin estado en servidor</p>
-    </div>
-    <div class="proto-step">
-      <div class="proto-icon" data-n="3">💱</div>
-      <div class="proto-label">Quote SEP-38</div>
-      <p class="proto-desc">Precio y comisión en tiempo real desde el driver activo. Quote firmado con TTL</p>
-    </div>
-    <div class="proto-step">
-      <div class="proto-icon" data-n="4">🏦</div>
-      <div class="proto-label">Instrucciones</div>
-      <p class="proto-desc">CLABE + referencia SPEI para depósito. Dirección Stellar + memo para retiro</p>
-    </div>
-    <div class="proto-step">
-      <div class="proto-icon" data-n="5">⚡</div>
-      <div class="proto-label">Liquidación</div>
-      <p class="proto-desc">Pull-on-read actualiza el estado. TMXN acreditan en la wallet del usuario</p>
-    </div>
-  </div>
-
-  <!-- Architecture diagram -->
-  <div class="arch-bg" style="margin-top:56px">
-    <div class="arch-row">
-      <div class="arch-node">
-        <div class="arch-node-name">Wallet / App</div>
-        <div class="arch-node-sub">Freighter · Demo Wallet<br>Cualquier cliente SEP-24</div>
+    <!-- ── SLIDE 4: CÓMO FUNCIONA ─────────────── -->
+    <section class="slide" id="s4">
+      <div class="slide-inner">
+        <div class="slide-label">// Protocolo</div>
+        <h2 class="slide-h">Cómo funciona</h2>
+        <div class="flow">
+          <div class="step">
+            <div class="step-n">🔍<div class="step-badge">1</div></div>
+            <div class="step-title">Discovery</div>
+            <p class="step-desc">La wallet lee</p>
+            <span class="step-code">stellar.toml</span>
+          </div>
+          <div class="step">
+            <div class="step-n">🔑<div class="step-badge">2</div></div>
+            <div class="step-title">SEP-10 Auth</div>
+            <p class="step-desc">Challenge tx + JWT firmado sin estado</p>
+          </div>
+          <div class="step">
+            <div class="step-n">💱<div class="step-badge">3</div></div>
+            <div class="step-title">SEP-38 Quote</div>
+            <p class="step-desc">Precio en tiempo real con TTL firmado</p>
+          </div>
+          <div class="step">
+            <div class="step-n">🏦<div class="step-badge">4</div></div>
+            <div class="step-title">SEP-24 Flow</div>
+            <p class="step-desc">CLABE + ref SPEI o Stellar + memo</p>
+          </div>
+          <div class="step">
+            <div class="step-n">⚡<div class="step-badge">5</div></div>
+            <div class="step-title">Liquidación</div>
+            <p class="step-desc">TMXN acreditan en la wallet. Pull-on-read</p>
+          </div>
+        </div>
       </div>
-      <div class="arch-connector">
-        <div class="arch-arr">⟶</div>
-        <div class="arch-proto">SEP-10</div>
-        <div class="arch-proto">SEP-24</div>
+    </section>
+
+    <!-- ── SLIDE 5: ARQUITECTURA ──────────────── -->
+    <section class="slide" id="s5">
+      <div class="slide-inner">
+        <div class="slide-label">// Arquitectura</div>
+        <h2 class="slide-h">Diseño <span class="g">serverless</span></h2>
+        <div class="diag">
+          <div class="d-row">
+            <div class="d-node">
+              <div class="d-name">Wallet / App</div>
+              <div class="d-sub">Freighter · Demo Wallet<br>Cualquier cliente SEP-24</div>
+            </div>
+            <div class="d-arr">
+              <div class="d-arr-sym">⟶</div>
+              <div class="d-arr-label">SEP-10</div>
+              <div class="d-arr-label">SEP-24</div>
+            </div>
+            <div class="d-node center">
+              <div class="d-name" style="color:var(--gold);font-size:.95rem">⟴ SEPuente</div>
+              <div class="d-sub">Next.js 15 · Supabase · Vercel</div>
+              <div class="d-badges">
+                <span class="d-badge">SEP-1</span>
+                <span class="d-badge">SEP-10</span>
+                <span class="d-badge">SEP-24</span>
+                <span class="d-badge">SEP-38</span>
+              </div>
+            </div>
+            <div class="d-arr">
+              <div class="d-arr-sym">⟶</div>
+              <div class="d-arr-label">RampDriver</div>
+            </div>
+            <div class="d-node">
+              <div class="d-name">Etherfuse</div>
+              <div class="d-sub">Sandbox API<br>SPEI ⇄ CETES</div>
+            </div>
+            <div class="d-arr">
+              <div class="d-arr-sym">⟶</div>
+              <div class="d-arr-label">SPEI</div>
+            </div>
+            <div class="d-node">
+              <div class="d-name">Banco</div>
+              <div class="d-sub">CLABE · referencia<br>Red interbancaria MX</div>
+            </div>
+          </div>
+        </div>
+        <p style="margin-top:20px;font-size:.8rem;color:var(--muted);text-align:center">
+          <span style="color:var(--sky)" class="mono">MockDriver</span> disponible para desarrollo en testnet sin dependencias externas
+        </p>
       </div>
-      <div class="arch-node center">
-        <div class="arch-node-name" style="color:var(--gold);font-size:1rem">⟴ SEPuente</div>
-        <div class="arch-node-sub">SEP-1 · SEP-10 · SEP-24 · SEP-38<br>Next.js 15 · Supabase · Vercel</div>
-        <div class="arch-node-badge">RampDriver interface</div>
+    </section>
+
+    <!-- ── SLIDE 6: ESTÁNDARES SEP ────────────── -->
+    <section class="slide" id="s6">
+      <div class="slide-inner">
+        <div class="slide-label">// Estándares</div>
+        <h2 class="slide-h">Cuatro SEPs, <span class="g">una URL</span></h2>
+        <div class="seps">
+          <div class="sep">
+            <div class="sep-n">SEP-1</div>
+            <div class="sep-name">Stellar Info</div>
+            <p class="sep-desc"><span class="mono" style="font-size:.7rem">stellar.toml</span> dinámico con endpoints, activos y documentación del anchor</p>
+            <div class="sep-check">✓ implementado</div>
+          </div>
+          <div class="sep">
+            <div class="sep-n">SEP-10</div>
+            <div class="sep-name">Web Auth</div>
+            <p class="sep-desc">Challenge transaction + JWT HS256. Sin estado. Compatible con anchor-tests SDF</p>
+            <div class="sep-check">✓ implementado</div>
+          </div>
+          <div class="sep">
+            <div class="sep-n">SEP-24</div>
+            <div class="sep-name">Hosted Transfer</div>
+            <p class="sep-desc">UI en popup/iframe. Depósito SPEI→TMXN y retiro TMXN→SPEI con historial completo</p>
+            <div class="sep-check">✓ implementado</div>
+          </div>
+          <div class="sep">
+            <div class="sep-n">SEP-38</div>
+            <div class="sep-name">Anchor RFQ</div>
+            <p class="sep-desc">Cotizaciones en tiempo real. Quotes firmados con TTL. Contexto sep24 integrado</p>
+            <div class="sep-check">✓ implementado</div>
+          </div>
+        </div>
       </div>
-      <div class="arch-connector">
-        <div class="arch-arr">⟶</div>
-        <div class="arch-proto">REST API</div>
-        <div class="arch-proto">Driver</div>
+    </section>
+
+    <!-- ── SLIDE 7: COMPARATIVA ───────────────── -->
+    <section class="slide" id="s7">
+      <div class="slide-inner">
+        <div class="slide-label">// Diferenciación</div>
+        <h2 class="slide-h">¿Por qué no<br><span class="g">algo existente?</span></h2>
+        <div class="table-wrap">
+          <table class="ctable">
+            <thead>
+              <tr>
+                <th>Proyecto</th>
+                <th>Propósito</th>
+                <th>SEP-24</th>
+                <th>Adapta rampas existentes</th>
+                <th>Sin KYC propio</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Ramp Kit</td>
+                <td>SDK per-app</td>
+                <td><span class="n">—</span></td>
+                <td><span class="n">—</span></td>
+                <td><span class="n">—</span></td>
+              </tr>
+              <tr>
+                <td>StellarMesh</td>
+                <td>SEP-24 para exchanges</td>
+                <td><span class="y">✓</span></td>
+                <td><span class="n">—</span></td>
+                <td><span class="n">—</span></td>
+              </tr>
+              <tr>
+                <td>Anchor Platform (SDF)</td>
+                <td>Ser anchor desde cero</td>
+                <td><span class="y">✓</span></td>
+                <td><span class="n">—</span></td>
+                <td><span class="n">Requiere KYC</span></td>
+              </tr>
+              <tr class="hl">
+                <td>⟴ SEPuente</td>
+                <td>Adaptador para rampas reguladas</td>
+                <td><span class="y">✓</span></td>
+                <td><span class="y">✓ Exactamente eso</span></td>
+                <td><span class="y">✓ KYC del proveedor</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-      <div class="arch-node">
-        <div class="arch-node-name">Etherfuse / Mock</div>
-        <div class="arch-node-sub">Rampa MXN regulada<br>SPEI ⇄ CETES</div>
+    </section>
+
+    <!-- ── SLIDE 8: STACK ─────────────────────── -->
+    <section class="slide" id="s8">
+      <div class="slide-label">// Stack tecnológico</div>
+      <h2 class="slide-h">Construido sobre<br><span class="g">tecnología probada</span></h2>
+      <div class="stack-grid">
+        <div class="tech">
+          <div class="tech-icon">▲</div>
+          <div class="tech-name">Next.js 15</div>
+          <div class="tech-role">App Router · API Routes</div>
+        </div>
+        <div class="tech">
+          <div class="tech-icon">🌐</div>
+          <div class="tech-name">Stellar SDK</div>
+          <div class="tech-role">v12 · WebAuth · Horizon</div>
+        </div>
+        <div class="tech">
+          <div class="tech-icon">🗄️</div>
+          <div class="tech-name">Supabase</div>
+          <div class="tech-role">Postgres · RLS · realtime</div>
+        </div>
+        <div class="tech">
+          <div class="tech-icon">☁️</div>
+          <div class="tech-name">Vercel</div>
+          <div class="tech-role">Edge · Serverless · CI/CD</div>
+        </div>
+        <div class="tech">
+          <div class="tech-icon">🔑</div>
+          <div class="tech-name">jose</div>
+          <div class="tech-role">JWT HS256 · SEP-10</div>
+        </div>
+        <div class="tech">
+          <div class="tech-icon">🏦</div>
+          <div class="tech-name">Etherfuse</div>
+          <div class="tech-role">Sandbox SPEI API</div>
+        </div>
+        <div class="tech">
+          <div class="tech-icon">🔷</div>
+          <div class="tech-name">TypeScript</div>
+          <div class="tech-role">Strict · end-to-end types</div>
+        </div>
+        <div class="tech">
+          <div class="tech-icon">🧪</div>
+          <div class="tech-name">MockDriver</div>
+          <div class="tech-role">Testnet · 1 TMXN = 1 MXN</div>
+        </div>
       </div>
-      <div class="arch-connector">
-        <div class="arch-arr">⟶</div>
-        <div class="arch-proto">SPEI</div>
-      </div>
-      <div class="arch-node">
-        <div class="arch-node-name">Banco</div>
-        <div class="arch-node-sub">CLABE · referencia<br>Red interbancaria MX</div>
-      </div>
-    </div>
-  </div>
-</div>
+    </section>
 
-<hr class="divider">
-
-<!-- STANDARDS -->
-<div class="section fade-in" id="seps">
-  <div class="section-num">// 02 — ESTÁNDARES</div>
-  <h2 class="section-h">Cuatro SEPs, una URL</h2>
-  <p class="section-sub">Apunta cualquier wallet Stellar al dominio de SEPuente y obtiene el stack completo de estándares anchor.</p>
-
-  <div class="sep-row">
-    <div class="sep-cell">
-      <div class="sep-n">SEP-1</div>
-      <div class="sep-name">Stellar Info</div>
-      <p class="sep-desc"><span class="mono" style="font-size:.72rem;color:var(--sky)">stellar.toml</span> generado dinámicamente. Endpoints, activos, documentación del anchor.</p>
-      <div class="sep-tag">✓ live</div>
-    </div>
-    <div class="sep-cell">
-      <div class="sep-n">SEP-10</div>
-      <div class="sep-name">Stellar Auth</div>
-      <p class="sep-desc">Challenge transaction + verify. JWT HS256. Sin estado. Compatible con anchor-tests SDF.</p>
-      <div class="sep-tag">✓ live</div>
-    </div>
-    <div class="sep-cell">
-      <div class="sep-n">SEP-24</div>
-      <div class="sep-name">Hosted Deposit &amp; Withdrawal</div>
-      <p class="sep-desc">UI interactiva en popup/iframe. Flujo completo depósito SPEI→TMXN y retiro TMXN→SPEI.</p>
-      <div class="sep-tag">✓ live</div>
-    </div>
-    <div class="sep-cell">
-      <div class="sep-n">SEP-38</div>
-      <div class="sep-name">Anchor RFQ</div>
-      <p class="sep-desc">Cotizaciones en tiempo real. Quotes firmados con TTL. Contexto sep24 integrado.</p>
-      <div class="sep-tag">✓ live</div>
-    </div>
-  </div>
-</div>
-
-<hr class="divider">
-
-<!-- COMPARISON -->
-<div class="section fade-in" id="compare">
-  <div class="section-num">// 03 — COMPARATIVA</div>
-  <h2 class="section-h">¿Por qué no usar<br>algo existente?</h2>
-  <p class="section-sub">Cada alternativa resuelve un problema diferente. SEPuente es el único adaptador ligero para rampas ya reguladas.</p>
-
-  <div style="overflow-x:auto">
-    <table class="comp-table">
-      <thead>
-        <tr>
-          <th>Proyecto</th>
-          <th>Propósito</th>
-          <th>SEP-24</th>
-          <th>Adapta rampas existentes</th>
-          <th>Sin KYC propio</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Ramp Kit</td>
-          <td>SDK per-app para una rampa</td>
-          <td><span class="icon-no">—</span></td>
-          <td><span class="icon-no">—</span></td>
-          <td><span class="icon-no">—</span></td>
-        </tr>
-        <tr>
-          <td>StellarMesh</td>
-          <td>SEP-24 para exchanges</td>
-          <td><span class="icon-yes">✓</span></td>
-          <td><span class="icon-no">—</span></td>
-          <td><span class="icon-no">—</span></td>
-        </tr>
-        <tr>
-          <td>Anchor Platform (SDF)</td>
-          <td>Ser anchor desde cero</td>
-          <td><span class="icon-yes">✓</span></td>
-          <td><span class="icon-no">—</span></td>
-          <td><span class="icon-no">Requiere KYC</span></td>
-        </tr>
-        <tr class="hl">
-          <td>⟴ SEPuente</td>
-          <td>Adaptador para rampas reguladas</td>
-          <td><span class="icon-yes">✓</span></td>
-          <td><span class="icon-yes">✓ Exactamente eso</span></td>
-          <td><span class="icon-yes">✓ KYC del proveedor</span></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="stats-row">
-    <div class="stat">
-      <div class="stat-num">4</div>
-      <div class="stat-label">SEPs implementados</div>
-      <div class="stat-sub">SEP-1 · SEP-10 · SEP-24 · SEP-38</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">$0</div>
-      <div class="stat-label">Fondos custodiados</div>
-      <div class="stat-sub">El dinero siempre en el proveedor</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">∞</div>
-      <div class="stat-label">Rampas compatibles</div>
-      <div class="stat-sub">Cualquier proveedor que implemente RampDriver</div>
-    </div>
-  </div>
-</div>
-
-<!-- CTA -->
-<div id="cta">
-  <div class="inner fade-in">
-    <div>
-      <div class="section-num">// OPEN SOURCE</div>
-      <h2 class="section-h" style="margin-bottom:12px">Listo para usar<br>en testnet hoy</h2>
-      <p class="section-sub" style="margin-bottom:0">Clona el repo, corre <span class="mono" style="color:var(--sky);font-size:.9rem">npm run setup-testnet</span> y apunta Demo Wallet al dominio. El anchor responde en segundos.</p>
-    </div>
-    <div class="cta-links">
-      <a href="https://github.com/ALFA117/sepuente" target="_blank" class="cta-btn cta-btn-primary">
-        <span class="cta-btn-icon">
+    <!-- ── SLIDE 9: CTA ───────────────────────── -->
+    <section class="slide" id="s9">
+      <div class="slide-label">// Empezar</div>
+      <h2 class="slide-h" style="max-width:700px">Listo para usar<br>en <span class="g">testnet hoy</span></h2>
+      <div class="domain">github.com/ALFA117/sepuente</div>
+      <div class="btns">
+        <a href="https://github.com/ALFA117/sepuente" target="_blank" class="btn-p btn-gold-fill">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-        </span>
-        Ver en GitHub
-      </a>
-      <a href="https://demo-wallet.stellar.org" target="_blank" class="cta-btn">
-        <span class="cta-btn-icon">🌐</span>
-        Demo Wallet SDF
-      </a>
-      <a href="https://github.com/ALFA117/sepuente/blob/master/README.md" target="_blank" class="cta-btn">
-        <span class="cta-btn-icon">📖</span>
-        Documentación
-      </a>
+          Ver en GitHub
+        </a>
+        <a href="https://demo-wallet.stellar.org" target="_blank" class="btn-p btn-border">🌐 Demo Wallet SDF</a>
+        <a href="https://sepuente.vercel.app" target="_blank" class="btn-p btn-border">↗ Live App</a>
+      </div>
+    </section>
+
+  </div><!-- /slides-wrap -->
+
+  <!-- NAV BAR -->
+  <div id="nav-bar">
+    <div class="nav-brand"><span class="nav-sym">⟴</span> SEPuente</div>
+    <div class="dots" id="dots"></div>
+    <div class="nav-controls">
+      <button class="nav-btn" id="btn-prev" disabled title="Anterior (←)">←</button>
+      <span class="slide-counter" id="counter">1 / 9</span>
+      <button class="nav-btn" id="btn-next" title="Siguiente (→)">→</button>
     </div>
+    <a href="https://github.com/ALFA117/sepuente" target="_blank" class="nav-gh">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      GitHub
+    </a>
   </div>
 </div>
 
-<footer>
-  <span>⟴ SEPuente — MIT License — Stellar Testnet</span>
-  <span>No custodial · Open source · Serverless</span>
-  <a href="https://github.com/ALFA117/sepuente" target="_blank">github.com/ALFA117/sepuente ↗</a>
-</footer>
+<div id="hint">← → para navegar · Space para avanzar</div>
 
 <script>
-// Fade-in on scroll
-const obs = new IntersectionObserver((entries) => {
-  entries.forEach(e => { if(e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
-}, { threshold: 0.12 });
-document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
+(function(){
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total = slides.length;
+  let cur = 0;
+  let animating = false;
+
+  const btnPrev = document.getElementById('btn-prev');
+  const btnNext = document.getElementById('btn-next');
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress-line');
+  const dotsWrap = document.getElementById('dots');
+
+  // Build dots
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsWrap.appendChild(d);
+  });
+
+  function updateUI() {
+    counter.textContent = (cur + 1) + ' / ' + total;
+    btnPrev.disabled = cur === 0;
+    btnNext.disabled = cur === total - 1;
+    progress.style.width = ((cur + 1) / total * 100) + '%';
+    dotsWrap.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === cur));
+  }
+
+  function goTo(next) {
+    if (next === cur || animating) return;
+    animating = true;
+    const dir = next > cur ? 1 : -1;
+    const leaving = slides[cur];
+    const entering = slides[next];
+
+    leaving.classList.add('exit-left');
+    entering.style.transform = dir > 0 ? 'translateX(60px)' : 'translateX(-60px)';
+    entering.style.opacity = '0';
+    entering.style.pointerEvents = 'none';
+
+    // force reflow
+    entering.getBoundingClientRect();
+
+    entering.classList.add('active');
+
+    requestAnimationFrame(() => {
+      entering.style.transform = '';
+      entering.style.opacity = '';
+      entering.style.pointerEvents = '';
+
+      setTimeout(() => {
+        leaving.classList.remove('active', 'exit-left');
+        animating = false;
+      }, 450);
+    });
+
+    cur = next;
+    updateUI();
+  }
+
+  btnPrev.onclick = () => goTo(cur - 1);
+  btnNext.onclick = () => goTo(cur + 1);
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(cur + 1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(cur - 1); }
+  });
+
+  // Touch/swipe
+  let tx = 0;
+  document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, {passive:true});
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) dx < 0 ? goTo(cur + 1) : goTo(cur - 1);
+  }, {passive:true});
+
+  updateUI();
+})();
 </script>
 </body>
 </html>
