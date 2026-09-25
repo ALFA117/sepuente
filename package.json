@@ -1,0 +1,27 @@
+{
+  "name": "sepuente",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "setup-testnet": "tsx scripts/setup-testnet.ts"
+  },
+  "dependencies": {
+    "@stellar/stellar-sdk": "^12.3.0",
+    "@supabase/supabase-js": "^2.45.4",
+    "jose": "^5.9.6",
+    "next": "15.0.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "tsx": "^4.19.1",
+    "typescript": "^5"
+  }
+}
