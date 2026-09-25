@@ -2,629 +2,854 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEPuente — El puente entre SPEI y Stellar</title>
-<meta name="description" content="Gateway open-source no custodial SEP-24 que conecta rampas SPEI con el ecosistema Stellar.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEPuente — SPEI ⇄ Stellar</title>
+<meta name="description" content="Gateway open-source SEP-24 que conecta rampas SPEI con Stellar. No custodial · Serverless · MIT.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@300;400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
+/* ─── TOKENS ───────────────────────────────────────── */
 :root {
-  --bg:       #070F1A;
-  --surface:  #0D1E35;
-  --surface2: #152844;
-  --gold:     #C9A227;
-  --gold-d:   rgba(201,162,39,.12);
-  --sky:      #6EAFF5;
-  --text:     #E8E3D8;
-  --muted:    #7A8FA8;
-  --border:   rgba(110,175,245,.12);
-  --r:        14px;
+  --ink:     #050D1A;
+  --ink2:    #0B1A30;
+  --gold:    #D4A843;
+  --gold2:   #F0C855;
+  --sky:     #4F9EF8;
+  --green:   #2FBF71;
+  --red:     #E05555;
+  --cream:   #EDE8DB;
+  --muted:   #6A7F99;
+  --border:  rgba(79,158,248,.1);
+  --border2: rgba(212,168,67,.15);
   color-scheme: dark;
 }
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Inter', system-ui, sans-serif;
-  font-size: 16px;
-  line-height: 1.6;
-  overflow-x: hidden;
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{
+  background:var(--ink);
+  color:var(--cream);
+  font-family:'Inter',system-ui,sans-serif;
+  line-height:1.6;
+  overflow-x:hidden;
 }
-a { color: var(--gold); text-decoration: none; }
-a:hover { text-decoration: underline; }
-img { max-width: 100%; }
+a{color:var(--gold);text-decoration:none}
+a:hover{text-decoration:underline}
 
-nav {
-  position: fixed;
-  top: env(safe-area-inset-top, 0px);
-  left: 0; right: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 32px;
-  background: rgba(7,15,26,.82);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border);
+/* ─── UTILITY ──────────────────────────────────────── */
+.mono{font-family:'JetBrains Mono',monospace}
+.tag{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 12px;border-radius:100px;
+  font-size:.72rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;
+  border:1px solid var(--border);color:var(--muted);
 }
-.nav-logo {
-  display: flex; align-items: center; gap: 10px;
-  font-family: 'Playfair Display', serif;
-  font-size: 1.25rem; font-weight: 700;
-  color: var(--gold);
-}
-.nav-sym { font-size: 1.6rem; line-height: 1; }
-.nav-links { display: flex; gap: 28px; }
-.nav-links a {
-  font-size: .82rem; font-weight: 500; letter-spacing: .04em;
-  text-transform: uppercase; color: var(--muted);
-  transition: color .2s;
-}
-.nav-links a:hover { color: var(--text); text-decoration: none; }
-.nav-cta {
-  padding: 7px 18px;
-  border: 1.5px solid var(--gold);
-  border-radius: 8px;
-  font-size: .82rem; font-weight: 600;
-  color: var(--gold) !important;
-  transition: background .2s;
-}
-.nav-cta:hover { background: var(--gold-d); text-decoration: none !important; }
+.tag.live{border-color:rgba(47,191,113,.25);color:var(--green)}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+.divider{border:none;border-top:1px solid var(--border);margin:0}
 
-#hero {
-  position: relative;
-  min-height: 100svh;
-  display: flex; flex-direction: column;
-  justify-content: center; align-items: center;
-  text-align: center;
-  padding: 120px 24px 80px;
-  overflow: hidden;
+/* ─── NAV ──────────────────────────────────────────── */
+nav{
+  position:fixed;inset:0 0 auto 0;
+  z-index:200;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 40px;height:60px;
+  background:rgba(5,13,26,.7);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
 }
-#bridge-canvas {
-  position: absolute; inset: 0;
-  width: 100%; height: 100%;
-  opacity: .35;
-  pointer-events: none;
+.nav-brand{
+  display:flex;align-items:center;gap:10px;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;
+  color:var(--gold);letter-spacing:.02em;
 }
-.hero-eyebrow {
-  font-size: .78rem; font-weight: 600; letter-spacing: .18em;
-  text-transform: uppercase; color: var(--sky);
-  margin-bottom: 20px;
-  position: relative;
+.nav-sym{font-size:1.5rem;line-height:1}
+.nav-center{display:flex;gap:32px}
+.nav-center a{
+  font-size:.78rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--muted);transition:color .15s;
 }
-.hero-title {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(3rem, 9vw, 6.5rem);
-  font-weight: 900;
-  line-height: 1.0;
-  text-wrap: balance;
-  position: relative;
-  margin-bottom: 28px;
+.nav-center a:hover{color:var(--cream);text-decoration:none}
+.nav-gh{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 16px;border-radius:8px;
+  border:1.5px solid var(--border2);
+  font-size:.78rem;font-weight:600;color:var(--gold);
+  transition:background .15s;
 }
-.hero-title em {
-  font-style: italic;
-  background: linear-gradient(135deg, var(--gold) 0%, #E8C84A 60%, var(--sky) 100%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.hero-sub {
-  max-width: 600px;
-  font-size: 1.1rem; color: var(--muted);
-  line-height: 1.7; position: relative;
-  margin-bottom: 44px;
-}
-.hero-actions {
-  display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
-  position: relative;
-}
-.btn-hero {
-  padding: 14px 32px; border-radius: 12px;
-  font-size: .95rem; font-weight: 700;
-  cursor: pointer; transition: all .2s;
-  border: none;
-}
-.btn-primary-hero { background: var(--gold); color: #070F1A; }
-.btn-primary-hero:hover { opacity: .9; transform: translateY(-1px); }
-.btn-ghost {
-  background: transparent; color: var(--text);
-  border: 1.5px solid var(--border);
-}
-.btn-ghost:hover { border-color: var(--muted); }
-.hero-badge {
-  position: relative;
-  display: inline-flex; align-items: center; gap: 6px;
-  margin-bottom: 32px;
-  padding: 6px 14px 6px 10px;
-  background: rgba(110,175,245,.08);
-  border: 1px solid rgba(110,175,245,.2);
-  border-radius: 100px;
-  font-size: .78rem; color: var(--sky);
-}
-.badge-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--sky);
-  animation: pulse 2s ease-in-out infinite;
-}
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+.nav-gh:hover{background:rgba(212,168,67,.08);text-decoration:none}
 
-section {
-  padding: 96px 24px;
-  max-width: 1080px;
-  margin: 0 auto;
+/* ─── HERO ─────────────────────────────────────────── */
+#hero{
+  min-height:100vh;
+  display:grid;grid-template-columns:1fr 1fr;
+  align-items:center;
+  padding:100px 0 80px;
+  position:relative;overflow:hidden;
+  max-width:1200px;margin:0 auto;
 }
-.eyebrow {
-  font-size: .72rem; font-weight: 700; letter-spacing: .2em;
-  text-transform: uppercase; color: var(--gold);
-  margin-bottom: 12px;
+.hero-left{padding:0 40px 0 40px}
+.hero-right{padding:0 40px 0 20px;display:flex;align-items:center;justify-content:center}
+.hero-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px}
+.hero-h{
+  font-family:'Syne',sans-serif;
+  font-size:clamp(2.8rem,5.5vw,5rem);
+  font-weight:800;line-height:1.05;
+  letter-spacing:-.02em;
+  text-wrap:balance;
+  margin-bottom:24px;
 }
-h2 {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
-  font-weight: 700; line-height: 1.15;
-  text-wrap: balance; margin-bottom: 16px;
+.hero-h .accent{
+  background:linear-gradient(90deg,var(--gold) 0%,var(--gold2) 50%,var(--sky) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
 }
-.section-lead {
-  font-size: 1.05rem; color: var(--muted);
-  max-width: 580px; line-height: 1.75;
-  margin-bottom: 56px;
+.hero-h .accent2{color:var(--sky)}
+.hero-p{
+  font-size:1.05rem;color:var(--muted);line-height:1.7;
+  max-width:460px;margin-bottom:36px;
+}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap}
+.btn-gold{
+  padding:12px 28px;border-radius:10px;
+  background:var(--gold);color:var(--ink);
+  font-size:.9rem;font-weight:700;
+  transition:all .15s;border:none;cursor:pointer;
+}
+.btn-gold:hover{background:var(--gold2);transform:translateY(-1px);text-decoration:none;color:var(--ink)}
+.btn-outline{
+  padding:12px 28px;border-radius:10px;
+  background:transparent;color:var(--cream);
+  font-size:.9rem;font-weight:600;
+  border:1.5px solid var(--border);
+  transition:border-color .15s;cursor:pointer;
+}
+.btn-outline:hover{border-color:var(--muted);text-decoration:none;color:var(--cream)}
+
+/* bridge SVG diagram */
+.bridge-svg-wrap{
+  position:relative;width:100%;max-width:480px;
+}
+.bridge-svg{width:100%;height:auto}
+
+/* ─── HERO GRID BACKGROUND ─────────────────────────── */
+#hero::before{
+  content:'';
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(79,158,248,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(79,158,248,.04) 1px,transparent 1px);
+  background-size:60px 60px;
+  mask-image:radial-gradient(ellipse 60% 80% at 70% 50%,black 0%,transparent 70%);
+  pointer-events:none;
 }
 
-#problem {
-  padding: 72px 24px;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
+/* ─── MARQUEE STRIP ─────────────────────────────────── */
+.marquee-wrap{
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  background:var(--ink2);
+  overflow:hidden;
+  padding:14px 0;
 }
-#problem .inner {
-  max-width: 900px; margin: 0 auto;
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 48px; align-items: center;
+.marquee-track{
+  display:flex;gap:0;
+  animation:marquee 28s linear infinite;
+  width:max-content;
 }
-.problem-quote {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(1.4rem, 3vw, 2rem);
-  font-style: italic; line-height: 1.4;
-  color: var(--text);
+.marquee-item{
+  display:flex;align-items:center;gap:8px;
+  padding:0 32px;
+  font-size:.75rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);white-space:nowrap;
 }
-.problem-quote strong { color: var(--gold); font-style: normal; }
-.problem-list { list-style: none; display: flex; flex-direction: column; gap: 16px; }
-.problem-list li {
-  display: flex; align-items: flex-start; gap: 12px;
-  font-size: .9rem; color: var(--muted); line-height: 1.5;
+.marquee-item span{color:var(--gold)}
+.marquee-sep{color:var(--border);user-select:none}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ─── SECTION BASE ──────────────────────────────────── */
+.section{
+  max-width:1200px;margin:0 auto;
+  padding:96px 40px;
 }
-.prob-x {
-  flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
-  background: rgba(224,82,82,.12);
-  display: flex; align-items: center; justify-content: center;
-  color: #E05252; font-size: .75rem; font-weight: 700; margin-top: 2px;
+.section-num{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.72rem;color:var(--gold);
+  letter-spacing:.2em;margin-bottom:12px;opacity:.7;
 }
-.prob-check {
-  flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
-  background: rgba(76,175,130,.12);
-  display: flex; align-items: center; justify-content: center;
-  color: #4CAF82; font-size: .75rem; margin-top: 2px;
+.section-h{
+  font-family:'Syne',sans-serif;
+  font-size:clamp(1.8rem,3.5vw,3rem);
+  font-weight:800;line-height:1.1;
+  letter-spacing:-.02em;text-wrap:balance;
+  margin-bottom:16px;
+}
+.section-sub{
+  font-size:1rem;color:var(--muted);line-height:1.7;
+  max-width:540px;margin-bottom:64px;
 }
 
-.flow {
-  display: flex; align-items: stretch; gap: 0;
-  overflow-x: auto; padding-bottom: 8px; margin-top: 48px;
+/* ─── PROBLEM ───────────────────────────────────────── */
+#problem{background:var(--ink2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+#problem .inner{
+  max-width:1200px;margin:0 auto;
+  padding:80px 40px;
+  display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;
 }
-.flow-step {
-  flex: 1; min-width: 160px;
-  display: flex; flex-direction: column; align-items: center;
-  text-align: center; padding: 0 12px; position: relative;
+.problem-ql{
+  font-family:'Syne',sans-serif;
+  font-size:clamp(1.6rem,3vw,2.4rem);font-weight:700;
+  line-height:1.25;color:var(--cream);
 }
-.flow-step + .flow-step::before {
-  content: ''; position: absolute; left: 0; top: 28px;
-  width: 1px; height: 40px; background: var(--border);
+.problem-ql em{
+  font-style:italic;
+  background:linear-gradient(90deg,var(--gold),var(--gold2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
-.flow-icon {
-  width: 56px; height: 56px; border-radius: 16px;
-  background: var(--gold-d); border: 1.5px solid rgba(201,162,39,.25);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.4rem; margin-bottom: 14px; flex-shrink: 0;
+.pain-list{list-style:none;display:flex;flex-direction:column;gap:0}
+.pain-item{
+  display:flex;align-items:flex-start;gap:16px;
+  padding:20px 0;border-bottom:1px solid var(--border);
 }
-.flow-label {
-  font-size: .78rem; font-weight: 700; letter-spacing: .06em;
-  text-transform: uppercase; color: var(--gold); margin-bottom: 6px;
+.pain-item:first-child{border-top:1px solid var(--border)}
+.pain-icon{flex-shrink:0;margin-top:2px;font-size:1rem}
+.pain-text{font-size:.9rem;color:var(--muted);line-height:1.55}
+.pain-text strong{color:var(--cream);font-weight:600}
+
+/* ─── HOW IT WORKS ──────────────────────────────────── */
+.protocol-steps{
+  display:grid;grid-template-columns:repeat(5,1fr);
+  position:relative;gap:0;margin-top:0;
 }
-.flow-desc { font-size: .8rem; color: var(--muted); line-height: 1.5; }
-.flow-arrow {
-  flex-shrink: 0; align-self: flex-start;
-  padding-top: 16px; color: var(--muted); font-size: 1.1rem;
+.protocol-steps::before{
+  content:'';
+  position:absolute;top:36px;left:5%;right:5%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--border2),var(--gold),var(--border2),transparent);
+  z-index:0;
+}
+.proto-step{
+  display:flex;flex-direction:column;align-items:center;
+  text-align:center;padding:0 16px;position:relative;z-index:1;
+}
+.proto-icon{
+  width:72px;height:72px;border-radius:20px;
+  background:var(--ink2);border:1.5px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.6rem;margin-bottom:20px;flex-shrink:0;
+  position:relative;
+}
+.proto-icon::after{
+  content:attr(data-n);
+  position:absolute;top:-8px;right:-8px;
+  width:20px;height:20px;border-radius:50%;
+  background:var(--gold);color:var(--ink);
+  font-family:'Syne',sans-serif;font-size:.65rem;font-weight:800;
+  display:flex;align-items:center;justify-content:center;
+}
+.proto-label{
+  font-family:'Syne',sans-serif;
+  font-size:.8rem;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--gold);margin-bottom:8px;
+}
+.proto-desc{font-size:.78rem;color:var(--muted);line-height:1.5}
+
+/* ─── ARCHITECTURE DIAGRAM ──────────────────────────── */
+.arch-bg{
+  background:var(--ink2);border:1px solid var(--border);
+  border-radius:20px;padding:48px;margin-top:0;overflow-x:auto;
+}
+.arch-row{
+  display:flex;align-items:center;gap:0;
+  min-width:640px;
+}
+.arch-node{
+  flex:1;background:rgba(11,26,48,.8);
+  border:1px solid var(--border);border-radius:14px;
+  padding:20px 16px;text-align:center;
+}
+.arch-node.center{
+  background:linear-gradient(135deg,rgba(212,168,67,.12),rgba(79,158,248,.06));
+  border-color:rgba(212,168,67,.3);
+  flex:1.3;
+}
+.arch-node-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;color:var(--cream)}
+.arch-node-sub{font-size:.68rem;color:var(--muted);margin-top:4px;line-height:1.4}
+.arch-node-badge{
+  display:inline-block;margin-top:8px;
+  padding:2px 8px;border-radius:4px;
+  background:rgba(212,168,67,.12);border:1px solid rgba(212,168,67,.2);
+  font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--gold);
+}
+.arch-connector{
+  flex:0 0 auto;
+  display:flex;flex-direction:column;align-items:center;padding:0 6px;gap:3px;
+}
+.arch-arr{color:var(--gold);font-size:.9rem;opacity:.7}
+.arch-proto{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--sky);white-space:nowrap}
+
+/* ─── STANDARDS ─────────────────────────────────────── */
+.sep-row{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:1px;background:var(--border);border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;
+}
+.sep-cell{
+  background:var(--ink2);
+  padding:32px 24px;
+  position:relative;overflow:hidden;
+  transition:background .2s;
+}
+.sep-cell:hover{background:rgba(11,26,48,1)}
+.sep-cell::before{
+  content:'';
+  position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--gold),var(--sky));
+}
+.sep-n{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:2.4rem;color:transparent;line-height:1;
+  -webkit-text-stroke:1.5px rgba(212,168,67,.3);
+  margin-bottom:12px;transition:-webkit-text-stroke .2s;
+}
+.sep-cell:hover .sep-n{-webkit-text-stroke-color:var(--gold)}
+.sep-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;margin-bottom:10px;color:var(--cream)}
+.sep-desc{font-size:.78rem;color:var(--muted);line-height:1.55}
+.sep-tag{
+  display:inline-block;margin-top:12px;
+  padding:2px 8px;border-radius:4px;
+  font-family:'JetBrains Mono',monospace;font-size:.62rem;
+  background:rgba(47,191,113,.08);border:1px solid rgba(47,191,113,.2);color:var(--green);
 }
 
-.features {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px; margin-top: 48px;
+/* ─── COMPARISON ────────────────────────────────────── */
+.comp-table{width:100%;border-collapse:collapse;font-size:.85rem}
+.comp-table thead th{
+  padding:14px 20px;text-align:left;
+  font-size:.7rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);border-bottom:1px solid var(--border);
 }
-.feat {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 28px 24px; transition: border-color .2s;
-}
-.feat:hover { border-color: rgba(201,162,39,.3); }
-.feat-icon { font-size: 1.6rem; margin-bottom: 14px; }
-.feat-title { font-weight: 700; font-size: .95rem; margin-bottom: 8px; color: var(--text); }
-.feat-desc { font-size: .84rem; color: var(--muted); line-height: 1.55; }
+.comp-table tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
+.comp-table tbody tr:hover{background:rgba(255,255,255,.02)}
+.comp-table td{padding:16px 20px;color:var(--muted);line-height:1.5;vertical-align:middle}
+.comp-table td:first-child{font-weight:600;color:var(--cream)}
+.comp-table .hl{background:rgba(212,168,67,.07)}
+.comp-table .hl td:first-child{color:var(--gold)}
+.icon-yes{color:var(--green);font-weight:700}
+.icon-no{color:var(--muted)}
 
-.sep-grid {
-  display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 16px; margin-top: 48px;
+/* ─── STATS ROW ─────────────────────────────────────── */
+.stats-row{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:1px;background:var(--border);
+  border:1px solid var(--border);border-radius:16px;overflow:hidden;
+  margin-top:64px;
 }
-.sep-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 20px;
-  position: relative; overflow: hidden;
+.stat{
+  background:var(--ink2);padding:40px 36px;
+  position:relative;overflow:hidden;
 }
-.sep-card::before {
-  content: ''; position: absolute; inset: 0 0 auto 0;
-  height: 3px; background: var(--gold);
-  border-radius: var(--r) var(--r) 0 0;
+.stat::before{
+  content:'';
+  position:absolute;bottom:-20px;right:-20px;
+  width:80px;height:80px;border-radius:50%;
+  background:radial-gradient(circle,rgba(212,168,67,.08) 0%,transparent 70%);
 }
-.sep-num {
-  font-family: 'Playfair Display', serif;
-  font-size: 2rem; font-weight: 900;
-  color: var(--gold); line-height: 1; margin-bottom: 8px;
+.stat-num{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:3.5rem;line-height:1;color:var(--gold);
+  margin-bottom:8px;
+  font-variant-numeric:tabular-nums;
 }
-.sep-name { font-weight: 700; font-size: .88rem; margin-bottom: 8px; }
-.sep-desc { font-size: .78rem; color: var(--muted); line-height: 1.5; }
+.stat-label{font-size:.82rem;color:var(--muted)}
+.stat-sub{font-size:.72rem;color:rgba(106,127,153,.6);margin-top:4px}
 
-.comp-wrap { overflow-x: auto; margin-top: 48px; }
-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
-thead th {
-  padding: 12px 16px; text-align: left;
-  font-size: .72rem; font-weight: 700; letter-spacing: .12em;
-  text-transform: uppercase; color: var(--muted);
-  border-bottom: 1px solid var(--border);
+/* ─── CTA ───────────────────────────────────────────── */
+#cta{
+  position:relative;overflow:hidden;
+  border-top:1px solid var(--border);
 }
-tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
-tbody tr:hover { background: rgba(255,255,255,.025); }
-tbody td { padding: 14px 16px; vertical-align: top; line-height: 1.5; color: var(--muted); }
-tbody td:first-child { color: var(--text); font-weight: 600; }
-.highlight-row td { background: var(--gold-d); }
-.highlight-row td:first-child { color: var(--gold); }
-.check { color: #4CAF82; }
+#cta .inner{
+  max-width:1200px;margin:0 auto;
+  padding:96px 40px 120px;
+  display:grid;grid-template-columns:1fr auto;
+  align-items:center;gap:48px;
+}
+#cta::before{
+  content:'⟴';
+  position:absolute;right:-60px;top:50%;transform:translateY(-50%);
+  font-size:300px;line-height:1;color:rgba(212,168,67,.04);
+  font-family:'Syne',sans-serif;pointer-events:none;user-select:none;
+}
+.cta-links{display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+.cta-btn{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 24px;border-radius:10px;
+  font-size:.88rem;font-weight:600;
+  border:1.5px solid var(--border);color:var(--muted);
+  transition:all .15s;white-space:nowrap;
+  min-width:200px;
+}
+.cta-btn:hover{border-color:var(--muted);color:var(--cream);text-decoration:none}
+.cta-btn-primary{background:var(--gold);border-color:var(--gold);color:var(--ink)}
+.cta-btn-primary:hover{background:var(--gold2);border-color:var(--gold2);color:var(--ink)}
+.cta-btn-icon{flex-shrink:0;font-size:1rem}
 
-.diag-wrap {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 32px; margin-top: 48px; overflow-x: auto;
+/* ─── FOOTER ─────────────────────────────────────────── */
+footer{
+  border-top:1px solid var(--border);
+  padding:28px 40px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;
+  max-width:1200px;margin:0 auto;
+  font-size:.76rem;color:var(--muted);
 }
-.diag { display: flex; align-items: center; gap: 0; min-width: 560px; }
-.diag-node {
-  flex: 1; background: var(--surface2);
-  border: 1.5px solid var(--border); border-radius: 12px;
-  padding: 16px 14px; text-align: center;
-}
-.diag-node-title { font-weight: 700; font-size: .82rem; color: var(--text); }
-.diag-node-sub { font-size: .7rem; color: var(--muted); margin-top: 4px; line-height: 1.4; }
-.diag-bridge {
-  flex: 0 0 auto;
-  display: flex; flex-direction: column; align-items: center;
-  padding: 0 4px; gap: 2px;
-}
-.diag-arr { color: var(--muted); font-size: .85rem; }
-.diag-label { font-size: .65rem; color: var(--gold); white-space: nowrap; }
-.diag-center {
-  flex: 0 0 auto;
-  background: var(--gold-d); border: 1.5px solid rgba(201,162,39,.4);
-  border-radius: 14px; padding: 18px 20px; text-align: center;
-}
-.diag-center-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.05rem; font-weight: 700; color: var(--gold);
-}
-.diag-center-sub { font-size: .7rem; color: var(--muted); margin-top: 4px; }
+footer a{color:var(--muted)}
+footer a:hover{color:var(--cream)}
 
-.stats {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 1px; background: var(--border);
-  border: 1px solid var(--border); border-radius: var(--r);
-  overflow: hidden; margin: 80px 0 0;
-}
-.stat { background: var(--surface); padding: 32px 28px; text-align: center; }
-.stat-val {
-  font-family: 'Playfair Display', serif;
-  font-size: 2.5rem; font-weight: 900;
-  color: var(--gold); line-height: 1; margin-bottom: 8px;
-  font-variant-numeric: tabular-nums;
-}
-.stat-label { font-size: .8rem; color: var(--muted); }
+/* ─── FADE IN ─────────────────────────────────────────── */
+.fade-in{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.fade-in.visible{opacity:1;transform:none}
 
-#cta {
-  text-align: center; padding: 96px 24px 120px;
-  position: relative; overflow: hidden;
+/* ─── RESPONSIVE ─────────────────────────────────────── */
+@media(max-width:900px){
+  #hero{grid-template-columns:1fr;min-height:auto;padding:100px 0 60px}
+  .hero-right{display:none}
+  nav .nav-center{display:none}
+  #problem .inner{grid-template-columns:1fr;gap:40px}
+  .protocol-steps{grid-template-columns:1fr 1fr;gap:24px}
+  .protocol-steps::before{display:none}
+  .sep-row{grid-template-columns:1fr 1fr}
+  .stats-row{grid-template-columns:1fr}
+  #cta .inner{grid-template-columns:1fr;gap:32px}
 }
-.cta-bg {
-  position: absolute; inset: 0;
-  background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(201,162,39,.06) 0%, transparent 70%);
-  pointer-events: none;
-}
-#cta h2, #cta .section-lead { position: relative; }
-#cta .section-lead { margin-inline: auto; }
-.cta-links {
-  display: flex; gap: 12px; justify-content: center;
-  flex-wrap: wrap; margin-top: 40px; position: relative;
-}
-.cta-link {
-  padding: 12px 24px; border-radius: 10px;
-  font-size: .88rem; font-weight: 600;
-  border: 1.5px solid var(--border); color: var(--muted);
-  transition: all .2s;
-  display: flex; align-items: center; gap: 8px;
-}
-.cta-link:hover { border-color: var(--muted); color: var(--text); text-decoration: none; }
-.cta-link-primary { background: var(--gold); color: #070F1A; border-color: var(--gold); }
-.cta-link-primary:hover { opacity: .9; color: #070F1A; }
-
-footer {
-  border-top: 1px solid var(--border);
-  padding: 28px 32px;
-  display: flex; align-items: center; justify-content: space-between;
-  font-size: .78rem; color: var(--muted);
-  max-width: 1200px; margin: 0 auto;
-  flex-wrap: wrap; gap: 12px;
-}
-footer a { color: var(--muted); }
-footer a:hover { color: var(--text); }
-
-@media (max-width: 700px) {
-  nav { padding: 12px 20px; }
-  .nav-links { display: none; }
-  #problem .inner { grid-template-columns: 1fr; gap: 28px; }
-  .sep-grid { grid-template-columns: 1fr 1fr; }
-  .stats { grid-template-columns: 1fr; }
-  .flow { flex-direction: column; align-items: stretch; }
-  .flow-step + .flow-step::before { left: 28px; top: 0; width: 40px; height: 1px; }
-  .flow-step { flex-direction: row; text-align: left; gap: 14px; align-items: flex-start; }
-  .flow-icon { flex-shrink: 0; }
-  .flow-arrow { display: none; }
-}
-@media (max-width: 480px) {
-  .sep-grid { grid-template-columns: 1fr; }
+@media(max-width:600px){
+  nav{padding:0 20px}
+  .section{padding:64px 20px}
+  .hero-left{padding:0 20px}
+  #problem .inner{padding:60px 20px}
+  .sep-row{grid-template-columns:1fr}
+  .protocol-steps{grid-template-columns:1fr}
+  .arch-bg{padding:24px}
+  #cta .inner{padding:64px 20px 80px}
+  footer{padding:24px 20px}
 }
 </style>
 </head>
 <body>
 
+<!-- NAV -->
 <nav>
-  <div class="nav-logo"><span class="nav-sym">⟴</span> SEPuente</div>
-  <div class="nav-links">
+  <div class="nav-brand"><span class="nav-sym">⟴</span> SEPuente</div>
+  <div class="nav-center">
     <a href="#problem">Problema</a>
-    <a href="#how">Cómo funciona</a>
-    <a href="#seps">Estándares</a>
-    <a href="#compare">vs. alternativas</a>
+    <a href="#how">Protocolo</a>
+    <a href="#seps">SEPs</a>
+    <a href="#compare">Comparativa</a>
   </div>
-  <a href="https://github.com/ALFA117/sepuente" target="_blank" class="nav-links nav-cta">GitHub ↗</a>
+  <a href="https://github.com/ALFA117/sepuente" target="_blank" class="nav-gh">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+    GitHub ↗
+  </a>
 </nav>
 
-<section id="hero">
-  <canvas id="bridge-canvas"></canvas>
-  <div class="hero-badge"><span class="badge-dot"></span>Stellar Testnet · SEP-1, 10, 24, 38</div>
-  <p class="hero-eyebrow">Open source · No custodial · Serverless</p>
-  <h1 class="hero-title">El <em>puente</em> entre<br>SPEI y Stellar</h1>
-  <p class="hero-sub">SEPuente convierte cualquier rampa de pesos mexicanos en un anchor estándar SEP-24, para que cada wallet compatible pueda ofrecer depósito y retiro SPEI sin integrar una sola API propietaria.</p>
-  <div class="hero-actions">
-    <a href="https://github.com/ALFA117/sepuente" target="_blank"><button class="btn-hero btn-primary-hero">Ver en GitHub</button></a>
-    <a href="https://demo-wallet.stellar.org" target="_blank"><button class="btn-hero btn-ghost">Probar con Demo Wallet ↗</button></a>
-  </div>
-</section>
+<!-- HERO -->
+<div style="max-width:1200px;margin:0 auto">
+  <section id="hero" style="max-width:100%;margin:0">
+    <div class="hero-left">
+      <div class="hero-tags">
+        <span class="tag live"><span class="dot"></span>Stellar Testnet</span>
+        <span class="tag">Open Source · MIT</span>
+        <span class="tag">SEP-1/10/24/38</span>
+      </div>
+      <h1 class="hero-h">
+        Un <span class="accent">puente</span><br>
+        entre el banco<br>
+        y <span class="accent2">Stellar</span>
+      </h1>
+      <p class="hero-p">SEPuente es una capa de protocolo open-source que convierte cualquier rampa SPEI en un anchor SEP-24 estándar. No custodia fondos. No requiere KYC propio. Funciona con cualquier wallet Stellar.</p>
+      <div class="hero-actions">
+        <a href="https://github.com/ALFA117/sepuente" target="_blank"><button class="btn-gold">Ver en GitHub →</button></a>
+        <a href="https://demo-wallet.stellar.org" target="_blank"><button class="btn-outline">Demo Wallet SDF ↗</button></a>
+      </div>
+    </div>
 
+    <div class="hero-right">
+      <!-- Animated architecture SVG -->
+      <div class="bridge-svg-wrap">
+        <svg class="bridge-svg" viewBox="0 0 420 460" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Grid background lines -->
+          <defs>
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(79,158,248,0.06)" stroke-width="1"/>
+            </pattern>
+            <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" style="stop-color:#4F9EF8;stop-opacity:.4"/>
+              <stop offset="50%" style="stop-color:#D4A843;stop-opacity:.8"/>
+              <stop offset="100%" style="stop-color:#4F9EF8;stop-opacity:.4"/>
+            </linearGradient>
+            <linearGradient id="nodeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#D4A843;stop-opacity:.15"/>
+              <stop offset="100%" style="stop-color:#4F9EF8;stop-opacity:.05"/>
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          <rect width="420" height="460" fill="url(#grid)" rx="16"/>
+          <rect width="420" height="460" fill="linear-gradient(135deg,rgba(11,26,48,0.9),rgba(5,13,26,0.6))" rx="16" opacity=".7"/>
+
+          <!-- Top node: Wallet -->
+          <rect x="130" y="20" width="160" height="64" rx="12" fill="#0B1A30" stroke="rgba(79,158,248,0.2)" stroke-width="1.5"/>
+          <text x="210" y="46" text-anchor="middle" fill="#EDE8DB" font-family="Syne,sans-serif" font-weight="700" font-size="12">WALLET</text>
+          <text x="210" y="63" text-anchor="middle" fill="#6A7F99" font-family="JetBrains Mono,monospace" font-size="9">Freighter · Demo Wallet</text>
+
+          <!-- Arrow down from wallet -->
+          <line x1="210" y1="84" x2="210" y2="126" stroke="url(#lineGrad)" stroke-width="1.5" stroke-dasharray="4 3">
+            <animate attributeName="stroke-dashoffset" from="14" to="0" dur="1.2s" repeatCount="indefinite"/>
+          </line>
+          <polygon points="204,124 210,136 216,124" fill="#D4A843" opacity=".7"/>
+
+          <!-- Center node: SEPuente -->
+          <rect x="60" y="136" width="300" height="88" rx="14" fill="url(#nodeGrad)" stroke="rgba(212,168,67,0.35)" stroke-width="1.5"/>
+          <text x="105" y="166" fill="#D4A843" font-family="Syne,sans-serif" font-weight="800" font-size="22">⟴</text>
+          <text x="140" y="166" fill="#D4A843" font-family="Syne,sans-serif" font-weight="700" font-size="14">SEPuente</text>
+          <rect x="80" y="178" width="60" height="16" rx="4" fill="rgba(79,158,248,0.08)" stroke="rgba(79,158,248,0.15)" stroke-width="1"/>
+          <text x="110" y="190" text-anchor="middle" fill="#4F9EF8" font-family="JetBrains Mono,monospace" font-size="8">SEP-10</text>
+          <rect x="148" y="178" width="60" height="16" rx="4" fill="rgba(79,158,248,0.08)" stroke="rgba(79,158,248,0.15)" stroke-width="1"/>
+          <text x="178" y="190" text-anchor="middle" fill="#4F9EF8" font-family="JetBrains Mono,monospace" font-size="8">SEP-24</text>
+          <rect x="216" y="178" width="60" height="16" rx="4" fill="rgba(79,158,248,0.08)" stroke="rgba(79,158,248,0.15)" stroke-width="1"/>
+          <text x="246" y="190" text-anchor="middle" fill="#4F9EF8" font-family="JetBrains Mono,monospace" font-size="8">SEP-38</text>
+          <text x="210" y="218" text-anchor="middle" fill="#6A7F99" font-family="JetBrains Mono,monospace" font-size="9">Serverless · No custodial</text>
+
+          <!-- Arrow down to driver -->
+          <line x1="210" y1="224" x2="210" y2="266" stroke="url(#lineGrad)" stroke-width="1.5" stroke-dasharray="4 3">
+            <animate attributeName="stroke-dashoffset" from="14" to="0" dur="1.2s" repeatCount="indefinite" begin="0.3s"/>
+          </line>
+          <polygon points="204,264 210,276 216,264" fill="#D4A843" opacity=".7"/>
+
+          <!-- RampDriver row -->
+          <rect x="40" y="276" width="152" height="64" rx="12" fill="#0B1A30" stroke="rgba(212,168,67,0.15)" stroke-width="1.5"/>
+          <text x="116" y="300" text-anchor="middle" fill="#EDE8DB" font-family="Syne,sans-serif" font-weight="700" font-size="11">ETHERFUSE</text>
+          <text x="116" y="318" text-anchor="middle" fill="#6A7F99" font-family="JetBrains Mono,monospace" font-size="9">Sandbox API</text>
+          <rect x="228" y="276" width="152" height="64" rx="12" fill="#0B1A30" stroke="rgba(212,168,67,0.15)" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <text x="304" y="300" text-anchor="middle" fill="#EDE8DB" font-family="Syne,sans-serif" font-weight="700" font-size="11">MOCKDRIVER</text>
+          <text x="304" y="318" text-anchor="middle" fill="#6A7F99" font-family="JetBrains Mono,monospace" font-size="9">Testnet · 1:1 MXN</text>
+
+          <!-- Arrows down from drivers -->
+          <line x1="116" y1="340" x2="116" y2="382" stroke="rgba(79,158,248,0.4)" stroke-width="1.5" stroke-dasharray="4 3">
+            <animate attributeName="stroke-dashoffset" from="14" to="0" dur="1.2s" repeatCount="indefinite" begin="0.6s"/>
+          </line>
+          <line x1="304" y1="340" x2="304" y2="382" stroke="rgba(79,158,248,0.2)" stroke-width="1.5" stroke-dasharray="4 3">
+            <animate attributeName="stroke-dashoffset" from="14" to="0" dur="1.2s" repeatCount="indefinite" begin="0.6s"/>
+          </line>
+          <polygon points="110,380 116,392 122,380" fill="#4F9EF8" opacity=".5"/>
+
+          <!-- Bottom node: Bank / SPEI -->
+          <rect x="40" y="392" width="152" height="52" rx="12" fill="#0B1A30" stroke="rgba(79,158,248,0.15)" stroke-width="1.5"/>
+          <text x="116" y="416" text-anchor="middle" fill="#EDE8DB" font-family="Syne,sans-serif" font-weight="700" font-size="11">BANCO / SPEI</text>
+          <text x="116" y="432" text-anchor="middle" fill="#6A7F99" font-family="JetBrains Mono,monospace" font-size="9">CLABE · transferencia</text>
+          <rect x="228" y="392" width="152" height="52" rx="12" fill="#0B1A30" stroke="rgba(79,158,248,0.1)" stroke-width="1" stroke-dasharray="4 3"/>
+          <text x="304" y="416" text-anchor="middle" fill="#6A7F99" font-family="Syne,sans-serif" font-weight="700" font-size="11">TESTNET XLM</text>
+          <text x="304" y="432" text-anchor="middle" fill="#6A7F99" font-family="JetBrains Mono,monospace" font-size="9">Friendbot funded</text>
+
+          <!-- Glow dot top -->
+          <circle cx="210" cy="84" r="4" fill="#D4A843" filter="url(#glow)" opacity=".8">
+            <animate attributeName="opacity" values=".8;.3;.8" dur="2s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="210" cy="224" r="4" fill="#D4A843" filter="url(#glow)" opacity=".8">
+            <animate attributeName="opacity" values=".8;.3;.8" dur="2s" repeatCount="indefinite" begin="0.4s"/>
+          </circle>
+        </svg>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <!-- Duplicated for seamless loop -->
+    <div class="marquee-item"><span>SEP-1</span> stellar.toml</div>
+    <div class="marquee-item marquee-sep">·</div>
+    <div class="marquee-item"><span>SEP-10</span> Web Auth</div>
+    <div class="marquee-item marquee-sep">·</div>
+    <div class="marquee-item"><span>SEP-24</span> Hosted Deposit &amp; Withdrawal</div>
+    <div class="marquee-item marquee-sep">·</div>
+    <div class="marquee-item"><span>SEP-38</span> Anchor RFQ</div>
+    <div class="marquee-item marquee-sep">·</div>
+    <div class="marquee-item"><span>DRIVER</span> Etherfuse · MockDriver</div>
+    <div class="marquee-item marquee-sep">·</div>
+    <div class="marquee-item"><span>STACK</span> Next.js 15 · Supabase · Vercel</div>
+    <div class="marquee-item marquee-sep">·</div>
+    <div class="marquee-item"><span>MIT</span> Open Source</div>
+    <div class="marquee-item marquee-sep">·</div>
+    <!-- duplicate -->
+    <div class="marquee-item"><span>SEP-1</span> stellar.toml</div>
+    <div class="marquee-item marquee-sep">·</div>
+    <div class="marquee-item"><span>SEP-10</span> Web Auth</div>
+    <div class="marquee-item marquee-sep">·</div>
+    <div class="marquee-item"><span>SEP-24</span> Hosted Deposit &amp; Withdrawal</div>
+    <div class="marquee-item marquee-sep">·</div>
+    <div class="marquee-item"><span>SEP-38</span> Anchor RFQ</div>
+    <div class="marquee-item marquee-sep">·</div>
+    <div class="marquee-item"><span>DRIVER</span> Etherfuse · MockDriver</div>
+    <div class="marquee-item marquee-sep">·</div>
+    <div class="marquee-item"><span>STACK</span> Next.js 15 · Supabase · Vercel</div>
+    <div class="marquee-item marquee-sep">·</div>
+    <div class="marquee-item"><span>MIT</span> Open Source</div>
+    <div class="marquee-item marquee-sep">·</div>
+  </div>
+</div>
+
+<!-- PROBLEM -->
 <div id="problem">
-  <div class="inner">
-    <blockquote class="problem-quote">
-      "Cada rampa MXN tiene su propia API. Cada wallet tiene que integrarlas <strong>una por una</strong>."
+  <div class="inner fade-in">
+    <blockquote class="problem-ql">
+      Cada rampa SPEI tiene<br>su propia API.<br>
+      Cada wallet tiene que<br>integrarlas <em>una por una.</em>
     </blockquote>
     <div>
-      <ul class="problem-list">
-        <li><span class="prob-x">✕</span><span>Etherfuse, Bitso, Kushki — APIs completamente distintas, sin estándar común</span></li>
-        <li><span class="prob-x">✕</span><span>Las wallets Stellar no tienen forma de descubrir rampas fiat automáticamente</span></li>
-        <li><span class="prob-x">✕</span><span>Anclar a una sola rampa ata a los usuarios a un solo proveedor regulado</span></li>
-        <li><span class="prob-check">✓</span><span>SEPuente expone <strong>cualquier</strong> rampa como anchor SEP-24 estándar — una vez</span></li>
+      <ul class="pain-list">
+        <li class="pain-item">
+          <span class="pain-icon">✕</span>
+          <span class="pain-text"><strong>Sin estándar común</strong> — Etherfuse, Bitso, Kushki exponen APIs propietarias incompatibles entre sí</span>
+        </li>
+        <li class="pain-item">
+          <span class="pain-icon">✕</span>
+          <span class="pain-text"><strong>Descubrimiento manual</strong> — las wallets Stellar no tienen mecanismo para encontrar rampas MXN automáticamente</span>
+        </li>
+        <li class="pain-item">
+          <span class="pain-icon">✕</span>
+          <span class="pain-text"><strong>Vendor lock-in</strong> — anclar a una sola rampa ata al usuario a un único proveedor regulado</span>
+        </li>
+        <li class="pain-item" style="border-bottom:none">
+          <span class="pain-icon" style="color:var(--green)">✓</span>
+          <span class="pain-text"><strong style="color:var(--green)">SEPuente</strong> — expone <em>cualquier</em> rampa como anchor SEP-24 estándar. Una integración, cualquier proveedor.</span>
+        </li>
       </ul>
     </div>
   </div>
 </div>
 
-<section id="how">
-  <p class="eyebrow">Arquitectura</p>
-  <h2>Protocolo primero,<br>custodia cero</h2>
-  <p class="section-lead">SEPuente es una capa de traducción: el KYC y el dinero se quedan en el proveedor regulado. SEPuente solo convierte el protocolo.</p>
-  <div class="diag-wrap">
-    <div class="diag">
-      <div class="diag-node">
-        <div class="diag-node-title">Wallet / App</div>
-        <div class="diag-node-sub">Cualquier cliente SEP-24<br>(Demo Wallet, Freighter, etc.)</div>
-      </div>
-      <div class="diag-bridge">
-        <div class="diag-arr">⟶</div>
-        <div class="diag-label">SEP-10 JWT</div>
-        <div class="diag-label">SEP-24 API</div>
-      </div>
-      <div class="diag-center">
-        <div class="diag-center-title">⟴ SEPuente</div>
-        <div class="diag-center-sub">SEP-1 · SEP-10 · SEP-24 · SEP-38<br>Serverless · Pull-on-read</div>
-      </div>
-      <div class="diag-bridge">
-        <div class="diag-arr">⟶</div>
-        <div class="diag-label">RampDriver</div>
-        <div class="diag-label">API nativa</div>
-      </div>
-      <div class="diag-node">
-        <div class="diag-node-title">Etherfuse / Mock</div>
-        <div class="diag-node-sub">Rampa regulada<br>SPEI ⇄ CETES/MXN</div>
-      </div>
-      <div class="diag-bridge">
-        <div class="diag-arr">⟶</div>
-        <div class="diag-label">SPEI</div>
-      </div>
-      <div class="diag-node">
-        <div class="diag-node-title">Banco</div>
-        <div class="diag-node-sub">Red interbancaria<br>CLABE · referencia</div>
-      </div>
-    </div>
-  </div>
-  <div class="flow" style="margin-top:40px;">
-    <div class="flow-step">
-      <div class="flow-icon">🔍</div>
-      <div><div class="flow-label">Descubrimiento</div><div class="flow-desc">La wallet lee stellar.toml y encuentra los endpoints SEP-10 y SEP-24 automáticamente</div></div>
-    </div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-step">
-      <div class="flow-icon">🔑</div>
-      <div><div class="flow-label">Autenticación</div><div class="flow-desc">SEP-10 challenge / verify. JWT firmado, 24 h de validez, sin estado en servidor</div></div>
-    </div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-step">
-      <div class="flow-icon">💱</div>
-      <div><div class="flow-label">Cotización</div><div class="flow-desc">SEP-38 devuelve precio y comisión en tiempo real desde el driver activo</div></div>
-    </div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-step">
-      <div class="flow-icon">🏦</div>
-      <div><div class="flow-label">Instrucciones</div><div class="flow-desc">CLABE + referencia SPEI (depósito) o cuenta Stellar + memo (retiro)</div></div>
-    </div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-step">
-      <div class="flow-icon">✅</div>
-      <div><div class="flow-label">Liquidación</div><div class="flow-desc">Pull-on-read actualiza el estado; los tokens llegan a la wallet del usuario</div></div>
-    </div>
-  </div>
-</section>
+<!-- HOW IT WORKS -->
+<div class="section fade-in" id="how">
+  <div class="section-num">// 01 — PROTOCOLO</div>
+  <h2 class="section-h">Cómo funciona</h2>
+  <p class="section-sub">SEPuente traduce el protocolo — el dinero y el KYC se quedan en el proveedor regulado.</p>
 
-<section id="features" style="padding-top:0;">
-  <div class="features">
-    <div class="feat"><div class="feat-icon">🔓</div><div class="feat-title">No custodial</div><div class="feat-desc">SEPuente nunca toca llaves ni fondos de usuarios. El KYC y el dinero se quedan en el proveedor regulado.</div></div>
-    <div class="feat"><div class="feat-icon">🌐</div><div class="feat-title">Open source</div><div class="feat-desc">MIT. Cualquier equipo puede forkear, auditar, extender o desplegar su propia instancia.</div></div>
-    <div class="feat"><div class="feat-icon">☁️</div><div class="feat-title">Serverless</div><div class="feat-desc">Next.js + Supabase en Vercel Hobby. Sin procesos en background, sin estado en memoria.</div></div>
-    <div class="feat"><div class="feat-icon">🔌</div><div class="feat-title">Drivers intercambiables</div><div class="feat-desc">MockDriver para testnet sin dependencias externas. EtherfuseDriver para sandbox real. La interfaz RampDriver acepta cualquier proveedor.</div></div>
-    <div class="feat"><div class="feat-icon">🛡️</div><div class="feat-title">Seguridad by design</div><div class="feat-desc">Llaves privadas solo en servidor. RLS en Supabase. CORS abierto solo en endpoints SEP. JWT de vida corta.</div></div>
-    <div class="feat"><div class="feat-icon">📐</div><div class="feat-title">Spec-compliant</div><div class="feat-desc">Implementación directa de SEP-1, 10, 24 y 38. Compatible con anchor-tests de SDF y Demo Wallet.</div></div>
+  <div class="protocol-steps">
+    <div class="proto-step">
+      <div class="proto-icon" data-n="1">🔍</div>
+      <div class="proto-label">Descubrimiento</div>
+      <p class="proto-desc">La wallet lee <span class="mono" style="color:var(--sky);font-size:.72rem">stellar.toml</span> y encuentra los endpoints automáticamente</p>
+    </div>
+    <div class="proto-step">
+      <div class="proto-icon" data-n="2">🔑</div>
+      <div class="proto-label">Auth SEP-10</div>
+      <p class="proto-desc">Challenge tx firmada en la wallet. JWT propio HS256, 24 h, sin estado en servidor</p>
+    </div>
+    <div class="proto-step">
+      <div class="proto-icon" data-n="3">💱</div>
+      <div class="proto-label">Quote SEP-38</div>
+      <p class="proto-desc">Precio y comisión en tiempo real desde el driver activo. Quote firmado con TTL</p>
+    </div>
+    <div class="proto-step">
+      <div class="proto-icon" data-n="4">🏦</div>
+      <div class="proto-label">Instrucciones</div>
+      <p class="proto-desc">CLABE + referencia SPEI para depósito. Dirección Stellar + memo para retiro</p>
+    </div>
+    <div class="proto-step">
+      <div class="proto-icon" data-n="5">⚡</div>
+      <div class="proto-label">Liquidación</div>
+      <p class="proto-desc">Pull-on-read actualiza el estado. TMXN acreditan en la wallet del usuario</p>
+    </div>
   </div>
-</section>
 
-<section id="seps">
-  <p class="eyebrow">Estándares Stellar</p>
-  <h2>Cuatro SEPs,<br>una URL</h2>
-  <p class="section-lead">Apunta cualquier wallet al dominio de SEPuente y obtiene el stack completo de estándares anchor.</p>
-  <div class="sep-grid">
-    <div class="sep-card"><div class="sep-num">SEP-1</div><div class="sep-name">Stellar Info</div><div class="sep-desc">stellar.toml generado dinámicamente con todos los endpoints, activos y documentación del anchor.</div></div>
-    <div class="sep-card"><div class="sep-num">SEP-10</div><div class="sep-name">Stellar Auth</div><div class="sep-desc">Challenge transaction firmada con la cuenta del usuario. JWT propio firmado con HS256.</div></div>
-    <div class="sep-card"><div class="sep-num">SEP-24</div><div class="sep-name">Hosted Deposit &amp; Withdrawal</div><div class="sep-desc">UI interactiva en popup o iframe. Depósito SPEI→TMXN y retiro TMXN→SPEI con historial.</div></div>
-    <div class="sep-card"><div class="sep-num">SEP-38</div><div class="sep-name">Anchor RFQ</div><div class="sep-desc">Cotizaciones en tiempo real. Precios, quotes firmados con TTL, contexto sep24 integrado.</div></div>
+  <!-- Architecture diagram -->
+  <div class="arch-bg" style="margin-top:56px">
+    <div class="arch-row">
+      <div class="arch-node">
+        <div class="arch-node-name">Wallet / App</div>
+        <div class="arch-node-sub">Freighter · Demo Wallet<br>Cualquier cliente SEP-24</div>
+      </div>
+      <div class="arch-connector">
+        <div class="arch-arr">⟶</div>
+        <div class="arch-proto">SEP-10</div>
+        <div class="arch-proto">SEP-24</div>
+      </div>
+      <div class="arch-node center">
+        <div class="arch-node-name" style="color:var(--gold);font-size:1rem">⟴ SEPuente</div>
+        <div class="arch-node-sub">SEP-1 · SEP-10 · SEP-24 · SEP-38<br>Next.js 15 · Supabase · Vercel</div>
+        <div class="arch-node-badge">RampDriver interface</div>
+      </div>
+      <div class="arch-connector">
+        <div class="arch-arr">⟶</div>
+        <div class="arch-proto">REST API</div>
+        <div class="arch-proto">Driver</div>
+      </div>
+      <div class="arch-node">
+        <div class="arch-node-name">Etherfuse / Mock</div>
+        <div class="arch-node-sub">Rampa MXN regulada<br>SPEI ⇄ CETES</div>
+      </div>
+      <div class="arch-connector">
+        <div class="arch-arr">⟶</div>
+        <div class="arch-proto">SPEI</div>
+      </div>
+      <div class="arch-node">
+        <div class="arch-node-name">Banco</div>
+        <div class="arch-node-sub">CLABE · referencia<br>Red interbancaria MX</div>
+      </div>
+    </div>
   </div>
-</section>
+</div>
 
-<section id="compare">
-  <p class="eyebrow">Diferenciación</p>
-  <h2>¿Por qué no<br>usar algo existente?</h2>
-  <p class="section-lead">Cada alternativa resuelve un problema diferente. SEPuente es el único adaptador para rampas ya reguladas.</p>
-  <div class="comp-wrap">
-    <table>
+<hr class="divider">
+
+<!-- STANDARDS -->
+<div class="section fade-in" id="seps">
+  <div class="section-num">// 02 — ESTÁNDARES</div>
+  <h2 class="section-h">Cuatro SEPs, una URL</h2>
+  <p class="section-sub">Apunta cualquier wallet Stellar al dominio de SEPuente y obtiene el stack completo de estándares anchor.</p>
+
+  <div class="sep-row">
+    <div class="sep-cell">
+      <div class="sep-n">SEP-1</div>
+      <div class="sep-name">Stellar Info</div>
+      <p class="sep-desc"><span class="mono" style="font-size:.72rem;color:var(--sky)">stellar.toml</span> generado dinámicamente. Endpoints, activos, documentación del anchor.</p>
+      <div class="sep-tag">✓ live</div>
+    </div>
+    <div class="sep-cell">
+      <div class="sep-n">SEP-10</div>
+      <div class="sep-name">Stellar Auth</div>
+      <p class="sep-desc">Challenge transaction + verify. JWT HS256. Sin estado. Compatible con anchor-tests SDF.</p>
+      <div class="sep-tag">✓ live</div>
+    </div>
+    <div class="sep-cell">
+      <div class="sep-n">SEP-24</div>
+      <div class="sep-name">Hosted Deposit &amp; Withdrawal</div>
+      <p class="sep-desc">UI interactiva en popup/iframe. Flujo completo depósito SPEI→TMXN y retiro TMXN→SPEI.</p>
+      <div class="sep-tag">✓ live</div>
+    </div>
+    <div class="sep-cell">
+      <div class="sep-n">SEP-38</div>
+      <div class="sep-name">Anchor RFQ</div>
+      <p class="sep-desc">Cotizaciones en tiempo real. Quotes firmados con TTL. Contexto sep24 integrado.</p>
+      <div class="sep-tag">✓ live</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- COMPARISON -->
+<div class="section fade-in" id="compare">
+  <div class="section-num">// 03 — COMPARATIVA</div>
+  <h2 class="section-h">¿Por qué no usar<br>algo existente?</h2>
+  <p class="section-sub">Cada alternativa resuelve un problema diferente. SEPuente es el único adaptador ligero para rampas ya reguladas.</p>
+
+  <div style="overflow-x:auto">
+    <table class="comp-table">
       <thead>
         <tr>
-          <th>Proyecto</th><th>Qué hace</th><th>¿Expone SEP-24?</th><th>¿Adaptador para rampas existentes?</th>
+          <th>Proyecto</th>
+          <th>Propósito</th>
+          <th>SEP-24</th>
+          <th>Adapta rampas existentes</th>
+          <th>Sin KYC propio</th>
         </tr>
       </thead>
       <tbody>
-        <tr><td>Ramp Kit</td><td>SDK para que cada app integre una rampa directamente</td><td>No</td><td>No — cada app integra por separado</td></tr>
-        <tr><td>StellarMesh</td><td>Mismo patrón SEP-24 pero para saldos de exchanges</td><td>Sí</td><td>No — para exchanges, no rampas SPEI</td></tr>
-        <tr><td>Anchor Platform (SDF)</td><td>Para convertirse en anchor propio desde cero</td><td>Sí</td><td>No — requiere infraestructura y KYC propios</td></tr>
-        <tr class="highlight-row"><td>⟴ SEPuente</td><td>Adaptador ligero que envuelve rampas ya reguladas</td><td><span class="check">✓ Sí</span></td><td><span class="check">✓ Exactamente eso</span></td></tr>
+        <tr>
+          <td>Ramp Kit</td>
+          <td>SDK per-app para una rampa</td>
+          <td><span class="icon-no">—</span></td>
+          <td><span class="icon-no">—</span></td>
+          <td><span class="icon-no">—</span></td>
+        </tr>
+        <tr>
+          <td>StellarMesh</td>
+          <td>SEP-24 para exchanges</td>
+          <td><span class="icon-yes">✓</span></td>
+          <td><span class="icon-no">—</span></td>
+          <td><span class="icon-no">—</span></td>
+        </tr>
+        <tr>
+          <td>Anchor Platform (SDF)</td>
+          <td>Ser anchor desde cero</td>
+          <td><span class="icon-yes">✓</span></td>
+          <td><span class="icon-no">—</span></td>
+          <td><span class="icon-no">Requiere KYC</span></td>
+        </tr>
+        <tr class="hl">
+          <td>⟴ SEPuente</td>
+          <td>Adaptador para rampas reguladas</td>
+          <td><span class="icon-yes">✓</span></td>
+          <td><span class="icon-yes">✓ Exactamente eso</span></td>
+          <td><span class="icon-yes">✓ KYC del proveedor</span></td>
+        </tr>
       </tbody>
     </table>
   </div>
-  <div class="stats">
-    <div class="stat"><div class="stat-val">4</div><div class="stat-label">SEPs implementados</div></div>
-    <div class="stat"><div class="stat-val">0</div><div class="stat-label">Fondos custodiados</div></div>
-    <div class="stat"><div class="stat-val">$0</div><div class="stat-label">Costo mensual en hosting</div></div>
-  </div>
-</section>
 
-<section id="cta">
-  <div class="cta-bg"></div>
-  <p class="eyebrow">Empezar ahora</p>
-  <h2>Pruébalo en dos minutos</h2>
-  <p class="section-lead">Usa Demo Wallet de SDF apuntando al dominio, o clona el repo y corre setup-testnet para tener tu propio anchor en testnet.</p>
-  <div class="cta-links">
-    <a href="https://github.com/ALFA117/sepuente" target="_blank" class="cta-link cta-link-primary">GitHub →</a>
-    <a href="https://demo-wallet.stellar.org" target="_blank" class="cta-link">Demo Wallet SDF ↗</a>
-    <a href="https://github.com/ALFA117/sepuente/blob/master/README.md" target="_blank" class="cta-link">README ↗</a>
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-num">4</div>
+      <div class="stat-label">SEPs implementados</div>
+      <div class="stat-sub">SEP-1 · SEP-10 · SEP-24 · SEP-38</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">$0</div>
+      <div class="stat-label">Fondos custodiados</div>
+      <div class="stat-sub">El dinero siempre en el proveedor</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">∞</div>
+      <div class="stat-label">Rampas compatibles</div>
+      <div class="stat-sub">Cualquier proveedor que implemente RampDriver</div>
+    </div>
   </div>
-</section>
+</div>
+
+<!-- CTA -->
+<div id="cta">
+  <div class="inner fade-in">
+    <div>
+      <div class="section-num">// OPEN SOURCE</div>
+      <h2 class="section-h" style="margin-bottom:12px">Listo para usar<br>en testnet hoy</h2>
+      <p class="section-sub" style="margin-bottom:0">Clona el repo, corre <span class="mono" style="color:var(--sky);font-size:.9rem">npm run setup-testnet</span> y apunta Demo Wallet al dominio. El anchor responde en segundos.</p>
+    </div>
+    <div class="cta-links">
+      <a href="https://github.com/ALFA117/sepuente" target="_blank" class="cta-btn cta-btn-primary">
+        <span class="cta-btn-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        </span>
+        Ver en GitHub
+      </a>
+      <a href="https://demo-wallet.stellar.org" target="_blank" class="cta-btn">
+        <span class="cta-btn-icon">🌐</span>
+        Demo Wallet SDF
+      </a>
+      <a href="https://github.com/ALFA117/sepuente/blob/master/README.md" target="_blank" class="cta-btn">
+        <span class="cta-btn-icon">📖</span>
+        Documentación
+      </a>
+    </div>
+  </div>
+</div>
 
 <footer>
-  <span>⟴ SEPuente — MIT License</span>
-  <span>Stellar Testnet · No custodial · Open source</span>
+  <span>⟴ SEPuente — MIT License — Stellar Testnet</span>
+  <span>No custodial · Open source · Serverless</span>
   <a href="https://github.com/ALFA117/sepuente" target="_blank">github.com/ALFA117/sepuente ↗</a>
 </footer>
 
 <script>
-(function() {
-  const canvas = document.getElementById('bridge-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  let W, H, nodes = [];
-
-  function resize() {
-    W = canvas.width = canvas.offsetWidth;
-    H = canvas.height = canvas.offsetHeight;
-    nodes = [];
-    const cols = Math.ceil(W / 80) + 1;
-    const rows = Math.ceil(H / 80) + 1;
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        nodes.push({
-          x: c * 80 + (r % 2 === 0 ? 0 : 40),
-          y: r * 80,
-          phase: Math.random() * Math.PI * 2,
-          speed: 0.003 + Math.random() * 0.004,
-        });
-      }
-    }
-  }
-
-  function draw(t) {
-    ctx.clearRect(0, 0, W, H);
-    const GOLD = [201, 162, 39], SKY = [110, 175, 245];
-    for (let i = 0; i < nodes.length; i++) {
-      const n = nodes[i];
-      const nx = n.x + Math.sin(n.phase + t * n.speed * 1000) * 6;
-      const ny = n.y + Math.cos(n.phase * 1.3 + t * n.speed * 1000) * 6;
-      for (let j = i + 1; j < nodes.length; j++) {
-        const m = nodes[j];
-        const mx = m.x + Math.sin(m.phase + t * m.speed * 1000) * 6;
-        const my = m.y + Math.cos(m.phase * 1.3 + t * m.speed * 1000) * 6;
-        const d = Math.hypot(mx - nx, my - ny);
-        if (d > 110) continue;
-        const alpha = (1 - d / 110) * 0.18;
-        const mix = (Math.sin(n.phase + t * 0.001) + 1) / 2;
-        const r = Math.round(GOLD[0] * mix + SKY[0] * (1 - mix));
-        const g2 = Math.round(GOLD[1] * mix + SKY[1] * (1 - mix));
-        const b = Math.round(GOLD[2] * mix + SKY[2] * (1 - mix));
-        ctx.beginPath(); ctx.moveTo(nx, ny); ctx.lineTo(mx, my);
-        ctx.strokeStyle = `rgba(${r},${g2},${b},${alpha})`; ctx.lineWidth = 1; ctx.stroke();
-      }
-    }
-    for (const n of nodes) {
-      const nx = n.x + Math.sin(n.phase + t * n.speed * 1000) * 6;
-      const ny = n.y + Math.cos(n.phase * 1.3 + t * n.speed * 1000) * 6;
-      const pulse = (Math.sin(n.phase + t * n.speed * 1000) + 1) / 2;
-      ctx.beginPath(); ctx.arc(nx, ny, 1.5 + pulse, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(201,162,39,${0.15 + pulse * 0.25})`; ctx.fill();
-    }
-  }
-
-  function loop(ts) {
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) draw(ts);
-    requestAnimationFrame(loop);
-  }
-
-  new ResizeObserver(resize).observe(canvas.parentElement);
-  resize();
-  requestAnimationFrame(loop);
-})();
+// Fade-in on scroll
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+}, { threshold: 0.12 });
+document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
 </script>
 </body>
 </html>
