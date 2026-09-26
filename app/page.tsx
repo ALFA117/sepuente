@@ -211,6 +211,159 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── ARCHITECTURE DIAGRAM ── */}
+      <section className={styles.archSection}>
+        <div className={styles.archInner}>
+          <div className={styles.sectionEyebrow}>Arquitectura</div>
+          <h2 className={styles.sectionTitle}>Cómo fluye el protocolo</h2>
+          <p className={styles.archSub}>
+            SEPuente actúa como adaptador sin custodia entre el sistema bancario mexicano y la red Stellar.
+          </p>
+
+          {/* SVG Diagram */}
+          <div className={styles.archDiagram}>
+            <svg viewBox="0 0 700 320" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.archSvg}>
+              <defs>
+                {/* Animated dash paths */}
+                <style>{`
+                  .arch-dash { stroke-dasharray: 6 4; animation: dashMove 1.8s linear infinite; }
+                  .arch-dash-rev { stroke-dasharray: 6 4; animation: dashMoveRev 1.8s linear infinite; }
+                  .arch-dash-slow { stroke-dasharray: 6 4; animation: dashMove 2.5s linear infinite; }
+                  @keyframes dashMove    { to { stroke-dashoffset: -20; } }
+                  @keyframes dashMoveRev { to { stroke-dashoffset:  20; } }
+                  .arch-node-glow { filter: drop-shadow(0 0 10px currentColor); }
+                  .arch-pulse { animation: archPulse 2s ease-in-out infinite; }
+                  @keyframes archPulse { 0%,100%{opacity:.7} 50%{opacity:1} }
+                `}</style>
+
+                {/* Gold gradient */}
+                <radialGradient id="gGold" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#C9A227" stopOpacity="0.2"/>
+                  <stop offset="100%" stopColor="#C9A227" stopOpacity="0"/>
+                </radialGradient>
+                <radialGradient id="gBlue" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#7DBAFF" stopOpacity="0.18"/>
+                  <stop offset="100%" stopColor="#7DBAFF" stopOpacity="0"/>
+                </radialGradient>
+                <radialGradient id="gGreen" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#4CD68E" stopOpacity="0.18"/>
+                  <stop offset="100%" stopColor="#4CD68E" stopOpacity="0"/>
+                </radialGradient>
+                <radialGradient id="gMuted" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#8B9BB5" stopOpacity="0.15"/>
+                  <stop offset="100%" stopColor="#8B9BB5" stopOpacity="0"/>
+                </radialGradient>
+
+                <marker id="arrowGold" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                  <path d="M0,0 L0,6 L8,3 z" fill="rgba(201,162,39,0.7)"/>
+                </marker>
+                <marker id="arrowBlue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                  <path d="M0,0 L0,6 L8,3 z" fill="rgba(125,186,255,0.7)"/>
+                </marker>
+                <marker id="arrowGreen" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                  <path d="M0,0 L0,6 L8,3 z" fill="rgba(76,214,142,0.7)"/>
+                </marker>
+              </defs>
+
+              {/* ── GLOW HALOS ── */}
+              <ellipse cx="100" cy="80"  rx="60" ry="50" fill="url(#gBlue)"/>
+              <ellipse cx="350" cy="160" rx="80" ry="60" fill="url(#gGold)"/>
+              <ellipse cx="600" cy="80"  rx="60" ry="50" fill="url(#gGreen)"/>
+              <ellipse cx="160" cy="270" rx="55" ry="44" fill="url(#gMuted)"/>
+              <ellipse cx="540" cy="270" rx="55" ry="44" fill="url(#gMuted)"/>
+
+              {/* ── CONNECTION LINES ── */}
+              {/* Wallet → SEPuente */}
+              <line x1="158" y1="90" x2="268" y2="148" stroke="rgba(125,186,255,0.35)" strokeWidth="1.5"
+                className="arch-dash" markerEnd="url(#arrowGold)"/>
+              {/* Stellar → SEPuente */}
+              <line x1="542" y1="90" x2="432" y2="148" stroke="rgba(76,214,142,0.35)" strokeWidth="1.5"
+                className="arch-dash-rev" markerEnd="url(#arrowGold)"/>
+              {/* SEPuente → SPEI */}
+              <line x1="310" y1="188" x2="210" y2="248" stroke="rgba(139,155,181,0.3)" strokeWidth="1.5"
+                className="arch-dash-slow" markerEnd="url(#arrowGold)"/>
+              {/* SEPuente → TMXN */}
+              <line x1="390" y1="188" x2="490" y2="248" stroke="rgba(201,162,39,0.3)" strokeWidth="1.5"
+                className="arch-dash-slow" markerEnd="url(#arrowGold)"/>
+
+              {/* SEP labels on lines */}
+              <text x="192" y="126" fontSize="9" fill="rgba(125,186,255,0.6)" fontFamily="monospace" textAnchor="middle">SEP-10 JWT</text>
+              <text x="508" y="126" fontSize="9" fill="rgba(76,214,142,0.6)" fontFamily="monospace" textAnchor="middle">SEP-24 tx</text>
+              <text x="242" y="232" fontSize="9" fill="rgba(139,155,181,0.5)" fontFamily="monospace" textAnchor="middle">SPEI / mock</text>
+              <text x="462" y="232" fontSize="9" fill="rgba(201,162,39,0.5)" fontFamily="monospace" textAnchor="middle">mint / burn</text>
+
+              {/* ── NODE: Wallet (left top) ── */}
+              <rect x="42" y="42" width="116" height="76" rx="14"
+                fill="rgba(17,40,77,0.8)" stroke="rgba(125,186,255,0.3)" strokeWidth="1.5"/>
+              <circle cx="100" cy="80" r="18" fill="rgba(125,186,255,0.1)" stroke="rgba(125,186,255,0.4)" strokeWidth="1.2"/>
+              {/* wallet icon */}
+              <rect x="90" y="71" width="20" height="14" rx="3" stroke="rgba(125,186,255,0.8)" strokeWidth="1.3" fill="none"/>
+              <path d="M90 75h20" stroke="rgba(125,186,255,0.8)" strokeWidth="1.3"/>
+              <circle cx="107" cy="78.5" r="1.5" fill="rgba(125,186,255,0.9)"/>
+              <text x="100" y="106" fontSize="10" fill="#7DBAFF" fontFamily="monospace" textAnchor="middle" fontWeight="700">Wallet</text>
+              <text x="100" y="116" fontSize="8.5" fill="rgba(125,186,255,0.5)" fontFamily="monospace" textAnchor="middle">Stellar · SEP-24</text>
+
+              {/* ── NODE: SEPuente (center) ── */}
+              <rect x="268" y="112" width="164" height="96" rx="16"
+                fill="rgba(17,40,77,0.9)" stroke="rgba(201,162,39,0.45)" strokeWidth="2"/>
+              {/* gold glow ring */}
+              <rect x="268" y="112" width="164" height="96" rx="16"
+                fill="none" stroke="rgba(201,162,39,0.12)" strokeWidth="8" className="arch-pulse"/>
+              {/* ⟴ symbol */}
+              <text x="350" y="158" fontSize="28" fill="rgba(201,162,39,0.9)" textAnchor="middle" dominantBaseline="middle">⟴</text>
+              <text x="350" y="183" fontSize="12" fill="#F5F1E6" fontFamily="monospace" textAnchor="middle" fontWeight="700">SEPuente</text>
+              <text x="350" y="197" fontSize="8.5" fill="rgba(201,162,39,0.6)" fontFamily="monospace" textAnchor="middle">Anchor · No custodial</text>
+
+              {/* ── NODE: Stellar (right top) ── */}
+              <rect x="542" y="42" width="116" height="76" rx="14"
+                fill="rgba(17,40,77,0.8)" stroke="rgba(76,214,142,0.3)" strokeWidth="1.5"/>
+              <circle cx="600" cy="80" r="18" fill="rgba(76,214,142,0.1)" stroke="rgba(76,214,142,0.4)" strokeWidth="1.2"/>
+              {/* globe icon */}
+              <circle cx="600" cy="80" r="10" stroke="rgba(76,214,142,0.8)" strokeWidth="1.2" fill="none"/>
+              <ellipse cx="600" cy="80" rx="5" ry="10" stroke="rgba(76,214,142,0.5)" strokeWidth="1" fill="none"/>
+              <line x1="590" y1="80" x2="610" y2="80" stroke="rgba(76,214,142,0.5)" strokeWidth="1"/>
+              <text x="600" y="106" fontSize="10" fill="#4CD68E" fontFamily="monospace" textAnchor="middle" fontWeight="700">Stellar</text>
+              <text x="600" y="116" fontSize="8.5" fill="rgba(76,214,142,0.5)" fontFamily="monospace" textAnchor="middle">Testnet · Horizon</text>
+
+              {/* ── NODE: SPEI (bottom left) ── */}
+              <rect x="106" y="238" width="108" height="60" rx="12"
+                fill="rgba(17,40,77,0.8)" stroke="rgba(139,155,181,0.2)" strokeWidth="1.5"/>
+              <text x="160" y="263" fontSize="13" fill="rgba(139,155,181,0.7)" fontFamily="monospace" textAnchor="middle" fontWeight="700">SPEI</text>
+              <text x="160" y="277" fontSize="8.5" fill="rgba(139,155,181,0.4)" fontFamily="monospace" textAnchor="middle">Etherfuse · MockDriver</text>
+              <text x="160" y="290" fontSize="8" fill="rgba(139,155,181,0.3)" fontFamily="monospace" textAnchor="middle">Sistema bancario MX</text>
+
+              {/* ── NODE: TMXN (bottom right) ── */}
+              <rect x="486" y="238" width="108" height="60" rx="12"
+                fill="rgba(17,40,77,0.8)" stroke="rgba(201,162,39,0.25)" strokeWidth="1.5"/>
+              <text x="540" y="263" fontSize="13" fill="rgba(201,162,39,0.8)" fontFamily="monospace" textAnchor="middle" fontWeight="700">TMXN</text>
+              <text x="540" y="277" fontSize="8.5" fill="rgba(201,162,39,0.4)" fontFamily="monospace" textAnchor="middle">Token Stellar · 1:1 MXN</text>
+              <text x="540" y="290" fontSize="8" fill="rgba(201,162,39,0.3)" fontFamily="monospace" textAnchor="middle">Trustline · SEP-1 issuer</text>
+
+            </svg>
+          </div>
+
+          {/* Legend */}
+          <div className={styles.archLegend}>
+            <div className={styles.archLegendItem}>
+              <span className={styles.archLegendDot} style={{background:"rgba(125,186,255,0.6)"}}/>
+              <span>Wallet del usuario</span>
+            </div>
+            <div className={styles.archLegendItem}>
+              <span className={styles.archLegendDot} style={{background:"rgba(201,162,39,0.8)"}}/>
+              <span>SEPuente anchor</span>
+            </div>
+            <div className={styles.archLegendItem}>
+              <span className={styles.archLegendDot} style={{background:"rgba(76,214,142,0.7)"}}/>
+              <span>Red Stellar</span>
+            </div>
+            <div className={styles.archLegendItem}>
+              <span className={styles.archLegendDot} style={{background:"rgba(139,155,181,0.5)"}}/>
+              <span>Sistema bancario (SPEI)</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── PROTOCOLS ── */}
       <section className={styles.protocols}>
         <div className={styles.protocolsInner}>

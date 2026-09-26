@@ -556,6 +556,67 @@
   }
 }
 
+/* ── Architecture Diagram ── */
+.archSection {
+  padding: 80px 24px 60px;
+  max-width: 1080px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.archInner {}
+
+.archSub {
+  font-size: 0.88rem;
+  color: var(--muted, #8B9BB5);
+  line-height: 1.65;
+  max-width: 480px;
+  margin-bottom: 40px;
+}
+
+.archDiagram {
+  background: rgba(17,40,77,0.4);
+  border: 1px solid rgba(139,155,181,0.1);
+  border-radius: 18px;
+  padding: 8px;
+  overflow: hidden;
+}
+
+.archSvg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.archLegend {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+  padding: 0 4px;
+}
+
+.archLegendItem {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.74rem;
+  color: rgba(139,155,181,0.6);
+}
+
+.archLegendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .archSection { padding: 60px 16px 40px; }
+  .archLegend { gap: 14px; }
+  .archLegendItem { font-size: 0.68rem; }
+}
+
 /* ── Protocols ── */
 .protocols {
   padding: 80px 24px;
