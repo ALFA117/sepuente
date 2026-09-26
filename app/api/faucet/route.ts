@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/supabase";
-import { friendbot, ensureTrustline } from "@/lib/stellar";
+import { StrKey } from "@stellar/stellar-sdk";
+import { friendbot, horizon } from "@/lib/stellar";
 import { env } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
@@ -13,8 +14,8 @@ export async function POST(req: NextRequest) {
   catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
 
   const account = body.account;
-  if (!account || !account.startsWith("G") || account.length !== 56) {
-    return NextResponse.json({ error: "Invalid Stellar account" }, { status: 400 });
+  if (!account || !StrKey.isValidEd25519PublicKey(account)) {
+    return NextResponse.json({ error: "Dirección Stellar inválida." }, { status: 400 });
   }
 
   // Límite diario por cuenta
@@ -33,12 +34,17 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // 1. Friendbot fondea con XLM
-    await friendbot(account).catch(() => null); // puede fallar si ya tiene fondos
-
-    // 2. Agrega trustline si DISTRIBUTION_SECRET_KEY disponible en servidor
-    // La trustline la debe agregar la wallet del usuario; aquí solo validamos que la cuenta exista.
-    // La app frontend establece la trustline con su keypair.
+    // Friendbot responde error si la cuenta ya existe; solo es fallo real si la cuenta sigue sin existir.
+    const funded = await friendbot(account).then(() => true).catch(() => false);
+    if (!funded) {
+      const exists = await horizon.loadAccount(account).then(() => true).catch(() => false);
+      if (!exists) {
+        return NextResponse.json(
+          { error: "Friendbot de Stellar no respondió. Intenta de nuevo en unos segundos." },
+          { status: 502 }
+        );
+      }
+    }
 
     await db.from("faucet_requests").insert({
       id: crypto.randomUUID(),
@@ -57,6 +63,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
-
-// Para que ensureTrustline no quede sin uso en este archivo
-void ensureTrustline;

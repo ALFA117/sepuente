@@ -62,12 +62,15 @@ function formatTx(data: any) {
     status_eta: null,
     amount_in: data.amount_in ?? null,
     amount_in_asset: data.amount_in
-      ? `iso4217:MXN`
+      ? data.kind === "deposit" ? "iso4217:MXN" : `stellar:${data.asset_code}:${data.asset_issuer}`
       : null,
     amount_out: data.amount_out ?? null,
     amount_out_asset: data.amount_out
-      ? `stellar:${data.asset_code}:${data.asset_issuer}`
+      ? data.kind === "deposit" ? `stellar:${data.asset_code}:${data.asset_issuer}` : "iso4217:MXN"
       : null,
+    withdraw_anchor_account: data.kind === "withdrawal" ? data.anchor_account ?? null : null,
+    withdraw_memo: data.kind === "withdrawal" ? data.anchor_memo ?? null : null,
+    withdraw_memo_type: data.kind === "withdrawal" ? data.anchor_memo_type ?? null : null,
     amount_fee: data.amount_fee ?? null,
     started_at: data.started_at,
     completed_at: data.completed_at ?? null,

@@ -3,111 +3,121 @@
  * Acciones: quote | start_deposit | start_withdraw | simulate | status
  * Protegido con session token (no JWT SEP-10).
  */
-import { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { verifySession } from "@/lib/jwt";
 import { getDriver } from "@/lib/drivers";
 import { db } from "@/lib/supabase";
 import { env } from "@/lib/env";
 import { clabeError } from "@/lib/clabe";
+import { amountError } from "@/lib/amount";
+import { describeError } from "@/lib/errors";
 
 export const dynamic = "force-dynamic";
+
+const PENDING = ["pending_user_transfer_start", "pending_anchor", "pending_stellar"];
 
 export async function POST(req: NextRequest) {
   let body: Record<string, string>;
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Solicitud inválida" }, { status: 400 });
   }
 
-  const { action, token, ...params } = body;
+  try {
+    return await handle(body);
+  } catch (e: unknown) {
+    console.error("[api/sep24]", body.action, e);
+    return NextResponse.json({ error: describeError(e) }, { status: 500 });
+  }
+}
 
-  // Acciones que no requieren sesión
+async function handle(body: Record<string, string>) {
+  const { action, token, ...params } = body;
+  const sandbox = env.DRIVER === "mock";
+
   if (action === "quote") {
-    const driver = getDriver();
-    const result = await driver.quote({
+    const aErr = amountError(params.sell_amount ?? params.buy_amount);
+    if (aErr) return NextResponse.json({ error: aErr }, { status: 400 });
+    const result = await getDriver().quote({
       sell_asset: params.sell_asset ?? `iso4217:MXN`,
       buy_asset: params.buy_asset ?? `stellar:${env.ASSET_CODE}:${env.ISSUER_PUBLIC_KEY}`,
       sell_amount: params.sell_amount,
       buy_amount: params.buy_amount,
-    }).catch((e: Error) => ({ error: e.message }));
-    return NextResponse.json(result);
+    });
+    return NextResponse.json({ ...result, sandbox });
   }
 
-  // El resto requiere session token
   if (!token) {
-    return NextResponse.json({ error: "Missing token" }, { status: 401 });
+    return NextResponse.json({ error: "Falta el token de sesión. Abre esta pantalla desde tu wallet." }, { status: 401 });
   }
   let txId: string;
   try {
     ({ txId } = await verifySession(token));
   } catch {
-    return NextResponse.json({ error: "Invalid session token" }, { status: 401 });
+    return NextResponse.json({ error: "La sesión expiró. Vuelve a tu wallet e inicia la operación de nuevo." }, { status: 401 });
   }
 
-  const { data: tx } = await db
-    .from("sep24_transactions")
-    .select("*")
-    .eq("id", txId)
-    .single();
+  const { data: tx } = await db.from("sep24_transactions").select("*").eq("id", txId).single();
   if (!tx) {
-    return NextResponse.json({ error: "Transaction not found" }, { status: 404 });
+    return NextResponse.json({ error: "No encontramos esta transacción." }, { status: 404 });
   }
 
   const driver = getDriver();
 
-  if (action === "start_deposit") {
-    const amount = params.amount ?? tx.amount_in ?? "100";
-    await db.from("sep24_transactions").update({
-      amount_in: amount,
-      updated_at: new Date().toISOString(),
-    }).eq("id", txId);
+  if (action === "start_deposit" || action === "start_withdraw") {
+    const isDeposit = action === "start_deposit";
+    if ((isDeposit ? "deposit" : "withdrawal") !== tx.kind) {
+      return NextResponse.json({ error: "Tipo de operación no coincide con la transacción." }, { status: 400 });
+    }
+    // Idempotencia: si ya se iniciaron instrucciones, se devuelven las mismas sin tocar el driver.
+    if (tx.status !== "incomplete") {
+      if (tx.status === "pending_user_transfer_start") {
+        return NextResponse.json(
+          isDeposit
+            ? { clabe: tx.clabe, reference: tx.spei_reference, bank_name: sandbox ? "Banco de Prueba SEPuente" : "SPEI", beneficiary: sandbox ? "SEPuente Escrow Demo" : "SEPuente", sandbox }
+            : { anchor_account: tx.anchor_account, anchor_memo: tx.anchor_memo, anchor_memo_type: tx.anchor_memo_type, sandbox }
+        );
+      }
+      return NextResponse.json({ error: "Esta operación ya fue procesada." }, { status: 409 });
+    }
 
-    const instructions = await driver.createDeposit({
-      txId,
-      stellarAccount: tx.stellar_account,
-      amount,
-      quoteId: params.quote_id,
-      claimableBalanceSupported: params.claimable_balance_supported === "true",
-    }).catch((e: Error) => ({ error: e.message }));
+    const amount = params.amount ?? "";
+    const aErr = amountError(amount);
+    if (aErr) return NextResponse.json({ error: aErr }, { status: 400 });
 
-    return NextResponse.json(instructions);
-  }
+    if (isDeposit) {
+      await db.from("sep24_transactions").update({ amount_in: amount, updated_at: new Date().toISOString() }).eq("id", txId);
+      const instructions = await driver.createDeposit({
+        txId,
+        stellarAccount: tx.stellar_account,
+        amount,
+        quoteId: params.quote_id,
+        claimableBalanceSupported: params.claimable_balance_supported === "true",
+      });
+      return NextResponse.json({ ...instructions, sandbox });
+    }
 
-  if (action === "start_withdraw") {
-    const amount = params.amount ?? tx.amount_in ?? "100";
-    const clabe = params.clabe ?? "";
-    const err = clabeError(clabe);
-    if (err) return NextResponse.json({ error: err }, { status: 400 });
-
-    await db.from("sep24_transactions").update({
-      amount_in: amount,
-      clabe,
-      updated_at: new Date().toISOString(),
-    }).eq("id", txId);
-
+    const clabe = (params.clabe ?? "").trim();
+    const cErr = clabeError(clabe);
+    if (cErr) return NextResponse.json({ error: cErr }, { status: 400 });
+    await db.from("sep24_transactions").update({ amount_in: amount, clabe, updated_at: new Date().toISOString() }).eq("id", txId);
     const instructions = await driver.createWithdraw({
       txId,
       stellarAccount: tx.stellar_account,
       amount,
       clabe,
       quoteId: params.quote_id,
-    }).catch((e: Error) => ({ error: e.message }));
-
-    return NextResponse.json(instructions);
+    });
+    return NextResponse.json({ ...instructions, sandbox });
   }
 
   if (action === "simulate") {
-    if (!("simulateFiatReceived" in driver)) {
-      return NextResponse.json(
-        { error: "Simulación solo disponible en modo sandbox (DRIVER=mock)" },
-        { status: 400 }
-      );
+    if (!driver.simulateFiatReceived) {
+      return NextResponse.json({ error: "La simulación solo existe en modo sandbox." }, { status: 400 });
     }
     try {
-      await (driver as { simulateFiatReceived: (id: string) => Promise<void> })
-        .simulateFiatReceived(txId);
+      await driver.simulateFiatReceived(txId);
     } catch (e: unknown) {
       return NextResponse.json({ error: describeError(e) }, { status: 400 });
     }
@@ -115,24 +125,12 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === "status") {
-    const { data: fresh } = await db
-      .from("sep24_transactions")
-      .select("*")
-      .eq("id", txId)
-      .single();
-    return NextResponse.json({ transaction: fresh });
+    if (PENDING.includes(tx.status)) {
+      await driver.getStatus(txId).catch((e) => console.error("[api/sep24] getStatus", e));
+    }
+    const { data: fresh } = await db.from("sep24_transactions").select("*").eq("id", txId).single();
+    return NextResponse.json({ transaction: fresh, sandbox });
   }
 
-  return NextResponse.json({ error: "Unknown action" }, { status: 400 });
-}
-
-function describeError(e: unknown): string {
-  const codes = (e as { response?: { data?: { extras?: { result_codes?: { transaction?: string; operations?: string[] } } } } })
-    ?.response?.data?.extras?.result_codes;
-  const ops = codes?.operations ?? [];
-  if (ops.includes("op_no_trust")) return "Tu wallet no tiene trustline de TMXN. Agrégala en el paso 2 de la demo.";
-  if (ops.includes("op_underfunded")) return "La cuenta de distribución del anchor no tiene saldo TMXN suficiente.";
-  if (ops.includes("op_no_destination")) return "Tu wallet no existe en testnet. Fondéala con el faucet primero.";
-  if (codes) return `Stellar rechazó la transacción: ${[codes.transaction, ...ops].filter(Boolean).join(", ")}`;
-  return (e as Error)?.message ?? "Error desconocido al simular el depósito";
+  return NextResponse.json({ error: "Acción desconocida" }, { status: 400 });
 }

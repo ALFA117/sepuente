@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { WebAuth, Networks, Keypair, TransactionBuilder, Transaction } from "@stellar/stellar-sdk";
+import { WebAuth, Networks, Keypair, TransactionBuilder, Transaction, StrKey } from "@stellar/stellar-sdk";
 import { jsonCors, optionsResponse } from "@/lib/cors";
 
 const { buildChallengeTx, verifyChallengeTxSigners } = WebAuth;
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     return jsonCors({ error: "Missing 'account' query param" }, 400);
   }
 
-  if (!account.startsWith("G") || account.length !== 56) {
+  if (!StrKey.isValidEd25519PublicKey(account)) {
     return jsonCors({ error: "Invalid Stellar account" }, 400);
   }
 

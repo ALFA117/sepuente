@@ -4,6 +4,7 @@ import { requireSep10 } from "@/lib/auth-middleware";
 import { db } from "@/lib/supabase";
 import { signSession } from "@/lib/jwt";
 import { env } from "@/lib/env";
+import { amountError } from "@/lib/amount";
 
 export const dynamic = "force-dynamic";
 
@@ -24,12 +25,13 @@ export async function POST(req: NextRequest) {
   }
 
   const assetCode = body.asset_code ?? env.ASSET_CODE;
-  const amount = body.amount ?? "";
+  if (assetCode !== env.ASSET_CODE) return jsonCors({ error: `Unsupported asset_code: ${assetCode}` }, 400);
+  const amount = body.amount && !amountError(body.amount) ? body.amount : "";
 
   const txId = crypto.randomUUID();
   const now = new Date().toISOString();
 
-  await db.from("sep24_transactions").insert({
+  const { error } = await db.from("sep24_transactions").insert({
     id: txId,
     kind: "withdrawal",
     status: "incomplete",
@@ -40,9 +42,13 @@ export async function POST(req: NextRequest) {
     started_at: now,
     updated_at: now,
   });
+  if (error) {
+    console.error("[sep24/withdraw] insert", error);
+    return jsonCors({ error: "Could not create transaction" }, 500);
+  }
 
   const sessionToken = await signSession(txId);
-  const interactiveUrl = `${env.APP_URL}/sep24/interactive?token=${sessionToken}&kind=withdraw&amount=${amount}`;
+  const interactiveUrl = `${env.APP_URL}/sep24/interactive?token=${encodeURIComponent(sessionToken)}&kind=withdraw&amount=${encodeURIComponent(amount)}`;
 
   return jsonCors({
     type: "interactive_customer_info_needed",

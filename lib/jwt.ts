@@ -1,7 +1,12 @@
 import { SignJWT, jwtVerify } from "jose";
 import { env } from "./env";
 
-const secret = () => new TextEncoder().encode(env.JWT_SECRET);
+const secret = () => {
+  if (!process.env.JWT_SECRET && process.env.NODE_ENV === "production") {
+    throw new Error("JWT_SECRET no está configurado");
+  }
+  return new TextEncoder().encode(env.JWT_SECRET);
+};
 
 export interface Sep10Claims {
   sub: string; // Stellar account G...

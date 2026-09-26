@@ -22,7 +22,8 @@ export class MockDriver implements RampDriver {
     sell_amount?: string;
     buy_amount?: string;
   }): Promise<QuoteResult> {
-    const sellAmt = parseFloat(params.sell_amount ?? params.buy_amount ?? "100");
+    const sellAmt = parseFloat(params.sell_amount ?? params.buy_amount ?? "");
+    if (!Number.isFinite(sellAmt) || sellAmt <= 0) throw new Error("Monto inválido para cotizar.");
     const fee = parseFloat((sellAmt * FEE_RATE).toFixed(7));
     const buyAmt = parseFloat((sellAmt - fee).toFixed(7));
     const expires_at = new Date(
@@ -101,10 +102,15 @@ export class MockDriver implements RampDriver {
         env.ASSET_CODE
       ).catch(() => null);
 
-      if (payment) {
+      if (payment && parseFloat(payment.amount) + 1e-7 >= parseFloat(String(data.amount_in ?? "0"))) {
+        const paid = parseFloat(payment.amount);
+        const fee = paid * FEE_RATE;
         await db.from("sep24_transactions").update({
           status: "completed",
           stellar_transaction_id: payment.txHash,
+          amount_in: paid.toFixed(7),
+          amount_fee: fee.toFixed(7),
+          amount_out: (paid - fee).toFixed(2),
           completed_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         }).eq("id", txId);
@@ -121,23 +127,39 @@ export class MockDriver implements RampDriver {
   }
 
   async simulateFiatReceived(txId: string): Promise<void> {
-    const { data } = await db
+    // Reclamo atómico: solo una petición pasa de pending_user_transfer_start a pending_stellar,
+    // así un doble clic o un reintento de red nunca envía TMXN dos veces.
+    const { data: claimed } = await db
       .from("sep24_transactions")
-      .select("*")
+      .update({ status: "pending_stellar", updated_at: new Date().toISOString() })
       .eq("id", txId)
-      .single();
-    if (!data) throw new Error("tx not found");
-    if (data.status !== "pending_user_transfer_start") {
-      throw new Error(`Cannot simulate: status is ${data.status}`);
+      .eq("kind", "deposit")
+      .eq("status", "pending_user_transfer_start")
+      .select("*");
+    const data = claimed?.[0];
+    if (!data) {
+      const { data: current } = await db.from("sep24_transactions").select("status").eq("id", txId).single();
+      if (!current) throw new Error("No encontramos esta transacción.");
+      if (current.status === "completed") throw new Error("Este depósito ya fue acreditado.");
+      if (current.status === "pending_stellar") throw new Error("El envío ya está en curso, espera unos segundos.");
+      throw new Error("Primero confirma la operación para obtener las instrucciones SPEI.");
     }
 
-    // Envía TMXN real desde DISTRIBUTION a la wallet del usuario
-    const amount = data.amount_in ?? "100";
+    const amount = String(data.amount_in ?? "100");
     const fee = parseFloat(amount) * FEE_RATE;
     const netAmount = (parseFloat(amount) - fee).toFixed(7);
 
-    // Claimable balances no implementados en MockDriver: envío directo siempre
-    const txHash = await sendTmxn(data.stellar_account, netAmount);
+    let txHash: string;
+    try {
+      // Envío real de TMXN en testnet (claimable balances no implementados en el mock)
+      txHash = await sendTmxn(data.stellar_account, netAmount);
+    } catch (e) {
+      await db.from("sep24_transactions").update({
+        status: "pending_user_transfer_start",
+        updated_at: new Date().toISOString(),
+      }).eq("id", txId);
+      throw e;
+    }
 
     await db.from("sep24_transactions").update({
       status: "completed",

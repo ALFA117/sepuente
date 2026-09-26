@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   const { claims } = auth;
 
   const limit = Math.min(
-    parseInt(req.nextUrl.searchParams.get("limit") ?? "20"),
+    Math.max(parseInt(req.nextUrl.searchParams.get("limit") ?? "20") || 20, 1),
     100
   );
   const kind = req.nextUrl.searchParams.get("kind"); // deposit | withdrawal
