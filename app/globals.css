@@ -52,6 +52,14 @@ a:hover { text-decoration: underline; }
 ::-webkit-scrollbar-track { background: var(--navy); }
 ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
 
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* Utilidades */
 .serif { font-family: var(--font-serif); }
 .gold { color: var(--gold); }
