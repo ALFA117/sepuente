@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   }
 
   const assetCode = body.asset_code ?? env.ASSET_CODE;
-  if (assetCode !== env.ASSET_CODE) return jsonCors({ error: `Unsupported asset_code: ${assetCode}` }, 400);
+  if (assetCode !== env.ASSET_CODE) return jsonCors({ error: `Activo no soportado: ${assetCode}` }, 400);
   const amount = body.amount && !amountError(body.amount) ? body.amount : "";
 
   const txId = crypto.randomUUID();
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
   });
   if (error) {
     console.error("[sep24/deposit] insert", error);
-    return jsonCors({ error: "Could not create transaction" }, 500);
+    return jsonCors({ error: "No se pudo crear la transacción. Intenta de nuevo en unos segundos." }, 500);
   }
 
   const sessionToken = await signSession(txId);

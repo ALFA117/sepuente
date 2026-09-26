@@ -1,490 +1,203 @@
 "use client";
-import { useState } from "react";
 import Link from "next/link";
+import styles from "./page.module.css";
+import { SiteHeader, SiteFooter } from "../components/SiteHeader";
+import { ui, CopyButton, Icon } from "../components/ui";
+import { truncateMiddle } from "@/lib/format";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://sepuente.vercel.app";
-const ASSET   = process.env.NEXT_PUBLIC_ASSET_CODE ?? "TMXN";
-const ISSUER  = process.env.NEXT_PUBLIC_ISSUER_PUBLIC_KEY ?? "<ISSUER_PUBLIC_KEY>";
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "https://sepuente.vercel.app").trim().replace(/\/$/, "");
+const HOME_DOMAIN = APP_URL.replace(/^https?:\/\//, "");
+const ASSET = (process.env.NEXT_PUBLIC_ASSET_CODE ?? "TMXN").trim();
+const ISSUER = (process.env.NEXT_PUBLIC_ISSUER_PUBLIC_KEY ?? "").trim();
 
-const TOML_URL   = `${APP_URL}/.well-known/stellar.toml`;
-const DEMO_WALLET = `https://demo-wallet.stellar.org/?home_domain=${encodeURIComponent(APP_URL.replace("https://", ""))}`;
-const ANCHOR_CMD  = `npx -p @stellar/anchor-tests stellar-anchor-tests \\\n  --home-domain ${APP_URL.replace("https://", "")} \\\n  --seps 1 10 24 38`;
+const TOML_URL = `${APP_URL}/.well-known/stellar.toml`;
+const DEMO_WALLET = `https://demo-wallet.stellar.org/?home_domain=${encodeURIComponent(HOME_DOMAIN)}`;
+const ANCHOR_CMD = `npx -p @stellar/anchor-tests stellar-anchor-tests \\\n  --home-domain ${HOME_DOMAIN} \\\n  --seps 1 10 24 38`;
 
-/* ---------- copy util ---------- */
-function useCopy() {
-  const [copied, setCopied] = useState<string>("");
-  function copy(text: string, key: string) {
-    navigator.clipboard.writeText(text).catch(() => {
-      const el = document.createElement("textarea");
-      el.value = text;
-      document.body.appendChild(el);
-      el.select();
-      document.execCommand("copy");
-      document.body.removeChild(el);
-    }).finally(() => { setCopied(key); setTimeout(() => setCopied(""), 2000); });
-  }
-  return { copied, copy };
-}
+const ENDPOINTS = [
+  { sep: "SEP-1", method: "GET", path: "/.well-known/stellar.toml", note: "Descubrimiento · CORS abierto" },
+  { sep: "SEP-10", method: "GET", path: "/auth?account=G…", note: "Challenge" },
+  { sep: "SEP-10", method: "POST", path: "/auth", note: "Verifica firma → JWT" },
+  { sep: "SEP-24", method: "GET", path: "/sep24/info", note: "Activos y límites" },
+  { sep: "SEP-24", method: "POST", path: "/sep24/transactions/deposit/interactive", note: "Inicia depósito" },
+  { sep: "SEP-24", method: "POST", path: "/sep24/transactions/withdraw/interactive", note: "Inicia retiro" },
+  { sep: "SEP-24", method: "GET", path: "/sep24/transaction?id=<id>", note: "Estado de una operación" },
+  { sep: "SEP-24", method: "GET", path: "/sep24/transactions", note: "Historial" },
+  { sep: "SEP-38", method: "GET", path: "/sep38/info", note: "Pares disponibles" },
+  { sep: "SEP-38", method: "GET", path: "/sep38/prices", note: "Precios indicativos" },
+  { sep: "SEP-38", method: "GET", path: "/sep38/price", note: "Precio para un monto" },
+  { sep: "SEP-38", method: "POST", path: "/sep38/quote", note: "Cotización con vigencia" },
+  { sep: "SEP-38", method: "GET", path: "/sep38/quote/<id>", note: "Consulta cotización" },
+  { sep: "Demo", method: "POST", path: "/api/faucet", note: "Solo testnet · 3 por día" },
+];
 
-/* ---------- sub-components ---------- */
-function CopyBtn({ text, id, copied, copy }: { text: string; id: string; copied: string; copy: (t:string,k:string)=>void }) {
-  const ok = copied === id;
+const ENV_VARS = [
+  { k: "NEXT_PUBLIC_APP_URL", v: "https://sepuente.vercel.app (HTTPS, sin slash final)", side: "public" },
+  { k: "NEXT_PUBLIC_ASSET_CODE / NEXT_PUBLIC_ISSUER_PUBLIC_KEY", v: "Código y emisor del token para la wallet demo", side: "public" },
+  { k: "DRIVER", v: "mock | etherfuse", side: "server" },
+  { k: "SIGNING_SECRET_KEY", v: "Firma de challenges SEP-10", side: "server" },
+  { k: "ISSUER_SECRET_KEY", v: "Solo para setup-testnet.ts", side: "server" },
+  { k: "DISTRIBUTION_SECRET_KEY", v: "Envía TMXN en depósitos (debe corresponder a DISTRIBUTION_PUBLIC_KEY)", side: "server" },
+  { k: "JWT_SECRET", v: "Secreto aleatorio ≥ 32 caracteres (obligatorio en producción)", side: "server" },
+  { k: "SUPABASE_SERVICE_ROLE_KEY", v: "Solo en rutas de servidor", side: "server" },
+];
+
+const DIFF = [
+  { who: "Ramp Kit (SDK)", desc: "Librería que cada app integra directamente; no expone endpoints SEP propios." },
+  { who: "StellarMesh", desc: "Mismo patrón SEP-24 pero para saldos de exchanges, no para rampas SPEI." },
+  { who: "Anchor Platform", desc: "Para convertirse en anchor propio; requiere infraestructura y operación." },
+  { who: "SEPuente", desc: "Adaptador ligero sobre rampas que ya existen, sin modificarlas y sin custodia.", highlight: true },
+];
+
+const QUICK = [
+  { title: "Wallet demo SEPuente", sub: "Prueba depósito y retiro en testnet desde el navegador.", href: "/demo", internal: true },
+  { title: "Demo Wallet de SDF", sub: "La wallet oficial de Stellar, preconfigurada con este anchor.", href: DEMO_WALLET },
+  { title: "stellar.toml", sub: "Manifiesto con todos los endpoints publicados.", href: TOML_URL },
+];
+
+function Section({ n, title, children }: { n: string; title: string; children: React.ReactNode }) {
   return (
-    <button
-      onClick={() => copy(text, id)}
-      style={{
-        background: ok ? "rgba(76,214,142,0.1)" : "rgba(201,162,39,0.08)",
-        border: `1px solid ${ok ? "rgba(76,214,142,0.25)" : "rgba(201,162,39,0.2)"}`,
-        borderRadius: 6, color: ok ? "#4CD68E" : "#C9A227",
-        cursor: "pointer", fontSize: "0.62rem", fontWeight: 700,
-        fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.05em",
-        padding: "3px 8px", transition: "all .12s", flexShrink: 0,
-      }}
-    >{ok ? "✓ OK" : "Copiar"}</button>
+    <section className={styles.section} aria-labelledby={`s-${n}`}>
+      <div className={styles.sectionHead}>
+        <span className={styles.sectionNum}>{n}</span>
+        <h2 id={`s-${n}`} className={styles.h2}>{title}</h2>
+      </div>
+      {children}
+    </section>
   );
 }
 
-function CodeBox({ children, id, copied, copy }: { children: string; id: string; copied: string; copy: (t:string,k:string)=>void }) {
+function Code({ value, label }: { value: string; label: string }) {
   return (
-    <div style={{ position:"relative" }}>
-      <pre style={{
-        background: "rgba(255,255,255,0.025)", border: "1px solid rgba(139,155,181,0.1)",
-        borderRadius: 11, padding: "14px 46px 14px 16px", fontSize: "0.75rem",
-        overflowX: "auto", color: "#E8E2D5",
-        fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.65,
-        margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-all",
-      }}>{children}</pre>
-      <div style={{ position:"absolute", top: 10, right: 10 }}>
-        <CopyBtn text={children} id={id} copied={copied} copy={copy} />
-      </div>
+    <div className={styles.code}>
+      <pre className={styles.pre}><code>{value}</code></pre>
+      <div className={styles.codeCopy}><CopyButton value={value.replace(/\\\n\s*/g, "")} label={label} /></div>
     </div>
   );
 }
 
-const ENDPOINTS = [
-  { sep:"SEP-1",   method:"GET",  path:"/.well-known/stellar.toml", note:"CORS abierto" },
-  { sep:"SEP-10",  method:"GET",  path:"/auth?account=G...",         note:"Challenge JWT" },
-  { sep:"SEP-10",  method:"POST", path:"/auth",                      note:"Verify → JWT" },
-  { sep:"SEP-24",  method:"GET",  path:"/sep24/info",                note:"Activos soportados" },
-  { sep:"SEP-24",  method:"POST", path:"/sep24/transactions/deposit/interactive",  note:"Inicia depósito" },
-  { sep:"SEP-24",  method:"POST", path:"/sep24/transactions/withdraw/interactive", note:"Inicia retiro" },
-  { sep:"SEP-24",  method:"GET",  path:"/sep24/transaction?id=<id>", note:"Estado de tx" },
-  { sep:"SEP-24",  method:"GET",  path:"/sep24/transactions",        note:"Historial" },
-  { sep:"SEP-38",  method:"GET",  path:"/sep38/info",                note:"Pares disponibles" },
-  { sep:"SEP-38",  method:"GET",  path:"/sep38/prices",              note:"Precios en tiempo real" },
-  { sep:"SEP-38",  method:"POST", path:"/sep38/quote",               note:"Cotización firmada" },
-  { sep:"Faucet",  method:"POST", path:"/api/faucet",                note:"Solo testnet" },
-];
-
-const ENV_VARS = [
-  { k:"NEXT_PUBLIC_APP_URL",          v:"https://sepuente.vercel.app", side:"public" },
-  { k:"DRIVER",                        v:"mock | etherfuse",            side:"server" },
-  { k:"SIGNING_SECRET_KEY",           v:"Generated by setup-testnet.ts", side:"server" },
-  { k:"ISSUER_SECRET_KEY",            v:"Generated by setup-testnet.ts", side:"server" },
-  { k:"DISTRIBUTION_SECRET_KEY",      v:"Generated by setup-testnet.ts", side:"server" },
-  { k:"JWT_SECRET",                   v:"Random long secret (>=32 chars)", side:"server" },
-  { k:"NEXT_PUBLIC_SUPABASE_URL",     v:"https://<id>.supabase.co",   side:"public" },
-  { k:"SUPABASE_SERVICE_ROLE_KEY",    v:"Service role key",            side:"server" },
-];
-
-const DIFF = [
-  { who:"Ramp Kit (SDK)",               desc:"Librería que integra cada app directamente; no expone endpoints SEP propios." },
-  { who:"StellarMesh",                  desc:"Mismo patrón SEP-24 pero para saldos de exchanges; no rampas SPEI/bancarias." },
-  { who:"Anchor Platform / In a Box",   desc:"Para convertirse en anchor propio; requiere infraestructura y ops." },
-  { who:"SEPuente ✓",                   desc:"Adaptador ligero para rampas que ya existen sin modificarlas. Sin custodia.", highlight: true },
-];
-
-const SEPS = ["SEP-1","SEP-10","SEP-24","SEP-38"];
-const METHOD_COLOR: Record<string, string> = { GET:"rgba(125,186,255,.15)", POST:"rgba(76,214,142,.12)" };
-const METHOD_TEXT:  Record<string, string> = { GET:"#7DBAFF", POST:"#4CD68E" };
-
 export default function DevsPage() {
-  const { copied, copy } = useCopy();
-
   return (
-    <div style={{ minHeight:"100dvh", background:"#0A0F1E", color:"#E2E8F0", fontFamily:"'Inter', system-ui, sans-serif" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
-        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-        ::-webkit-scrollbar{width:6px;background:#0A0F1E}
-        ::-webkit-scrollbar-thumb{background:rgba(51,65,85,.6);border-radius:3px}
-        a{color:inherit;text-decoration:none}
+    <div className={styles.page}>
+      <SiteHeader badge="Docs" />
 
-        /* bg */
-        .devs-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
-        .devs-bg::before{content:'';position:absolute;inset:0;
-          background-image:linear-gradient(rgba(51,65,85,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(51,65,85,.06) 1px,transparent 1px);
-          background-size:40px 40px;
-          mask-image:radial-gradient(ellipse 120% 100% at 50% 0%,black 20%,transparent 70%)}
-        .devs-bg::after{content:'';position:absolute;inset:0;
-          background:radial-gradient(ellipse 80% 60% at 50% 50%,transparent 40%,rgba(10,15,30,.88) 100%)}
-        .blob-d{position:absolute;border-radius:50%;filter:blur(80px)}
-        .blob-d1{width:400px;height:300px;top:-100px;left:-80px;
-          background:radial-gradient(circle,rgba(245,158,11,.1) 0%,transparent 70%);
-          animation:dA 14s ease-in-out infinite}
-        .blob-d2{width:350px;height:400px;bottom:-120px;right:-60px;
-          background:radial-gradient(circle,rgba(139,92,246,.08) 0%,transparent 70%);
-          animation:dB 18s ease-in-out infinite}
-        .blob-d3{width:200px;height:200px;top:40%;right:10%;
-          background:radial-gradient(circle,rgba(16,185,129,.06) 0%,transparent 70%);
-          animation:dC 22s ease-in-out infinite}
-        @keyframes dA{0%,100%{transform:translate(0,0)}40%{transform:translate(30px,20px)}70%{transform:translate(-15px,35px)}}
-        @keyframes dB{0%,100%{transform:translate(0,0)}35%{transform:translate(-30px,-20px)}65%{transform:translate(15px,-35px)}}
-        @keyframes dC{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-20px,15px) scale(1.2)}}
-
-        /* layout */
-        .devs-nav{position:sticky;top:0;z-index:10;display:flex;align-items:center;
-          justify-content:space-between;padding:14px 24px;
-          border-bottom:1px solid rgba(51,65,85,.6);
-          background:rgba(10,15,30,.88);backdrop-filter:blur(20px) saturate(1.5)}
-        .devs-brand{display:flex;align-items:center;gap:6px;
-          font-family:'Space Grotesk',sans-serif;font-size:.95rem;font-weight:700;color:#F8FAFC;
-          letter-spacing:-.02em}
-        .devs-brand span{color:#F59E0B}
-        .nav-links{display:flex;align-items:center;gap:6px}
-        .nav-link{font-size:.75rem;font-weight:600;color:rgba(148,163,184,.7);
-          padding:5px 11px;border-radius:8px;transition:all .12s}
-        .nav-link:hover{color:#E2E8F0;background:rgba(255,255,255,.04)}
-        .nav-pill{font-size:.62rem;font-family:'JetBrains Mono',monospace;font-weight:700;
-          letter-spacing:.07em;text-transform:uppercase;
-          background:rgba(245,158,11,.09);border:1px solid rgba(245,158,11,.22);
-          color:rgba(245,158,11,.8);padding:3px 9px;border-radius:8px}
-
-        .devs-wrap{position:relative;z-index:1;max-width:840px;margin:0 auto;padding:0 24px 80px}
-
-        /* hero */
-        .devs-hero{padding:52px 0 40px;border-bottom:1px solid rgba(51,65,85,.5);margin-bottom:48px}
-        .hero-eyebrow{display:flex;align-items:center;gap:8px;margin-bottom:16px}
-        .hero-tag{font-size:.65rem;font-family:'JetBrains Mono',monospace;font-weight:700;
-          letter-spacing:.09em;text-transform:uppercase;
-          background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);
-          color:rgba(245,158,11,.85);padding:4px 10px;border-radius:8px}
-        .hero-title{font-family:'Space Grotesk',sans-serif;font-size:2.2rem;font-weight:700;
-          color:#F8FAFC;letter-spacing:-.04em;line-height:1.1;margin-bottom:12px}
-        .hero-title span{color:#F59E0B}
-        .hero-sub{font-size:.9rem;color:#94A3B8;line-height:1.65;max-width:520px;margin-bottom:24px}
-        .sep-badges{display:flex;gap:8px;flex-wrap:wrap}
-        .sep-badge{font-size:.7rem;font-family:'JetBrains Mono',monospace;font-weight:700;
-          letter-spacing:.06em;padding:5px 12px;border-radius:8px;
-          background:rgba(30,41,59,.8);border:1px solid rgba(51,65,85,.7);color:#94A3B8;
-          cursor:default;transition:all .15s}
-        .sep-badge:hover{border-color:rgba(245,158,11,.3);color:#F59E0B;background:rgba(245,158,11,.06)}
-
-        /* quick actions */
-        .quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:48px}
-        @media(max-width:640px){.quick-grid{grid-template-columns:1fr}}
-        .quick-card{display:flex;flex-direction:column;gap:6px;
-          background:rgba(15,23,42,.7);border:1px solid rgba(51,65,85,.6);
-          border-radius:13px;padding:16px;transition:all .15s;backdrop-filter:blur(8px)}
-        .quick-card:hover{border-color:rgba(245,158,11,.28);background:rgba(15,23,42,.9);transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,.3)}
-        .qc-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center}
-        .qc-title{font-size:.82rem;font-weight:700;color:#F8FAFC;font-family:'Space Grotesk',sans-serif;letter-spacing:-.01em}
-        .qc-sub{font-size:.72rem;color:#94A3B8;line-height:1.45}
-
-        /* sections */
-        .section{margin-bottom:48px}
-        .section-head{display:flex;align-items:center;gap:10px;margin-bottom:20px}
-        .section-num{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;
-          font-size:.68rem;font-family:'JetBrains Mono',monospace;font-weight:700;
-          background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.22);color:#F59E0B;flex-shrink:0}
-        .section-title{font-family:'Space Grotesk',sans-serif;font-size:1.05rem;font-weight:700;color:#F8FAFC;letter-spacing:-.02em}
-
-        /* endpoints table */
-        .ep-table{width:100%;border-collapse:collapse}
-        .ep-row{border-bottom:1px solid rgba(51,65,85,.4);transition:background .1s}
-        .ep-row:hover{background:rgba(255,255,255,.02)}
-        .ep-row:last-child{border-bottom:none}
-        .ep-sep{padding:10px 12px;font-size:.7rem;font-family:'JetBrains Mono',monospace;font-weight:700;
-          letter-spacing:.05em;color:#94A3B8;white-space:nowrap;vertical-align:middle;width:70px}
-        .ep-method{padding:10px 8px;width:52px;vertical-align:middle}
-        .ep-method span{display:inline-block;font-size:.62rem;font-family:'JetBrains Mono',monospace;
-          font-weight:700;letter-spacing:.04em;padding:2px 6px;border-radius:5px}
-        .ep-path{padding:10px 8px;font-family:'JetBrains Mono',monospace;font-size:.73rem;
-          color:#E2E8F0;vertical-align:middle;word-break:break-all}
-        .ep-note{padding:10px 12px;font-size:.72rem;color:#94A3B8;vertical-align:middle;text-align:right}
-        @media(max-width:580px){.ep-note{display:none}.ep-sep{display:none}}
-
-        /* env table */
-        .env-table{width:100%;border-collapse:collapse}
-        .env-row{border-bottom:1px solid rgba(51,65,85,.4)}
-        .env-row:last-child{border-bottom:none}
-        .env-key{padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:.72rem;
-          color:#E2E8F0;font-weight:600;vertical-align:top;width:40%}
-        .env-val{padding:10px 12px;font-size:.75rem;color:#94A3B8;vertical-align:top}
-        .env-side{padding:10px 8px;vertical-align:top;width:60px}
-        .env-side span{display:inline-block;font-size:.6rem;font-family:'JetBrains Mono',monospace;
-          font-weight:700;letter-spacing:.05em;padding:2px 6px;border-radius:5px;white-space:nowrap}
-
-        /* card table */
-        .diff-list{display:flex;flex-direction:column;gap:10px}
-        .diff-card{border-radius:12px;padding:14px 16px;border:1px solid rgba(51,65,85,.6);
-          background:rgba(15,23,42,.6);transition:border-color .12s}
-        .diff-card.hl{background:rgba(245,158,11,.04);border-color:rgba(245,158,11,.2)}
-        .diff-who{font-size:.8rem;font-weight:700;color:#F8FAFC;margin-bottom:3px;font-family:'Space Grotesk',sans-serif}
-        .diff-card.hl .diff-who{color:#F59E0B}
-        .diff-desc{font-size:.78rem;color:#94A3B8;line-height:1.5}
-
-        /* steps */
-        .steps-list{display:flex;flex-direction:column;gap:10px}
-        .step-row{display:flex;align-items:flex-start;gap:12px;
-          padding:14px 16px;border-radius:12px;
-          background:rgba(15,23,42,.6);border:1px solid rgba(51,65,85,.5)}
-        .step-num{width:26px;height:26px;border-radius:50%;flex-shrink:0;
-          display:flex;align-items:center;justify-content:center;
-          font-size:.7rem;font-weight:700;font-family:'JetBrains Mono',monospace;
-          background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.28);color:#34D399;margin-top:1px}
-        .step-body{}
-        .step-title{font-size:.82rem;font-weight:700;color:#F8FAFC;margin-bottom:3px;font-family:'Space Grotesk',sans-serif}
-        .step-desc{font-size:.76rem;color:#94A3B8;line-height:1.5}
-        .step-code{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.72rem;
-          background:rgba(30,41,59,.8);border:1px solid rgba(51,65,85,.7);
-          border-radius:6px;padding:1px 7px;color:#E2E8F0}
-
-        /* notice */
-        .notice{display:flex;align-items:flex-start;gap:10px;
-          padding:14px 16px;border-radius:11px;
-          background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.18);
-          font-size:.78rem;color:#94A3B8;line-height:1.5;margin-top:16px}
-        .notice-icon{flex-shrink:0;margin-top:1px;color:#F59E0B}
-
-        .inline-link{color:#F59E0B;text-decoration:underline;text-decoration-color:rgba(245,158,11,.3)}
-        .inline-link:hover{text-decoration-color:#F59E0B}
-
-        table{position:relative;z-index:1;border-radius:12px;overflow:hidden;
-          background:rgba(15,23,42,.7);border:1px solid rgba(51,65,85,.6)}
-      `}</style>
-
-      {/* 3D Background */}
-      <div className="devs-bg">
-        <div className="blob-d blob-d1"/>
-        <div className="blob-d blob-d2"/>
-        <div className="blob-d blob-d3"/>
-      </div>
-
-      {/* Nav */}
-      <nav className="devs-nav">
-        <Link href="/" className="devs-brand">
-          <span>⟴</span> SEPuente
-        </Link>
-        <div className="nav-links">
-          <span className="nav-pill">Docs</span>
-          <a href="https://github.com/ALFA117/sepuente" target="_blank" rel="noreferrer" className="nav-link">GitHub ↗</a>
-          <Link href="/demo" className="nav-link">Demo →</Link>
-        </div>
-      </nav>
-
-      <div className="devs-wrap">
-
-        {/* Hero */}
-        <div className="devs-hero">
-          <div className="hero-eyebrow">
-            <span className="hero-tag">Documentación técnica</span>
-          </div>
-          <h1 className="hero-title">
-            Integra rampas MXN<br/>en <span>Stellar</span> hoy mismo
-          </h1>
-          <p className="hero-sub">
-            Gateway open source y no custodial que implementa el stack SEP completo.
-            Apunta tu wallet o app al dominio — listo.
+      <main id="main" className={styles.main}>
+        <header className={styles.hero}>
+          <p className={ui.eyebrow}>Documentación técnica</p>
+          <h1 className={styles.title}>Integra rampas MXN en <span className={styles.accent}>Stellar</span></h1>
+          <p className={styles.lead}>
+            Anchor open source y no custodial con el stack SEP completo. Apunta tu wallet al dominio y listo.
           </p>
-          <div className="sep-badges">
-            {SEPS.map(s => <span key={s} className="sep-badge">{s}</span>)}
-            <span className="sep-badge">CORS abierto</span>
-            <span className="sep-badge">No custodial</span>
-            <span className="sep-badge">Open source</span>
-          </div>
-        </div>
+          <ul className={styles.tags}>
+            {["SEP-1", "SEP-10", "SEP-24", "SEP-38", "CORS abierto", "No custodial", "MIT"].map((t) => <li key={t}>{t}</li>)}
+          </ul>
+        </header>
 
-        {/* Quick actions */}
-        <div className="quick-grid">
-          <a href={DEMO_WALLET} target="_blank" rel="noreferrer" className="quick-card">
-            <div className="qc-icon" style={{background:"rgba(76,214,142,.1)",color:"#4CD68E"}}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-            </div>
-            <div className="qc-title">Demo Wallet SDF ↗</div>
-            <div className="qc-sub">Prueba el flujo completo sin código en la wallet de Stellar.</div>
-          </a>
-          <a href={TOML_URL} target="_blank" rel="noreferrer" className="quick-card">
-            <div className="qc-icon" style={{background:"rgba(201,162,39,.1)",color:"#C9A227"}}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            </div>
-            <div className="qc-title">stellar.toml ↗</div>
-            <div className="qc-sub">Manifiesto de descubrimiento con todos los endpoints.</div>
-          </a>
-          <Link href="/" className="quick-card">
-            <div className="qc-icon" style={{background:"rgba(125,186,255,.1)",color:"#7DBAFF"}}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-            </div>
-            <div className="qc-title">Demo interactivo</div>
-            <div className="qc-sub">Flujo de depósito y retiro en vivo sobre testnet.</div>
-          </Link>
-        </div>
+        <ul className={styles.quick}>
+          {QUICK.map((q) => {
+            const inner = (
+              <>
+                <span className={styles.quickTitle}>{q.title}{!q.internal && <span className={styles.ext}>{Icon.external(14)}</span>}</span>
+                <span className={styles.quickSub}>{q.sub}</span>
+              </>
+            );
+            return (
+              <li key={q.title}>
+                {q.internal
+                  ? <Link href={q.href} className={styles.quickCard}>{inner}</Link>
+                  : <a href={q.href} target="_blank" rel="noreferrer" className={styles.quickCard}>{inner}</a>}
+              </li>
+            );
+          })}
+        </ul>
 
-        {/* 1. Endpoints */}
-        <div className="section">
-          <div className="section-head">
-            <div className="section-num">01</div>
-            <div className="section-title">Endpoints REST</div>
+        <Section n="01" title="Endpoints">
+          <div className={styles.baseRow}>
+            <span className={styles.baseLabel}>URL base</span>
+            <code className={`addr ${styles.baseVal}`}>{APP_URL}</code>
+            <CopyButton value={APP_URL} label="URL base" />
           </div>
-          <table className="ep-table">
-            <tbody>
-              {ENDPOINTS.map((ep, i) => (
-                <tr key={i} className="ep-row">
-                  <td className="ep-sep">{ep.sep}</td>
-                  <td className="ep-method">
-                    <span style={{background:METHOD_COLOR[ep.method]??METHOD_COLOR.GET, color:METHOD_TEXT[ep.method]??METHOD_TEXT.GET}}>
-                      {ep.method}
-                    </span>
-                  </td>
-                  <td className="ep-path">{APP_URL}{ep.path}</td>
-                  <td className="ep-note">{ep.note}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* 2. Activo */}
-        <div className="section">
-          <div className="section-head">
-            <div className="section-num">02</div>
-            <div className="section-title">Activo TMXN</div>
-          </div>
-          <table className="env-table">
-            <tbody>
-              {[
-                ["Código", ASSET, ""],
-                ["Emisor", ISSUER, ""],
-                ["Red", "Stellar Testnet", ""],
-                ["Colateral", "1 TMXN = 1 MXN simulado (MockDriver)", ""],
-              ].map(([k,v], i) => (
-                <tr key={i} className="env-row">
-                  <td className="env-key">{k}</td>
-                  <td className="env-val" style={{fontFamily:"'JetBrains Mono',monospace",fontSize:".71rem"}}>{v}</td>
-                  <td className="env-side"></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* 3. stellar.toml */}
-        <div className="section">
-          <div className="section-head">
-            <div className="section-num">03</div>
-            <div className="section-title">stellar.toml</div>
-          </div>
-          <CodeBox id="toml" copied={copied} copy={copy}>{TOML_URL}</CodeBox>
-          <div className="notice" style={{marginTop:12}}>
-            <div className="notice-icon">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-            </div>
-            Servido con <code>Content-Type: text/plain</code> y header <code>Access-Control-Allow-Origin: *</code>. CORS completamente abierto en todos los endpoints SEP.
-          </div>
-        </div>
-
-        {/* 4. Probar en 2 min */}
-        <div className="section">
-          <div className="section-head">
-            <div className="section-num">04</div>
-            <div className="section-title">Prueba rápida (sin código)</div>
-          </div>
-          <div className="steps-list">
-            {[
-              { title:"Abre Demo Wallet", desc:<>Visita <a href={DEMO_WALLET} target="_blank" rel="noreferrer" className="inline-link">demo-wallet.stellar.org ↗</a> preconfigurado con este anchor.</>},
-              { title:"Crea cuenta y fondea", desc:<>Genera un keypair de testnet → "Fund with Friendbot" para obtener XLM.</>},
-              { title:"Añade el activo TMXN", desc:<>Add Asset → código <span className="step-code">{ASSET}</span>, emisor <span className="step-code">{ISSUER.slice(0,12)}…</span></>},
-              { title:"Conéctate al anchor", desc:<><span className="step-code">{APP_URL.replace("https://","")}</span> en el campo Home Domain.</>},
-              { title:"Deposita o retira", desc:"Elige Deposit o Withdraw, sigue el flujo interactivo SEP-24 y comprueba el saldo on-chain."},
-            ].map((s, i) => (
-              <div key={i} className="step-row">
-                <div className="step-num">{i+1}</div>
-                <div className="step-body">
-                  <div className="step-title">{s.title}</div>
-                  <div className="step-desc">{s.desc}</div>
+          <ul className={styles.list}>
+            {ENDPOINTS.map((e) => (
+              <li key={e.method + e.path} className={styles.endpoint}>
+                <div className={styles.epTop}>
+                  <span className={`${styles.method} ${e.method === "GET" ? styles.get : styles.post}`}>{e.method}</span>
+                  <span className={styles.epSep}>{e.sep}</span>
                 </div>
-              </div>
+                <code className={styles.epPath}>{e.path}</code>
+                <span className={styles.epNote}>{e.note}</span>
+              </li>
             ))}
-          </div>
-        </div>
+          </ul>
+        </Section>
 
-        {/* 5. anchor-tests */}
-        <div className="section">
-          <div className="section-head">
-            <div className="section-num">05</div>
-            <div className="section-title">Suite de tests (CI)</div>
-          </div>
-          <CodeBox id="anchortest" copied={copied} copy={copy}>{ANCHOR_CMD}</CodeBox>
-          <div className="notice">
-            <div className="notice-icon">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        <Section n="02" title={`Activo ${ASSET}`}>
+          <div className={`${ui.card} ${ui.kvList}`}>
+            <div className={ui.kv}><span className={ui.kvKey}>Código</span><span className={`${ui.kvVal} ${ui.kvMono}`}>{ASSET}</span></div>
+            <div className={ui.kv}>
+              <span className={ui.kvKey}>Emisor</span>
+              <span className={`${ui.kvVal} ${ui.kvMono}`} title={ISSUER}>{ISSUER ? truncateMiddle(ISSUER, 8, 8) : "Configura NEXT_PUBLIC_ISSUER_PUBLIC_KEY"}</span>
+              {ISSUER && <CopyButton value={ISSUER} label="Emisor" />}
             </div>
-            Requiere Node 18+ y variable <code>DRIVER=mock</code>. Corre SEPs 1, 10, 24 y 38. Todos los tests pasan en sandbox.
+            <div className={ui.kv}><span className={ui.kvKey}>Red</span><span className={ui.kvVal}>Stellar Testnet</span></div>
+            <div className={ui.kv}><span className={ui.kvKey}>Respaldo</span><span className={ui.kvVal}>1 {ASSET} = 1 MXN simulado (driver mock)</span></div>
           </div>
-        </div>
+        </Section>
 
-        {/* 6. Conectar wallet */}
-        <div className="section">
-          <div className="section-head">
-            <div className="section-num">06</div>
-            <div className="section-title">Conectar tu wallet</div>
-          </div>
-          <p style={{fontSize:".82rem",color:"#8B9BB5",marginBottom:12,lineHeight:1.6}}>
-            Apunta el campo <code style={{fontFamily:"JetBrains Mono,monospace",background:"rgba(22,47,89,.8)",padding:"1px 6px",borderRadius:5,fontSize:".74rem"}}>home_domain</code> de tu wallet a:
-          </p>
-          <CodeBox id="homedomain" copied={copied} copy={copy}>{APP_URL.replace("https://","")}</CodeBox>
-          <p style={{fontSize:".8rem",color:"#8B9BB5",marginTop:12,lineHeight:1.65}}>
-            La wallet leerá el <code style={{fontFamily:"JetBrains Mono,monospace",fontSize:".73rem"}}>stellar.toml</code>, descubrirá los endpoints SEP-10 y SEP-24 automáticamente, y podrá ofrecer depósito y retiro de pesos MXN sin ninguna integración adicional.
-          </p>
-        </div>
+        <Section n="03" title="stellar.toml">
+          <Code value={TOML_URL} label="URL del stellar.toml" />
+          <p className={styles.note}>Se sirve como <code>text/plain</code> con <code>Access-Control-Allow-Origin: *</code>; todos los endpoints SEP responden con CORS abierto.</p>
+        </Section>
 
-        {/* 7. ENV vars */}
-        <div className="section">
-          <div className="section-head">
-            <div className="section-num">07</div>
-            <div className="section-title">Variables de entorno</div>
-          </div>
-          <table className="env-table">
-            <tbody>
-              {ENV_VARS.map((e, i) => (
-                <tr key={i} className="env-row">
-                  <td className="env-key">{e.k}</td>
-                  <td className="env-val">{e.v}</td>
-                  <td className="env-side">
-                    <span style={{
-                      background: e.side==="server" ? "rgba(224,82,82,.1)" : "rgba(76,214,142,.1)",
-                      color: e.side==="server" ? "#E05252" : "#4CD68E",
-                    }}>{e.side==="server" ? "server" : "public"}</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="notice">
-            <div className="notice-icon" style={{color:"#E05252"}}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            </div>
-            Las variables marcadas <code>server</code> (llaves de firma, JWT_SECRET, service role) nunca se exponen al navegador. Solo las <code>NEXT_PUBLIC_*</code> son accesibles en el cliente.
-          </div>
-        </div>
+        <Section n="04" title="Prueba rápida sin código">
+          <ol className={styles.steps}>
+            <li><strong>Abre la Demo Wallet de SDF</strong><span>Entra a <a href={DEMO_WALLET} target="_blank" rel="noreferrer">demo-wallet.stellar.org</a>, ya apuntando a este anchor.</span></li>
+            <li><strong>Crea y fondea una cuenta</strong><span>Genera un keypair de testnet y usa “Fund with Friendbot”.</span></li>
+            <li><strong>Agrega el activo</strong><span>Código <code>{ASSET}</code>, emisor <code>{truncateMiddle(ISSUER, 6, 4)}</code>.</span></li>
+            <li><strong>Conecta el anchor</strong><span>Home domain: <code>{HOME_DOMAIN}</code>.</span></li>
+            <li><strong>Deposita o retira</strong><span>Sigue el flujo interactivo SEP-24 y verifica el saldo en stellar.expert.</span></li>
+          </ol>
+        </Section>
 
-        {/* 8. Diferenciación */}
-        <div className="section">
-          <div className="section-head">
-            <div className="section-num">08</div>
-            <div className="section-title">¿Por qué SEPuente?</div>
-          </div>
-          <div className="diff-list">
-            {DIFF.map((d, i) => (
-              <div key={i} className={`diff-card${d.highlight?" hl":""}`}>
-                <div className="diff-who">{d.who}</div>
-                <div className="diff-desc">{d.desc}</div>
-              </div>
+        <Section n="05" title="Suite de validación">
+          <Code value={ANCHOR_CMD} label="Comando de anchor-tests" />
+          <p className={styles.note}>Requiere Node 18+ y el anchor con <code>DRIVER=mock</code>. Ejecuta la suite oficial de SDF para SEP-1, 10, 24 y 38 contra el dominio desplegado.</p>
+        </Section>
+
+        <Section n="06" title="Conecta tu wallet">
+          <p className={styles.text}>Apunta el <code>home_domain</code> de tu wallet a:</p>
+          <Code value={HOME_DOMAIN} label="Home domain" />
+          <p className={styles.text}>La wallet leerá el stellar.toml, descubrirá SEP-10 y SEP-24 y podrá ofrecer depósitos y retiros de pesos sin integración adicional.</p>
+        </Section>
+
+        <Section n="07" title="Variables de entorno">
+          <ul className={styles.list}>
+            {ENV_VARS.map((e) => (
+              <li key={e.k} className={styles.env}>
+                <div className={styles.epTop}>
+                  <code className={styles.envKey}>{e.k}</code>
+                  <span className={`${ui.badge} ${e.side === "server" ? ui["tone-danger"] : ui["tone-success"]}`}>{e.side === "server" ? "servidor" : "público"}</span>
+                </div>
+                <span className={styles.epNote}>{e.v}</span>
+              </li>
             ))}
-          </div>
-        </div>
+          </ul>
+          <p className={styles.note}>Las variables de servidor (llaves de firma, JWT_SECRET, service role) nunca llegan al navegador; solo las <code>NEXT_PUBLIC_*</code> son visibles en el cliente.</p>
+        </Section>
 
-      </div>
+        <Section n="08" title="¿Por qué SEPuente?">
+          <ul className={styles.list}>
+            {DIFF.map((d) => (
+              <li key={d.who} className={`${styles.diff} ${d.highlight ? styles.diffHl : ""}`}>
+                <strong>{d.who}</strong>
+                <span>{d.desc}</span>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      </main>
+
+      <SiteFooter />
     </div>
   );
 }

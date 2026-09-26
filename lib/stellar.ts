@@ -27,6 +27,10 @@ export async function sendTmxn(
   memo?: string
 ): Promise<string> {
   const distKeypair = Keypair.fromSecret(env.DISTRIBUTION_SECRET_KEY);
+  if (distKeypair.publicKey() !== env.DISTRIBUTION_PUBLIC_KEY) {
+    console.error("[stellar] DISTRIBUTION_SECRET_KEY no corresponde a DISTRIBUTION_PUBLIC_KEY");
+    throw new Error("El anchor de prueba está mal configurado (llave de distribución). Avisa al administrador.");
+  }
   const distAccount = await horizon.loadAccount(env.DISTRIBUTION_PUBLIC_KEY);
   const asset = tmxnAsset();
 

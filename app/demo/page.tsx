@@ -1,585 +1,515 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Keypair,
   Networks,
   TransactionBuilder,
   Operation,
   Asset,
-  Account,
+  Memo,
+  Horizon,
 } from "@stellar/stellar-sdk";
-import Link from "next/link";
 import styles from "./page.module.css";
+import { SiteHeader, SiteFooter } from "../components/SiteHeader";
+import { ui, Icon, Spinner, StatusBadge, SandboxNotice, CopyButton, EmptyState, useToasts } from "../components/ui";
+import { fetchJson, errorText, horizonError } from "@/lib/client";
+import { truncateMiddle, formatAmount, EXPLORER_TX, EXPLORER_ACCOUNT } from "@/lib/format";
+import { PENDING_STATUSES } from "@/lib/status";
 
-const TESTNET = "https://horizon-testnet.stellar.org";
+const HORIZON = "https://horizon-testnet.stellar.org";
+const ASSET_CODE = (process.env.NEXT_PUBLIC_ASSET_CODE ?? "TMXN").trim();
+const ISSUER = (process.env.NEXT_PUBLIC_ISSUER_PUBLIC_KEY ?? "").trim();
 
 interface Tx {
   id: string;
-  kind: string;
+  kind: "deposit" | "withdrawal";
   status: string;
-  amount_in?: string;
-  amount_out?: string;
+  amount_in?: string | null;
+  amount_out?: string | null;
   started_at: string;
-  stellar_transaction_id?: string;
+  stellar_transaction_id?: string | null;
 }
 
-interface AccountInfo {
-  publicKey: string;
-  secretKey: string;
-  xlmBalance?: string;
-  tmxnBalance?: string;
+interface Balances { xlm: string | null; tmxn: string | null; exists: boolean; trust: boolean }
+
+type Busy = "faucet" | "trust" | "login" | "deposit" | "withdraw" | `pay:${string}` | null;
+
+function jwtValid(token: string | null): token is string {
+  if (!token) return false;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return typeof payload.exp === "number" && payload.exp * 1000 > Date.now() + 60_000;
+  } catch {
+    return false;
+  }
 }
 
-const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  incomplete:                  { bg: "rgba(139,155,181,0.1)",  color: "#8B9BB5",  label: "Incompleto" },
-  pending_user_transfer_start: { bg: "rgba(212,168,67,0.15)",  color: "#D4A843",  label: "En proceso" },
-  pending_anchor:              { bg: "rgba(79,158,248,0.15)",   color: "#7DBAFF",  label: "Procesando" },
-  completed:                   { bg: "rgba(47,191,113,0.15)",   color: "#4CD68E",  label: "Completado" },
-  error:                       { bg: "rgba(224,82,82,0.12)",    color: "#F07070",  label: "Error" },
-  expired:                     { bg: "rgba(224,82,82,0.12)",    color: "#F07070",  label: "Expirado" },
-};
+function store(key: string, value?: string | null) {
+  try {
+    if (value === undefined) return sessionStorage.getItem(key);
+    if (value === null) sessionStorage.removeItem(key);
+    else sessionStorage.setItem(key, value);
+  } catch { /* almacenamiento bloqueado: la demo sigue funcionando en memoria */ }
+  return null;
+}
 
 export default function DemoPage() {
-  const ASSET_CODE = process.env.NEXT_PUBLIC_ASSET_CODE ?? "TMXN";
-  const ISSUER = process.env.NEXT_PUBLIC_ISSUER_PUBLIC_KEY ?? "";
-  const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "";
-
-  const [account, setAccount] = useState<AccountInfo | null>(null);
+  const toast = useToasts();
+  const [kp, setKp] = useState<Keypair | null>(null);
+  const [bal, setBal] = useState<Balances | null>(null);
+  const [balLoading, setBalLoading] = useState(true);
   const [jwt, setJwt] = useState("");
-  const [txs, setTxs] = useState<Tx[]>([]);
-  const [loading, setLoading] = useState<Record<string, boolean>>({});
-  const [msg, setMsg] = useState("");
-  const [err, setErr] = useState("");
-  const [hasTrustline, setHasTrustline] = useState(false);
-  const [balanceLoading, setBalanceLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [txs, setTxs] = useState<Tx[] | null>(null);
+  const [txLoading, setTxLoading] = useState(false);
+  const [txError, setTxError] = useState("");
+  const [busy, setBusy] = useState<Busy>(null);
+  const busyRef = useRef<Busy>(null);
+
+  const run = async (key: NonNullable<Busy>, fn: () => Promise<void>) => {
+    if (busyRef.current) return;
+    busyRef.current = key;
+    setBusy(key);
+    try { await fn(); }
+    catch (e) { toast.error((e as Error).message || "Algo salió mal. Intenta de nuevo."); }
+    finally { busyRef.current = null; setBusy(null); }
+  };
 
   useEffect(() => {
-    let kp: Keypair;
-    const stored = sessionStorage.getItem("sp_keypair");
-    if (stored) {
-      try { kp = Keypair.fromSecret(stored); }
-      catch { kp = Keypair.random(); sessionStorage.setItem("sp_keypair", kp.secret()); }
-    } else {
-      kp = Keypair.random();
-      sessionStorage.setItem("sp_keypair", kp.secret());
-    }
-    setAccount({ publicKey: kp.publicKey(), secretKey: kp.secret() });
+    let k: Keypair;
+    const saved = store("sp_keypair");
+    try { k = saved ? Keypair.fromSecret(saved) : Keypair.random(); }
+    catch { k = Keypair.random(); }
+    store("sp_keypair", k.secret());
+    setKp(k);
+    const savedJwt = store("sp_jwt");
+    if (jwtValid(savedJwt)) setJwt(savedJwt);
   }, []);
 
   const loadBalances = useCallback(async () => {
-    if (!account) return;
-    setBalanceLoading(true);
+    if (!kp) return;
+    setBalLoading(true);
     try {
-      const res = await fetch(`${TESTNET}/accounts/${account.publicKey}`);
-      if (!res.ok) {
-        setAccount((a) => a ? { ...a, xlmBalance: "0", tmxnBalance: "—" } : a);
-        setBalanceLoading(false);
+      const r = await fetchJson<{ balances: { asset_type: string; asset_code?: string; asset_issuer?: string; balance: string }[] }>(
+        `${HORIZON}/accounts/${kp.publicKey()}`
+      );
+      if (r.status === 404) { setBal({ xlm: null, tmxn: null, exists: false, trust: false }); return; }
+      if (!r.ok) throw new Error("No pudimos leer tu saldo en Horizon.");
+      const native = r.data.balances.find((b) => b.asset_type === "native");
+      const token = r.data.balances.find((b) => b.asset_code === ASSET_CODE && b.asset_issuer === ISSUER);
+      setBal({ xlm: native?.balance ?? "0", tmxn: token?.balance ?? null, exists: true, trust: !!token });
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBalLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kp]);
+
+  const loadTxs = useCallback(async (token: string, quiet = false) => {
+    if (!quiet) setTxLoading(true);
+    try {
+      const r = await fetchJson<{ transactions: Tx[] }>("/sep24/transactions", { headers: { Authorization: `Bearer ${token}` } });
+      if (r.status === 403) {
+        setJwt(""); store("sp_jwt", null);
+        toast.error("Tu sesión SEP-10 expiró. Vuelve a iniciar sesión.");
         return;
       }
-      const data = await res.json();
-      let xlm = "0", tmxn = "—";
-      let trust = false;
-      for (const b of data.balances) {
-        if (b.asset_type === "native") xlm = parseFloat(b.balance).toFixed(2);
-        if (b.asset_code === ASSET_CODE && b.asset_issuer === ISSUER) {
-          tmxn = parseFloat(b.balance).toFixed(2);
-          trust = true;
+      if (!r.ok) throw new Error(errorText(r, "No pudimos cargar el historial"));
+      const list = r.data.transactions ?? [];
+      // Pull-on-read: consultar cada operación pendiente hace que el anchor detecte pagos en Stellar.
+      const pending = list.filter((t) => PENDING_STATUSES.includes(t.status)).slice(0, 5);
+      if (pending.length) {
+        const fresh = await Promise.all(
+          pending.map((t) =>
+            fetchJson<{ transaction: Tx }>(`/sep24/transaction?id=${t.id}`, { headers: { Authorization: `Bearer ${token}` } })
+              .then((x) => (x.ok ? x.data.transaction : null))
+              .catch(() => null)
+          )
+        );
+        for (const f of fresh) {
+          if (!f) continue;
+          const i = list.findIndex((t) => t.id === f.id);
+          if (i >= 0) {
+            if (list[i].status !== "completed" && f.status === "completed") {
+              toast.success(f.kind === "deposit" ? `Depósito acreditado en tu wallet.` : `Retiro completado.`);
+              loadBalances();
+            }
+            list[i] = { ...list[i], status: f.status, stellar_transaction_id: f.stellar_transaction_id ?? list[i].stellar_transaction_id };
+          }
         }
       }
-      setHasTrustline(trust);
-      setAccount((a) => a ? { ...a, xlmBalance: xlm, tmxnBalance: tmxn } : a);
-    } catch {
-      setAccount((a) => a ? { ...a, xlmBalance: "—" } : a);
+      setTxs(list);
+      setTxError("");
+    } catch (e) {
+      if (!quiet) setTxError((e as Error).message);
+      setTxs((prev) => prev ?? []);
+    } finally {
+      if (!quiet) setTxLoading(false);
     }
-    setBalanceLoading(false);
-  }, [account?.publicKey, ASSET_CODE, ISSUER]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadBalances]);
 
+  useEffect(() => { if (kp) loadBalances(); }, [kp, loadBalances]);
+  useEffect(() => { if (jwt) loadTxs(jwt); }, [jwt, loadTxs]);
+
+  // Al volver de la pestaña/ventana del anchor, refresca estado y saldos.
   useEffect(() => {
-    if (account?.publicKey) loadBalances();
-  }, [account?.publicKey]);
+    if (!jwt) return;
+    const onVisible = () => {
+      if (document.visibilityState === "visible") { loadTxs(jwt, true); loadBalances(); }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+  }, [jwt, loadTxs, loadBalances]);
 
-  function notify(message: string, isError = false) {
-    if (isError) { setErr(message); setMsg(""); }
-    else { setMsg(message); setErr(""); }
-    setTimeout(() => { setMsg(""); setErr(""); }, 6000);
-  }
+  // Mientras haya operaciones en curso, sondea cada 6 s.
+  const hasPending = !!txs?.some((t) => PENDING_STATUSES.includes(t.status));
+  useEffect(() => {
+    if (!jwt || !hasPending) return;
+    const iv = setInterval(() => loadTxs(jwt, true), 6000);
+    return () => clearInterval(iv);
+  }, [jwt, hasPending, loadTxs]);
 
-  async function handleFaucet() {
-    if (!account) return;
-    setLoading((l) => ({ ...l, faucet: true }));
-    try {
-      const res = await fetch("/api/faucet", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ account: account.publicKey }),
-      });
-      const data = await res.json();
-      if (!res.ok) { notify(data.error, true); return; }
-      notify("Cuenta fondeada con 10,000 XLM en testnet");
-      await loadBalances();
-    } catch (e: unknown) { notify((e as Error).message, true); }
-    finally { setLoading((l) => ({ ...l, faucet: false })); }
-  }
-
-  async function handleTrustline() {
-    if (!account || !ISSUER) return;
-    setLoading((l) => ({ ...l, trust: true }));
-    try {
-      const kp = Keypair.fromSecret(account.secretKey);
-      const accRes = await fetch(`${TESTNET}/accounts/${account.publicKey}`);
-      if (!accRes.ok) { notify("Fondea la cuenta primero con el faucet", true); return; }
-      const accData = await accRes.json();
-      const stellarAccount = new Account(accData.id, accData.sequence);
-      const asset = new Asset(ASSET_CODE, ISSUER);
-      const tx = new TransactionBuilder(stellarAccount, {
-        fee: "100000",
-        networkPassphrase: Networks.TESTNET,
-      })
-        .addOperation(Operation.changeTrust({ asset }))
-        .setTimeout(30)
-        .build();
-      tx.sign(kp);
-      const res = await fetch(`${TESTNET}/transactions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `tx=${encodeURIComponent(tx.toEnvelope().toXDR("base64"))}`,
-      });
-      const result = await res.json();
-      if (!res.ok) { notify(result.detail ?? "Error al agregar trustline", true); return; }
-      notify(`Trustline de ${ASSET_CODE} lista`);
-      setHasTrustline(true);
-      await loadBalances();
-    } catch (e: unknown) { notify((e as Error).message, true); }
-    finally { setLoading((l) => ({ ...l, trust: false })); }
-  }
-
-  async function handleLogin() {
-    if (!account) return;
-    setLoading((l) => ({ ...l, login: true }));
-    try {
-      const kp = Keypair.fromSecret(account.secretKey);
-      const chRes = await fetch(`/auth?account=${account.publicKey}`);
-      const ch = await chRes.json();
-      if (!chRes.ok) { notify(ch.error, true); return; }
-      const tx = TransactionBuilder.fromXDR(ch.transaction, ch.network_passphrase);
-      tx.sign(kp);
-      const signed = tx.toEnvelope().toXDR("base64");
-      const authRes = await fetch("/auth", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transaction: signed, network_passphrase: ch.network_passphrase }),
-      });
-      const authData = await authRes.json();
-      if (!authRes.ok) { notify(authData.error, true); return; }
-      setJwt(authData.token);
-      notify("Sesión SEP-10 activa");
-      await loadTxs(authData.token);
-    } catch (e: unknown) { notify((e as Error).message, true); }
-    finally { setLoading((l) => ({ ...l, login: false })); }
-  }
-
-  async function loadTxs(token: string) {
-    try {
-      const res = await fetch("/sep24/transactions", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (res.ok) setTxs(data.transactions ?? []);
-    } catch { }
-  }
-
-  function openInteractive(kind: "deposit" | "withdraw") {
-    if (!APP_URL || !jwt) return;
-    const url = `${APP_URL}/sep24/transactions/${kind}/interactive`;
-    fetch(url, {
+  const handleFaucet = () => run("faucet", async () => {
+    if (!kp) return;
+    const r = await fetchJson("/api/faucet", {
       method: "POST",
-      headers: { Authorization: `Bearer ${jwt}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ asset_code: ASSET_CODE }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.url) {
-          window.open(data.url, "sep24_popup", "width=480,height=700");
-          setTimeout(() => loadTxs(jwt), 3000);
-        } else {
-          notify(data.error ?? "No se recibió URL", true);
-        }
-      })
-      .catch((e: Error) => notify(e.message, true));
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ account: kp.publicKey() }),
+    }, 30000);
+    if (!r.ok) throw new Error(errorText(r, "El faucet no respondió"));
+    toast.success("Cuenta fondeada con 10,000 XLM de testnet.");
+    await loadBalances();
+  });
+
+  async function submit(tx: ReturnType<TransactionBuilder["build"]>, fallback: string) {
+    const r = await fetchJson<{ hash: string }>(`${HORIZON}/transactions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `tx=${encodeURIComponent(tx.toEnvelope().toXDR("base64"))}`,
+    }, 45000);
+    if (!r.ok) throw new Error(horizonError(r.data as never, fallback));
+    return r.data.hash;
   }
 
-  const isFunded = !!(account?.xlmBalance && account.xlmBalance !== "0" && account.xlmBalance !== "—");
-  const currentStep = jwt ? 4 : hasTrustline ? 3 : isFunded ? 2 : 1;
-  const shortKey = account
-    ? `${account.publicKey.slice(0, 6)} ··· ${account.publicKey.slice(-6)}`
-    : "···";
+  const handleTrustline = () => run("trust", async () => {
+    if (!kp) return;
+    if (!ISSUER) throw new Error("La demo no tiene configurado el emisor del token.");
+    const account = await new Horizon.Server(HORIZON).loadAccount(kp.publicKey()).catch(() => {
+      throw new Error("Tu cuenta aún no existe en testnet. Usa primero el faucet.");
+    });
+    const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: Networks.TESTNET })
+      .addOperation(Operation.changeTrust({ asset: new Asset(ASSET_CODE, ISSUER) }))
+      .setTimeout(60)
+      .build();
+    tx.sign(kp);
+    await submit(tx, "No se pudo agregar la trustline.");
+    toast.success(`Trustline de ${ASSET_CODE} lista.`);
+    await loadBalances();
+  });
+
+  const handleLogin = () => run("login", async () => {
+    if (!kp) return;
+    const ch = await fetchJson<{ transaction: string; network_passphrase: string }>(`/auth?account=${kp.publicKey()}`);
+    if (!ch.ok) throw new Error(errorText(ch, "No se pudo obtener el challenge SEP-10"));
+    const tx = TransactionBuilder.fromXDR(ch.data.transaction, ch.data.network_passphrase);
+    tx.sign(kp);
+    const auth = await fetchJson<{ token: string }>("/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ transaction: tx.toEnvelope().toXDR("base64"), network_passphrase: ch.data.network_passphrase }),
+    });
+    if (!auth.ok || !auth.data.token) throw new Error(errorText(auth, "El anchor rechazó la firma"));
+    setJwt(auth.data.token);
+    store("sp_jwt", auth.data.token);
+    toast.success("Sesión SEP-10 iniciada.");
+  });
+
+  const openInteractive = (kind: "deposit" | "withdraw") => {
+    if (busyRef.current || !jwt) return;
+    // La ventana se abre dentro del gesto del usuario; si se abre después del fetch, Safari/Chrome móvil la bloquean.
+    const isNarrow = window.matchMedia("(max-width: 720px)").matches;
+    const win = window.open("", "sep24_popup", isNarrow ? undefined : "width=480,height=760");
+    if (win) {
+      try { win.document.title = "SEPuente · cargando…"; } catch { /* otra origin */ }
+    }
+    run(kind, async () => {
+      const r = await fetchJson<{ url: string }>(`/sep24/transactions/${kind}/interactive`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${jwt}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ asset_code: ASSET_CODE }),
+      });
+      if (!r.ok || !r.data.url) {
+        win?.close();
+        if (r.status === 403) { setJwt(""); store("sp_jwt", null); }
+        throw new Error(errorText(r, "El anchor no devolvió la URL interactiva"));
+      }
+      // Misma origin: usa la ruta relativa para que funcione también en previews y localhost.
+      const u = new URL(r.data.url);
+      const target = `/sep24/interactive${u.search}`;
+      if (win && !win.closed) win.location.href = target;
+      else window.location.href = target;
+      loadTxs(jwt, true);
+    });
+  };
+
+  const payWithdrawal = (tx: Tx) => run(`pay:${tx.id}`, async () => {
+    if (!kp) return;
+    const info = await fetchJson<{ transaction: { withdraw_anchor_account: string | null; withdraw_memo: string | null; withdraw_memo_type: string | null; amount_in: string | null } }>(
+      `/sep24/transaction?id=${tx.id}`, { headers: { Authorization: `Bearer ${jwt}` } }
+    );
+    if (!info.ok) throw new Error(errorText(info, "No pudimos leer el retiro"));
+    const { withdraw_anchor_account: dest, withdraw_memo: memo, withdraw_memo_type: memoType, amount_in } = info.data.transaction;
+    if (!dest || !memo || !amount_in) throw new Error("Este retiro aún no tiene instrucciones de pago.");
+    const amount = parseFloat(amount_in).toFixed(7);
+    if (bal?.tmxn != null && parseFloat(bal.tmxn) < parseFloat(amount)) {
+      throw new Error(`Necesitas ${formatAmount(amount)} ${ASSET_CODE} y tienes ${formatAmount(bal.tmxn)}.`);
+    }
+    const account = await new Horizon.Server(HORIZON).loadAccount(kp.publicKey());
+    const built = new TransactionBuilder(account, { fee: "100000", networkPassphrase: Networks.TESTNET })
+      .addOperation(Operation.payment({ destination: dest, asset: new Asset(ASSET_CODE, ISSUER), amount }))
+      .addMemo(memoType === "id" ? Memo.id(memo) : memoType === "hash" ? Memo.hash(memo) : Memo.text(memo))
+      .setTimeout(60)
+      .build();
+    built.sign(kp);
+    await submit(built, "No se pudo enviar el pago del retiro.");
+    toast.success(`Enviaste ${formatAmount(amount)} ${ASSET_CODE} al anchor. Confirmando…`);
+    await loadBalances();
+    await loadTxs(jwt, true);
+  });
+
+  const logout = () => { setJwt(""); store("sp_jwt", null); setTxs(null); };
+
+  const funded = !!bal?.exists;
+  const trusted = !!bal?.trust;
+  const step = jwt ? 4 : trusted ? 3 : funded ? 2 : 1;
+  const pk = kp?.publicKey() ?? "";
+
+  const steps = [
+    {
+      n: 1, title: "Fondear cuenta", desc: "Obtén XLM de testnet para pagar comisiones de red.",
+      done: funded, action: handleFaucet, cta: "Usar faucet", busyLabel: "Fondeando…", key: "faucet" as const,
+    },
+    {
+      n: 2, title: `Agregar trustline ${ASSET_CODE}`, desc: "Firma changeTrust para poder recibir el token de pesos.",
+      done: trusted, action: handleTrustline, cta: "Firmar trustline", busyLabel: "Firmando…", key: "trust" as const,
+    },
+    {
+      n: 3, title: "Iniciar sesión SEP-10", desc: "Firma el challenge del anchor y obtén un JWT.",
+      done: !!jwt, action: handleLogin, cta: "Firmar y entrar", busyLabel: "Autenticando…", key: "login" as const,
+    },
+  ];
 
   return (
     <div className={styles.page}>
+      <SiteHeader badge="Testnet" />
 
-      <nav className={styles.nav}>
-        <Link href="/" className={styles.navBrand}>
-          <span className={styles.navSym}>⟴</span>
-          SEPuente
-        </Link>
-        <div className={styles.navPill}>
-          <span className={styles.navPillDot} />
-          Stellar Testnet · SEP-24
-        </div>
-        <div className={styles.navRight}>
-          <a href="/devs" className={styles.navLink}>Docs</a>
-          <a href="https://github.com/ALFA117/sepuente" target="_blank" rel="noreferrer" className={styles.navLink}>GitHub</a>
-        </div>
-      </nav>
-
-      <section className={styles.hero}>
-        <div className={styles.heroGlow} />
-        <div className={styles.heroContent}>
-          <div className={styles.heroBadge}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-            </svg>
-            Wallet Demo — Flujo SEP-24 completo
-          </div>
-          <h1 className={styles.heroTitle}>
-            De pesos a Stellar<br />
-            <span className={styles.heroAccent}>sin intermediarios</span>
-          </h1>
-          <p className={styles.heroSub}>
-            Conecta, firma y opera con el anchor SEP-24 no custodial para el peso mexicano.
+      <main id="main" className={styles.main}>
+        <section className={styles.intro}>
+          <p className={ui.eyebrow}>Wallet de prueba · SEP-24</p>
+          <h1 className={styles.title}>De pesos a Stellar, paso a paso</h1>
+          <p className={styles.lead}>
+            Esta página actúa como una wallet Stellar: genera una llave en tu navegador y habla con el anchor SEPuente por los protocolos oficiales.
           </p>
-        </div>
-      </section>
-
-      <main className={styles.main}>
-
-        <div className={styles.stepsRow}>
-          {[
-            { n: 1, label: "Fondear",    sub: "Faucet XLM" },
-            { n: 2, label: "Trustline",  sub: ASSET_CODE },
-            { n: 3, label: "Autenticar", sub: "SEP-10" },
-            { n: 4, label: "Operar",     sub: "SEP-24" },
-          ].map((s, i, arr) => {
-            const done = currentStep > s.n;
-            const active = currentStep === s.n;
-            return (
-              <div key={s.n} className={styles.stepItem}>
-                <div className={`${styles.stepBubble} ${done ? styles.sDone : active ? styles.sActive : styles.sIdle}`}>
-                  {done
-                    ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-                    : <span>{s.n}</span>
-                  }
-                </div>
-                <div className={styles.stepTexts}>
-                  <span className={`${styles.stepLbl} ${done ? styles.sLblDone : active ? styles.sLblActive : styles.sLblIdle}`}>{s.label}</span>
-                  <span className={styles.stepSub}>{s.sub}</span>
-                </div>
-                {i < arr.length - 1 && <div className={`${styles.stepLine} ${done ? styles.stepLineDone : ""}`} />}
-              </div>
-            );
-          })}
-        </div>
-
-        <div className={styles.twoCol}>
-
-          <div className={styles.walletCard}>
-            <div className={styles.cardShine} />
-            <div className={styles.cardTop}>
-              <span className={styles.cardLogo}>⟴</span>
-              <div className={styles.cardChipGrid}>
-                <div /><div /><div /><div />
-              </div>
-            </div>
-            <div className={styles.cardNetRow}>
-              <span className={styles.cardNetDot} />
-              Stellar Testnet
-            </div>
-            <div className={styles.cardKeyRow}>
-              <div className={styles.cardKey} title={account?.publicKey}>{shortKey}</div>
-              <button
-                className={styles.copyBtn}
-                disabled={!account}
-                aria-label="Copiar clave pública"
-                onClick={() => {
-                  if (!account) return;
-                  navigator.clipboard.writeText(account.publicKey).catch(() => {
-                    const el = document.createElement("textarea");
-                    el.value = account.publicKey;
-                    document.body.appendChild(el);
-                    el.select();
-                    document.execCommand("copy");
-                    document.body.removeChild(el);
-                  });
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 2000);
-                }}
-              >
-                {copied
-                  ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-                  : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                }
-              </button>
-            </div>
-            <div className={styles.cardBalances}>
-              <div className={styles.cardBal}>
-                <span className={styles.cardBalLabel}>XLM</span>
-                <span className={`${styles.cardBalVal} ${balanceLoading ? styles.skel : ""}`}>
-                  {balanceLoading ? "" : (account?.xlmBalance ?? "—")}
-                </span>
-              </div>
-              <div className={styles.cardBalDivider} />
-              <div className={styles.cardBal}>
-                <span className={styles.cardBalLabel}>{ASSET_CODE}</span>
-                <span className={`${styles.cardBalVal} ${balanceLoading ? styles.skel : ""}`}>
-                  {balanceLoading ? "" : (account?.tmxnBalance ?? "—")}
-                </span>
-              </div>
-            </div>
-            <div className={styles.cardBtns}>
-              <button
-                className={`${styles.cBtn} ${isFunded ? styles.cBtnGreenDone : styles.cBtnGold}`}
-                onClick={handleFaucet}
-                disabled={!!loading.faucet || isFunded}
-              >
-                {loading.faucet ? <span className={styles.spin} /> : isFunded ? <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg> : null}
-                {isFunded ? "Fondeado" : loading.faucet ? "Fondeando..." : "Faucet XLM"}
-              </button>
-              <button
-                className={`${styles.cBtn} ${hasTrustline ? styles.cBtnBlueDone : styles.cBtnBlue}`}
-                onClick={handleTrustline}
-                disabled={!!loading.trust || !isFunded || hasTrustline}
-              >
-                {loading.trust ? <span className={styles.spinBlue} /> : hasTrustline ? <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg> : null}
-                {hasTrustline ? `Trust ${ASSET_CODE}` : loading.trust ? "Procesando..." : `+ Trust ${ASSET_CODE}`}
-              </button>
-            </div>
-          </div>
-
-          <div className={styles.authCard}>
-            <div className={styles.authTop}>
-              <div className={styles.authIconBox}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-              </div>
-              <div className={styles.authTitles}>
-                <div className={styles.authTitle}>Autenticación SEP-10</div>
-                <div className={styles.authSubtitle}>Web Auth · Stellar</div>
-              </div>
-              <div className={`${styles.authPill} ${jwt ? styles.authPillOn : styles.authPillOff}`}>
-                <span className={`${styles.authPillDot} ${jwt ? styles.authPillDotOn : ""}`} />
-                {jwt ? "Activa" : "Sin sesión"}
-              </div>
-            </div>
-
-            <div className={styles.authMid}>
-              {jwt ? (
-                <div className={styles.jwtBlock}>
-                  <span className={styles.jwtLabel}>JWT</span>
-                  <span className={styles.jwtVal}>{jwt.slice(0, 36)}...</span>
-                </div>
-              ) : (
-                <p className={styles.authHint}>
-                  {hasTrustline
-                    ? "Tu cuenta está lista. Firma el challenge criptográfico para obtener acceso al protocolo."
-                    : isFunded
-                    ? "Agrega la trustline del token TMXN antes de autenticarte."
-                    : "Fondea la cuenta con XLM para comenzar."}
-                </p>
-              )}
-            </div>
-
-            <div className={styles.authBottom}>
-              {!jwt ? (
-                <button className={styles.authBtn} onClick={handleLogin} disabled={!!loading.login || !hasTrustline}>
-                  {loading.login
-                    ? <><span className={styles.spin} />Autenticando...</>
-                    : <>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>
-                        </svg>
-                        Iniciar sesión SEP-10
-                      </>
-                  }
-                </button>
-              ) : (
-                <div className={styles.authSuccess}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-                  Sesión autenticada · SEP-10
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <section className={styles.opsSection}>
-          {jwt ? (
-            <>
-              <div className={styles.opsSectionHead}>
-                <span className={styles.opsSectionTitle}>Operaciones SEP-24</span>
-                <span className={styles.opsSectionSub}>{ASSET_CODE} · Stellar Testnet</span>
-              </div>
-              <div className={styles.opsGrid}>
-                <button className={`${styles.opCard} ${styles.opDeposit}`} onClick={() => openInteractive("deposit")}>
-                  <div className={styles.opGlow} />
-                  <div className={styles.opIconWrap}>
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 3v13M5 14l7 7 7-7"/>
-                    </svg>
-                  </div>
-                  <div className={styles.opBody}>
-                    <div className={styles.opTitle}>Depositar</div>
-                    <div className={styles.opDesc}>Transfiere pesos MXN vía SPEI y recibe {ASSET_CODE} en tu wallet Stellar al instante.</div>
-                  </div>
-                  <div className={styles.opRoute}>
-                    <span>SPEI</span>
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    <span>{ASSET_CODE}</span>
-                  </div>
-                  <div className={styles.opArrow}>
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </div>
-                </button>
-
-                <button className={`${styles.opCard} ${styles.opWithdraw}`} onClick={() => openInteractive("withdraw")}>
-                  <div className={styles.opGlow} />
-                  <div className={styles.opIconWrap}>
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 21V8M5 10l7-7 7 7"/>
-                    </svg>
-                  </div>
-                  <div className={styles.opBody}>
-                    <div className={styles.opTitle}>Retirar</div>
-                    <div className={styles.opDesc}>Quema {ASSET_CODE} en Stellar y recibe pesos MXN directamente en tu cuenta SPEI.</div>
-                  </div>
-                  <div className={styles.opRoute}>
-                    <span>{ASSET_CODE}</span>
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    <span>SPEI</span>
-                  </div>
-                  <div className={styles.opArrow}>
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </div>
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className={styles.opsLocked}>
-              <div className={styles.opsLockedDecor} />
-              <div className={styles.opsLockedContent}>
-                <div className={styles.opsLockedIcon}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                  </svg>
-                </div>
-                <div className={styles.opsLockedTitle}>Operaciones SEP-24</div>
-                <div className={styles.opsLockedHint}>
-                  {4 - currentStep + 1 === 1 ? "Un paso más" : `${4 - currentStep + 1} pasos restantes`} para depositar o retirar pesos
-                </div>
-                <div className={styles.opsLockedBtns}>
-                  <div className={styles.opsGhostBtn}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v13M5 14l7 7 7-7"/></svg>
-                    Depositar
-                  </div>
-                  <div className={styles.opsGhostBtn}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21V8M5 10l7-7 7 7"/></svg>
-                    Retirar
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {msg && (
-            <div className={`${styles.toast} ${styles.toastOk}`} role="status" aria-live="polite">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-              {msg}
-            </div>
-          )}
-          {err && (
-            <div className={`${styles.toast} ${styles.toastErr}`} role="alert" aria-live="assertive">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-              {err}
-            </div>
-          )}
+          <SandboxNotice>
+            Stellar testnet: los XLM y {ASSET_CODE} no tienen valor. El SPEI es simulado; no envíes dinero real.
+          </SandboxNotice>
         </section>
 
-        {jwt && (
-          <section className={styles.histSection}>
-            <div className={styles.histHead}>
-              <span className={styles.histTitle}>Historial</span>
-              <button className={styles.histRefresh} onClick={() => loadTxs(jwt)}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
-                </svg>
-                Actualizar
+        <div className={styles.grid}>
+          {/* ── Wallet ── */}
+          <section className={`${ui.card} ${styles.wallet}`} aria-labelledby="wallet-title">
+            <div className={styles.walletHead}>
+              <h2 id="wallet-title" className={ui.cardTitle}>Tu wallet</h2>
+              <button type="button" className={`${ui.btn} ${ui.ghost} ${ui.btnSm}`} onClick={loadBalances} disabled={balLoading} aria-label="Actualizar saldos">
+                {balLoading ? <Spinner /> : Icon.refresh(16)}
+                <span className={styles.hideXs}>Actualizar</span>
               </button>
             </div>
 
-            {txs.length === 0 ? (
-              <div className={styles.histEmpty}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>
-                </svg>
-                <span>Sin transacciones — inicia un depósito o retiro</span>
+            <div className={styles.addrRow}>
+              <div className={styles.addrBlock}>
+                <span className={styles.addrLabel}>Dirección pública</span>
+                <a
+                  className={`addr ${styles.addr}`}
+                  href={pk ? `${EXPLORER_ACCOUNT}${pk}` : undefined}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={pk}
+                >
+                  {pk ? truncateMiddle(pk, 8, 8) : "Generando…"}
+                </a>
               </div>
-            ) : (
-              <div className={styles.histList}>
-                {txs.map((tx) => {
-                  const s = STATUS_STYLE[tx.status] ?? STATUS_STYLE.incomplete;
-                  return (
-                    <div key={tx.id} className={styles.histRow}>
-                      <div className={`${styles.histIcon} ${tx.kind === "deposit" ? styles.histD : styles.histW}`}>
-                        {tx.kind === "deposit"
-                          ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v13M5 14l7 7 7-7"/></svg>
-                          : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21V8M5 10l7-7 7 7"/></svg>
-                        }
-                      </div>
-                      <div className={styles.histInfo}>
-                        <span className={styles.histKind}>{tx.kind === "deposit" ? "Depósito" : "Retiro"}</span>
-                        <span className={styles.histDate}>{new Date(tx.started_at).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })}</span>
-                      </div>
-                      <div className={styles.histAmt}>
-                        {tx.amount_out ?? tx.amount_in ?? "—"}
-                        <span className={styles.histCur}>{tx.kind === "deposit" ? ASSET_CODE : "MXN"}</span>
-                      </div>
-                      <div className={styles.histStatus} style={{ background: s.bg, color: s.color }}>{s.label}</div>
-                      {tx.stellar_transaction_id
-                        ? <a href={`https://stellar.expert/explorer/testnet/tx/${tx.stellar_transaction_id}`} target="_blank" rel="noreferrer" className={styles.histLink}>
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-                            </svg>
-                          </a>
-                        : <div />
-                      }
+              {pk && <CopyButton value={pk} label="Dirección" />}
+            </div>
+
+            <div className={styles.balances}>
+              <div className={styles.balance}>
+                <span className={styles.balLabel}>XLM</span>
+                <span className={styles.balValue}>
+                  {balLoading && !bal ? <span className={ui.skeleton} /> : bal?.exists ? formatAmount(bal.xlm) : "0.00"}
+                </span>
+              </div>
+              <div className={styles.balance}>
+                <span className={styles.balLabel}>{ASSET_CODE}</span>
+                <span className={`${styles.balValue} ${styles.balGold}`}>
+                  {balLoading && !bal ? <span className={ui.skeleton} /> : bal?.trust ? formatAmount(bal.tmxn) : "—"}
+                </span>
+              </div>
+            </div>
+            <p className={styles.keyNote}>La llave privada vive solo en esta pestaña (sessionStorage). SEPuente nunca la recibe.</p>
+          </section>
+
+          {/* ── Pasos ── */}
+          <section className={`${ui.card} ${styles.stepsCard}`} aria-labelledby="steps-title">
+            <h2 id="steps-title" className={ui.cardTitle}>Prepárate en 3 pasos</h2>
+            <ol className={styles.steps}>
+              {steps.map((s) => {
+                const active = step === s.n;
+                const locked = step < s.n;
+                return (
+                  <li key={s.n} className={styles.step} data-state={s.done ? "done" : active ? "active" : "locked"}>
+                    <span className={styles.stepNum} aria-hidden="true">{s.done ? Icon.check(14) : s.n}</span>
+                    <div className={styles.stepBody}>
+                      <span className={styles.stepTitle}>{s.title}</span>
+                      <span className={styles.stepDesc}>{s.desc}</span>
+                      {active && !s.done && (
+                        <button
+                          type="button"
+                          className={`${ui.btn} ${ui.primary} ${styles.stepBtn}`}
+                          onClick={s.action}
+                          aria-busy={busy === s.key}
+                          disabled={!!busy || !kp || (balLoading && !bal)}
+                        >
+                          {busy === s.key ? <><Spinner />{s.busyLabel}</> : s.cta}
+                        </button>
+                      )}
                     </div>
-                  );
-                })}
+                    <span className="sr-only">{s.done ? "Completado" : locked ? "Pendiente" : "Paso actual"}</span>
+                  </li>
+                );
+              })}
+            </ol>
+            {jwt && (
+              <div className={styles.session}>
+                <span className={`${ui.badge} ${ui["tone-success"]}`}>Sesión SEP-10 activa</span>
+                <button type="button" className={ui.linkBtn} onClick={logout}>Cerrar sesión</button>
               </div>
             )}
           </section>
-        )}
-
-        <div className={styles.protoBar}>
-          {["SEP-1 stellar.toml", "SEP-10 Web Auth", "SEP-24 Hosted Transfers", "SEP-38 Anchor RFQ"].map((p) => (
-            <div key={p} className={styles.protoChip}>{p}</div>
-          ))}
         </div>
 
-        <footer className={styles.footer}>
-          <Link href="/" className={styles.footBrand}>⟴ SEPuente</Link>
-          <div className={styles.footLinks}>
-            <a href="/devs">Docs</a>
-            <span>·</span>
-            <a href="https://github.com/ALFA117/sepuente" target="_blank" rel="noreferrer">GitHub</a>
-            <span>·</span>
-            <a href="/pitch">Pitch</a>
+        {/* ── Operaciones ── */}
+        <section className={styles.ops} aria-labelledby="ops-title">
+          <div className={styles.sectionHead}>
+            <h2 id="ops-title" className={styles.h2}>Operar</h2>
+            {!jwt && <span className={styles.lockHint}>Completa los 3 pasos para desbloquear</span>}
           </div>
-          <span className={styles.footMono}>Stellar Testnet</span>
-        </footer>
+          <div className={styles.opsGrid}>
+            <button type="button" className={`${styles.op} ${styles.opDeposit}`} onClick={() => openInteractive("deposit")} disabled={!jwt || !!busy}>
+              <span className={styles.opIcon}>{busy === "deposit" ? <Spinner /> : Icon.down(22)}</span>
+              <span className={styles.opText}>
+                <span className={styles.opTitle}>Depositar</span>
+                <span className={styles.opDesc}>MXN por SPEI (simulado) → {ASSET_CODE} en tu wallet</span>
+              </span>
+              <span className={styles.opArrow}>{Icon.arrow(18)}</span>
+            </button>
+            <button type="button" className={`${styles.op} ${styles.opWithdraw}`} onClick={() => openInteractive("withdraw")} disabled={!jwt || !!busy}>
+              <span className={styles.opIcon}>{busy === "withdraw" ? <Spinner /> : Icon.up(22)}</span>
+              <span className={styles.opText}>
+                <span className={styles.opTitle}>Retirar</span>
+                <span className={styles.opDesc}>{ASSET_CODE} al anchor → MXN a tu CLABE (simulado)</span>
+              </span>
+              <span className={styles.opArrow}>{Icon.arrow(18)}</span>
+            </button>
+          </div>
+        </section>
 
+        {/* ── Historial ── */}
+        {jwt && (
+          <section className={`${ui.card} ${styles.history}`} aria-labelledby="hist-title">
+            <div className={styles.walletHead}>
+              <h2 id="hist-title" className={ui.cardTitle}>Historial</h2>
+              <button type="button" className={`${ui.btn} ${ui.ghost} ${ui.btnSm}`} onClick={() => loadTxs(jwt)} disabled={txLoading} aria-label="Actualizar historial">
+                {txLoading ? <Spinner /> : Icon.refresh(16)}
+                <span className={styles.hideXs}>Actualizar</span>
+              </button>
+            </div>
+
+            {txError && (
+              <div className={ui.alert} role="alert">
+                {Icon.alert(16)}
+                <span>{txError} <button type="button" className={ui.linkBtn} onClick={() => loadTxs(jwt)}>Reintentar</button></span>
+              </div>
+            )}
+            {txs === null ? (
+              <ul className={styles.txList} aria-busy="true">
+                {[0, 1].map((i) => (
+                  <li key={i} className={styles.txRow}>
+                    <span className={`${ui.skeleton} ${styles.skelIcon}`} />
+                    <span className={styles.txMain}><span className={ui.skeleton} style={{ width: "60%" }} /><span className={ui.skeleton} style={{ width: "40%" }} /></span>
+                  </li>
+                ))}
+              </ul>
+            ) : txs.length === 0 ? (
+              txError ? null : <EmptyState title="Aún no hay operaciones" text="Cuando deposites o retires, verás aquí cada movimiento con su estado en tiempo real." />
+            ) : (
+              <ul className={styles.txList}>
+                {txs.map((tx) => {
+                  const isDep = tx.kind === "deposit";
+                  const amount = tx.amount_out ?? tx.amount_in;
+                  const unit = tx.amount_out ? (isDep ? ASSET_CODE : "MXN") : (isDep ? "MXN" : ASSET_CODE);
+                  const needsPay = !isDep && tx.status === "pending_user_transfer_start";
+                  return (
+                    <li key={tx.id} className={styles.txRow}>
+                      <span className={`${styles.txIcon} ${isDep ? styles.txDep : styles.txWd}`} aria-hidden="true">
+                        {isDep ? Icon.down(16) : Icon.up(16)}
+                      </span>
+                      <div className={styles.txMain}>
+                        <div className={styles.txTop}>
+                          <span className={styles.txKind}>{isDep ? "Depósito" : "Retiro"}</span>
+                          <span className={styles.txAmt}>{amount ? `${formatAmount(amount)} ${unit}` : "—"}</span>
+                        </div>
+                        <div className={styles.txBottom}>
+                          <StatusBadge status={tx.status} />
+                          <time className={styles.txDate} dateTime={tx.started_at}>
+                            {new Date(tx.started_at).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })}
+                          </time>
+                        </div>
+                        {needsPay && (
+                          <button
+                            type="button"
+                            className={`${ui.btn} ${ui.primary} ${ui.btnSm} ${styles.payBtn}`}
+                            onClick={() => payWithdrawal(tx)}
+                            aria-busy={busy === `pay:${tx.id}`}
+                            disabled={!!busy}
+                          >
+                            {busy === `pay:${tx.id}` ? <><Spinner />Enviando…</> : <>Enviar {tx.amount_in ? formatAmount(tx.amount_in) : ""} {ASSET_CODE} al anchor</>}
+                          </button>
+                        )}
+                        {tx.stellar_transaction_id && (
+                          <a className={ui.extLink} href={`${EXPLORER_TX}${tx.stellar_transaction_id}`} target="_blank" rel="noreferrer">
+                            <span className="addr">{truncateMiddle(tx.stellar_transaction_id, 6, 6)}</span>
+                            {Icon.external(14)}
+                            <span className="sr-only">Ver en stellar.expert</span>
+                          </a>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+        )}
       </main>
+
+      <SiteFooter />
+      {toast.view}
     </div>
   );
 }

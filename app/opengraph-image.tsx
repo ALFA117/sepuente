@@ -5,6 +5,9 @@ export const alt = "SEPuente – Anchor SEP-24 para pesos mexicanos en Stellar";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+// Satori no resuelve variables CSS: espejo de los tokens de globals.css
+const C = { bg: "#0A1A33", gold: "#C9A227", cream: "#F5F1E6", muted: "#B8C2D6", success: "#4FB280", info: "#8FB3E0" };
+
 export default function OgImage() {
   return new ImageResponse(
     (
@@ -12,7 +15,7 @@ export default function OgImage() {
         style={{
           width: 1200,
           height: 630,
-          background: "#0A1A33",
+          background: C.bg,
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-start",
@@ -32,13 +35,13 @@ export default function OgImage() {
         <div style={{
           position: "absolute", bottom: -100, right: -80,
           width: 450, height: 500, borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(125,186,255,0.1) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(143,179,224,0.1) 0%, transparent 70%)",
         }}/>
 
         {/* Grid lines */}
         <div style={{
           position: "absolute", inset: 0,
-          backgroundImage: "linear-gradient(rgba(139,155,181,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(139,155,181,0.04) 1px, transparent 1px)",
+          backgroundImage: "linear-gradient(rgba(184,194,214,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(184,194,214,0.04) 1px, transparent 1px)",
           backgroundSize: "48px 48px",
           display: "flex",
         }}/>
@@ -56,7 +59,7 @@ export default function OgImage() {
           }}>
             <div style={{
               width: 7, height: 7, borderRadius: "50%",
-              background: "#4CD68E",
+              background: C.success,
             }}/>
             <span style={{
               fontSize: 14, fontWeight: 700, letterSpacing: "0.1em",
@@ -68,26 +71,18 @@ export default function OgImage() {
 
           {/* Symbol + Title row */}
           <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 20 }}>
-            <div style={{
-              width: 80, height: 80, borderRadius: 20,
-              background: "rgba(201,162,39,0.12)",
-              border: "1.5px solid rgba(201,162,39,0.35)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 26, fontWeight: 900, color: "#C9A227",
-              letterSpacing: "-0.04em",
-            }}>SP</div>
             <span style={{
-              fontSize: 80, fontWeight: 900, letterSpacing: "-0.05em",
-              color: "#F5F1E6", lineHeight: 1,
-            }}>SEPuente</span>
+              fontSize: 88, fontWeight: 700, letterSpacing: "-0.02em",
+              color: C.cream, lineHeight: 1, fontFamily: "Georgia, serif", display: "flex",
+            }}><span style={{ color: C.gold }}>SEP</span>uente</span>
           </div>
 
           {/* Tagline */}
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <span style={{ fontSize: 26, color: "#8B9BB5", lineHeight: 1.4, maxWidth: 620 }}>
+            <span style={{ fontSize: 26, color: C.muted, lineHeight: 1.4, maxWidth: 620 }}>
               Gateway open source y no custodial para pesos mexicanos en Stellar.
             </span>
-            <span style={{ fontSize: 22, color: "#C9A227", fontWeight: 700, letterSpacing: "0.02em" }}>
+            <span style={{ fontSize: 22, color: C.gold, fontWeight: 700, letterSpacing: "0.02em" }}>
               SEP-1 · SEP-10 · SEP-24 · SEP-38
             </span>
           </div>
@@ -102,8 +97,8 @@ export default function OgImage() {
               { num: "MIT", label: "Licencia" },
             ].map(s => (
               <div key={s.label} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <span style={{ fontSize: 32, fontWeight: 800, color: "#C9A227" }}>{s.num}</span>
-                <span style={{ fontSize: 14, color: "rgba(139,155,181,0.6)", letterSpacing: "0.06em", textTransform: "uppercase" }}>{s.label}</span>
+                <span style={{ fontSize: 32, fontWeight: 800, color: C.gold }}>{s.num}</span>
+                <span style={{ fontSize: 14, color: "rgba(184,194,214,0.6)", letterSpacing: "0.06em", textTransform: "uppercase" }}>{s.label}</span>
               </div>
             ))}
           </div>
@@ -116,10 +111,10 @@ export default function OgImage() {
           display: "flex", flexDirection: "column", gap: 12,
         }}>
           {[
-            { label: "Wallet", color: "#7DBAFF" },
-            { label: "SEPuente Anchor", color: "#C9A227" },
-            { label: "Stellar", color: "#4CD68E" },
-            { label: "SPEI / MXN", color: "#8B9BB5" },
+            { label: "Wallet", color: C.info },
+            { label: "SEPuente Anchor", color: C.gold },
+            { label: "Stellar", color: C.success },
+            { label: "SPEI / MXN", color: C.muted },
           ].map((n, i) => (
             <div key={n.label} style={{
               display: "flex", alignItems: "center", gap: 10,
@@ -136,7 +131,7 @@ export default function OgImage() {
         {/* URL watermark */}
         <div style={{
           position: "absolute", bottom: 40, right: 100,
-          fontSize: 16, color: "rgba(139,155,181,0.3)",
+          fontSize: 16, color: "rgba(184,194,214,0.3)",
           fontFamily: "monospace", letterSpacing: "0.04em",
         }}>
           sepuente.vercel.app
