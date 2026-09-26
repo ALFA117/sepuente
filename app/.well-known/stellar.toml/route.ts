@@ -52,6 +52,13 @@ ORG_NAME = "SEPuente"
 ORG_URL = "${appUrl}"
 ORG_DESCRIPTION = "Open-source non-custodial SEP-24 anchor adapter for Mexican peso on-ramps"
 ORG_GITHUB = "https://github.com/ALFA117/sepuente"
+ORG_SUPPORT_EMAIL = "sepuente@proton.me"
+ORG_LICENSE_TYPE = "MIT"
+
+[[PRINCIPALS]]
+name = "SEPuente"
+github = "ALFA117"
+roles = ["admin", "technical"]
 
 ${currencies}
 `.trimStart();

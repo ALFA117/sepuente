@@ -83,7 +83,7 @@ export default function LandingPage() {
 
       {/* ── FEATURES ── */}
       <section className={styles.features}>
-        <div className={styles.sectionHeader}>
+        <div className={styles.sectionHeader} data-sr>
           <div className={styles.sectionEyebrow}>Protocolo</div>
           <h2 className={styles.sectionTitle}>
             Infraestructura abierta<br/>para el peso en Stellar
@@ -92,7 +92,7 @@ export default function LandingPage() {
 
         <div className={styles.featureGrid}>
 
-          <div className={styles.featureCard}>
+          <div className={styles.featureCard} data-sr>
             <div className={`${styles.fIcon} ${styles.fIconGold}`}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2"/>
@@ -160,10 +160,10 @@ export default function LandingPage() {
       {/* ── HOW IT WORKS ── */}
       <section className={styles.flow}>
         <div className={styles.flowInner}>
-          <div className={styles.sectionEyebrow}>Flujo completo</div>
-          <h2 className={styles.sectionTitle}>De pesos a Stellar en 4 pasos</h2>
+          <div className={styles.sectionEyebrow} data-sr>Flujo completo</div>
+          <h2 className={styles.sectionTitle} data-sr="delay-1">De pesos a Stellar en 4 pasos</h2>
 
-          <div className={styles.flowSteps}>
+          <div className={styles.flowSteps} data-sr="delay-2">
             <div className={styles.flowStep}>
               <div className={styles.flowStepNum}>01</div>
               <div className={styles.flowStepBody}>
@@ -214,8 +214,8 @@ export default function LandingPage() {
       {/* ── ARCHITECTURE DIAGRAM ── */}
       <section className={styles.archSection}>
         <div className={styles.archInner}>
-          <div className={styles.sectionEyebrow}>Arquitectura</div>
-          <h2 className={styles.sectionTitle}>Cómo fluye el protocolo</h2>
+          <div className={styles.sectionEyebrow} data-sr>Arquitectura</div>
+          <h2 className={styles.sectionTitle} data-sr="delay-1">Cómo fluye el protocolo</h2>
           <p className={styles.archSub}>
             SEPuente actúa como adaptador sin custodia entre el sistema bancario mexicano y la red Stellar.
           </p>
@@ -367,7 +367,7 @@ export default function LandingPage() {
       {/* ── PROTOCOLS ── */}
       <section className={styles.protocols}>
         <div className={styles.protocolsInner}>
-          <div className={styles.sectionEyebrow}>Estándares Stellar implementados</div>
+          <div className={styles.sectionEyebrow} data-sr>Estándares Stellar implementados</div>
           <div className={styles.protocolGrid}>
             <div className={styles.protoBadge}>
               <span className={styles.protoNum}>SEP-1</span>
@@ -392,7 +392,7 @@ export default function LandingPage() {
       {/* ── BOTTOM CTA ── */}
       <section className={styles.ctaSection}>
         <div className={styles.ctaGlow} />
-        <div className={styles.ctaContent}>
+        <div className={styles.ctaContent} data-sr>
           <h2 className={styles.ctaTitle}>Pruébalo ahora</h2>
           <p className={styles.ctaSub}>
             Wallet testnet con faucet integrado.<br/>
