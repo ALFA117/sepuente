@@ -188,12 +188,17 @@ function InteractiveContent() {
   }
 
   function backToWallet() {
-    window.close();
-    // Si el navegador no permite cerrar (pestaña abierta a mano), regresa a la demo.
-    setTimeout(() => { window.location.href = "/demo"; }, 250);
+    // Solo cerrar si somos un popup: si la wallet navegó en esta misma pestaña, cerrarla la perdería.
+    if (window.opener && !window.opener.closed) {
+      try { window.opener.focus(); } catch { /* otra origin */ }
+      window.close();
+      setTimeout(() => { if (!window.closed) window.location.href = "/demo"; }, 300);
+    } else {
+      window.location.href = "/demo";
+    }
   }
 
-  const cur = ORDER.indexOf(step);
+  const cur = step === "done" && tx?.status === "completed" ? ORDER.length : ORDER.indexOf(step);
   const dep = instr as DepositInstructions | null;
   const wd = instr as WithdrawInstructions | null;
   const inUnit = isDeposit ? "MXN" : ASSET;
