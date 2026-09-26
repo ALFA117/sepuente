@@ -12,6 +12,8 @@
   --border: rgba(139, 155, 181, 0.18);
   --radius: 12px;
   --font-serif: Georgia, 'Times New Roman', serif;
+  --font-syne: var(--font-syne, 'Syne', system-ui, sans-serif);
+  --font-mono: var(--font-mono, 'JetBrains Mono', 'Courier New', monospace);
 }
 
 *, *::before, *::after {

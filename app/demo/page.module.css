@@ -1,0 +1,236 @@
+.main {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: Georgia, serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+
+.logoAlpha {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.tagline {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.notice {
+  background: rgba(201, 162, 39, 0.07);
+  border: 1px solid rgba(201, 162, 39, 0.2);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.notice strong { color: var(--cream); }
+.notice code { font-size: 0.8rem; color: var(--gold); }
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 600px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.cardTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.fieldRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.fieldLabel { color: var(--muted); flex-shrink: 0; }
+
+.code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  color: var(--cream);
+  background: rgba(255,255,255,0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.btnRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.btnPrimary {
+  width: 100%;
+  padding: 11px 16px;
+  background: var(--gold);
+  color: var(--navy);
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btnPrimary:disabled { opacity: 0.45; cursor: not-allowed; }
+.btnPrimary:hover:not(:disabled) { opacity: 0.9; }
+
+.btnSec {
+  padding: 8px 14px;
+  background: transparent;
+  color: var(--gold);
+  border: 1.5px solid rgba(201, 162, 39, 0.4);
+  border-radius: 8px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.btnSec:hover { border-color: var(--gold); }
+.btnSec:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.authBadge {
+  margin-top: 12px;
+  font-size: 0.82rem;
+  color: var(--success);
+}
+
+.muted { color: var(--muted); font-size: 0.85rem; }
+
+.opBtns {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.opBtn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+  width: 100%;
+}
+.opBtn:hover {
+  border-color: var(--gold);
+  background: var(--gold-dim);
+}
+
+.opIcon {
+  font-size: 1.4rem;
+  color: var(--gold);
+}
+
+.opLabel {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--cream);
+}
+
+.opDesc {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+.success {
+  color: var(--success);
+  font-size: 0.82rem;
+  margin-top: 10px;
+}
+
+.err {
+  color: var(--error);
+  font-size: 0.82rem;
+  margin-top: 10px;
+}
+
+.history {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.histTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.txList { display: flex; flex-direction: column; gap: 8px; }
+
+.txRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  font-size: 0.83rem;
+}
+
+.txKind { font-size: 1.1rem; flex-shrink: 0; }
+.txInfo { flex: 1; }
+.txAmount { color: var(--cream); font-weight: 600; }
+.txDate { color: var(--muted); font-size: 0.75rem; margin-top: 2px; }
+.txStatus { font-weight: 600; font-size: 0.78rem; }
+.txLink { color: var(--gold); margin-left: 4px; font-size: 0.8rem; }
+
+.footer {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 32px;
+}
+.footer a { color: var(--muted); }
+.footer a:hover { color: var(--gold); }
