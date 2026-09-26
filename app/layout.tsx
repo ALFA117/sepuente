@@ -9,12 +9,24 @@ const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", weigh
 export const metadata: Metadata = {
   title: "SEPuente – Anchor SEP-24 para pesos mexicanos",
   description:
-    "Gateway open source no custodial que presenta rampas de pesos mexicanos como anchor estándar Stellar (SEP-1, SEP-10, SEP-24, SEP-38).",
+    "Gateway open source y no custodial que implementa el stack SEP completo (SEP-1, SEP-10, SEP-24, SEP-38) para rampas de pesos mexicanos en Stellar.",
+  keywords: ["stellar", "anchor", "SEP-24", "SPEI", "pesos mexicanos", "TMXN", "DeFi", "blockchain", "Mexico"],
+  authors: [{ name: "SEPuente" }],
   openGraph: {
-    title: "SEPuente",
-    description: "Anchor SEP-24 para pesos mexicanos en Stellar",
+    title: "SEPuente – Anchor SEP-24 para pesos mexicanos en Stellar",
+    description:
+      "Gateway open source y no custodial para pesos mexicanos en Stellar. SEP-1, SEP-10, SEP-24, SEP-38 implementados. Sin custodia.",
     type: "website",
+    url: "https://sepuente.vercel.app",
+    siteName: "SEPuente",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "SEPuente – Anchor SEP-24 para pesos mexicanos",
+    description:
+      "Gateway open source y no custodial para rampas MXN en Stellar. SEP-1 · SEP-10 · SEP-24 · SEP-38.",
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({
