@@ -52,7 +52,7 @@ export default function OgImage() {
             background: "rgba(201,162,39,0.1)",
             border: "1px solid rgba(201,162,39,0.25)",
             borderRadius: 10, padding: "6px 14px",
-            marginBottom: 28, width: "fit-content",
+            marginBottom: 28,
           }}>
             <div style={{
               width: 7, height: 7, borderRadius: "50%",
@@ -70,11 +70,12 @@ export default function OgImage() {
           <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 20 }}>
             <div style={{
               width: 80, height: 80, borderRadius: 20,
-              background: "rgba(201,162,39,0.08)",
-              border: "1.5px solid rgba(201,162,39,0.3)",
+              background: "rgba(201,162,39,0.12)",
+              border: "1.5px solid rgba(201,162,39,0.35)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 44, color: "#C9A227",
-            }}>⟴</div>
+              fontSize: 26, fontWeight: 900, color: "#C9A227",
+              letterSpacing: "-0.04em",
+            }}>SP</div>
             <span style={{
               fontSize: 80, fontWeight: 900, letterSpacing: "-0.05em",
               color: "#F5F1E6", lineHeight: 1,
@@ -82,15 +83,14 @@ export default function OgImage() {
           </div>
 
           {/* Tagline */}
-          <p style={{
-            fontSize: 28, color: "#8B9BB5", margin: 0,
-            lineHeight: 1.4, maxWidth: 680,
-          }}>
-            Gateway open source y{" "}
-            <span style={{ color: "#E8E2D5" }}>no custodial</span>
-            {" "}para pesos mexicanos en Stellar.{" "}
-            <span style={{ color: "#C9A227" }}>SEP-1 · SEP-10 · SEP-24 · SEP-38</span>
-          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <span style={{ fontSize: 26, color: "#8B9BB5", lineHeight: 1.4, maxWidth: 620 }}>
+              Gateway open source y no custodial para pesos mexicanos en Stellar.
+            </span>
+            <span style={{ fontSize: 22, color: "#C9A227", fontWeight: 700, letterSpacing: "0.02em" }}>
+              SEP-1 · SEP-10 · SEP-24 · SEP-38
+            </span>
+          </div>
 
           {/* Stats row */}
           <div style={{
@@ -117,7 +117,7 @@ export default function OgImage() {
         }}>
           {[
             { label: "Wallet", color: "#7DBAFF" },
-            { label: "SEPuente ⟴", color: "#C9A227" },
+            { label: "SEPuente Anchor", color: "#C9A227" },
             { label: "Stellar", color: "#4CD68E" },
             { label: "SPEI / MXN", color: "#8B9BB5" },
           ].map((n, i) => (
