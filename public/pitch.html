@@ -27,33 +27,25 @@ a{color:inherit;text-decoration:none}
 #deck{position:fixed;inset:0;display:flex;flex-direction:column}
 .slides-wrap{position:relative;flex:1;overflow:hidden}
 
+/* ─── SLIDE TRANSITION KEYFRAMES ──────────────────── */
+@keyframes slideInRight{from{opacity:0;transform:translateX(70px);filter:blur(6px)}to{opacity:1;transform:translateX(0);filter:blur(0)}}
+@keyframes slideInLeft {from{opacity:0;transform:translateX(-70px);filter:blur(6px)}to{opacity:1;transform:translateX(0);filter:blur(0)}}
+@keyframes slideOutLeft{from{opacity:1;transform:translateX(0);filter:blur(0)}to{opacity:0;transform:translateX(-70px);filter:blur(6px)}}
+@keyframes slideOutRight{from{opacity:1;transform:translateX(0);filter:blur(0)}to{opacity:0;transform:translateX(70px);filter:blur(6px)}}
+
 /* ─── SLIDE BASE ──────────────────────────────────── */
 .slide{
   position:absolute;inset:0;
   display:flex;flex-direction:column;justify-content:center;
   padding:80px 10vw 100px;
   opacity:0;pointer-events:none;
-  transform:translateX(70px);
-  transition:opacity .55s var(--ease-out),transform .55s var(--ease-out),filter .55s var(--ease-out);
-  filter:blur(6px);
   will-change:transform,opacity,filter;
 }
-.slide.active{
-  opacity:1;pointer-events:auto;
-  transform:translateX(0);filter:blur(0);
-}
-.slide.enter-from-right{
-  opacity:0;transform:translateX(70px);filter:blur(6px);
-}
-.slide.enter-from-left{
-  opacity:0;transform:translateX(-70px);filter:blur(6px);
-}
-.slide.exit-left{
-  opacity:0;transform:translateX(-70px);filter:blur(6px);
-}
-.slide.exit-right{
-  opacity:0;transform:translateX(70px);filter:blur(6px);
-}
+.slide.active{opacity:1;pointer-events:auto}
+.slide.anim-in-right {animation:slideInRight .55s var(--ease-out) both}
+.slide.anim-in-left  {animation:slideInLeft  .55s var(--ease-out) both}
+.slide.anim-out-left {animation:slideOutLeft .55s var(--ease-out) both}
+.slide.anim-out-right{animation:slideOutRight .55s var(--ease-out) both}
 
 /* ─── NAV BAR ─────────────────────────────────────── */
 #nav-bar{
@@ -756,6 +748,10 @@ a{color:inherit;text-decoration:none}
     dotsWrap.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === cur));
   }
 
+  function clearAnim(el) {
+    el.classList.remove('anim-in-right','anim-in-left','anim-out-left','anim-out-right');
+  }
+
   function goTo(next) {
     if (next === cur || animating) return;
     animating = true;
@@ -763,19 +759,19 @@ a{color:inherit;text-decoration:none}
     const leaving = slides[cur];
     const entering = slides[next];
 
-    // Position entering slide off-screen with a class (no inline styles)
-    const enterClass = dir > 0 ? 'enter-from-right' : 'enter-from-left';
-    entering.classList.add(enterClass);
-    entering.getBoundingClientRect(); // force reflow
+    clearAnim(leaving); clearAnim(entering);
 
-    // Kick off both animations simultaneously
-    leaving.classList.add(dir > 0 ? 'exit-left' : 'exit-right');
+    // Kick off leaving animation
+    leaving.classList.add(dir > 0 ? 'anim-out-left' : 'anim-out-right');
     leaving.classList.remove('active');
+
+    // Kick off entering animation
+    entering.classList.add(dir > 0 ? 'anim-in-right' : 'anim-in-left');
     entering.classList.add('active');
-    entering.classList.remove(enterClass);
 
     setTimeout(() => {
-      leaving.classList.remove('exit-left', 'exit-right');
+      clearAnim(leaving);
+      clearAnim(entering);
       animating = false;
     }, 600);
 
