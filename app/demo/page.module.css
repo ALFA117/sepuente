@@ -284,6 +284,11 @@
   border-radius: 50%;
   background: #4CD68E;
 }
+.cardKeyRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .cardKey {
   font-family: var(--font-mono), monospace;
   font-size: 0.88rem;
@@ -292,6 +297,34 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+}
+.copyBtn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid rgba(139,155,181,0.2);
+  background: rgba(139,155,181,0.08);
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+}
+.copyBtn:hover {
+  background: rgba(201,162,39,0.12);
+  border-color: rgba(201,162,39,0.3);
+  color: var(--gold);
+  transform: scale(1.08);
+}
+.copyBtn:active {
+  transform: scale(0.94);
+}
+.copyBtn:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 .cardBalances {
   display: flex;

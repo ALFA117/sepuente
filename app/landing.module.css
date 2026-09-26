@@ -107,9 +107,67 @@
 }
 .navCta:hover { background: rgba(212,168,67,0.2); border-color: rgba(212,168,67,0.6); transform: translateY(-1px); text-decoration: none; }
 
+/* ── Mobile nav ── */
+.navMobile {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.burger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid rgba(139,155,181,0.2);
+  background: transparent;
+  color: var(--text, #E8E2D5);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.burger:hover {
+  background: rgba(139,155,181,0.1);
+  border-color: rgba(139,155,181,0.35);
+}
+
+.dropMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 160px;
+  background: rgba(17,40,77,0.97);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(139,155,181,0.18);
+  border-radius: 10px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 300;
+  animation: enterUp 0.18s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+.dropLink {
+  padding: 10px 14px;
+  border-radius: 7px;
+  font-size: 0.875rem;
+  color: var(--muted, #8B9BB5);
+  text-decoration: none;
+  transition: background 0.12s, color 0.12s;
+}
+.dropLink:hover {
+  background: rgba(139,155,181,0.1);
+  color: var(--cream, #F5F1E6);
+  text-decoration: none;
+}
+
 @media (max-width: 600px) {
   .nav { padding: 0 16px; }
-  .navLink { display: none; }
+  .navLinks { display: none; }
+  .navMobile { display: flex; }
 }
 
 /* ── Hero ── */

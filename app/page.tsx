@@ -1,5 +1,6 @@
 import Link from "next/link";
 import styles from "./landing.module.css";
+import { NavMenu } from "./components/NavMenu";
 
 export default function LandingPage() {
   return (
@@ -11,12 +12,7 @@ export default function LandingPage() {
           <span className={styles.navSymbol}>⟴</span>
           SEPuente
         </span>
-        <div className={styles.navLinks}>
-          <a href="/devs" className={styles.navLink}>Docs</a>
-          <a href="https://github.com/ALFA117/sepuente" target="_blank" rel="noreferrer" className={styles.navLink}>GitHub</a>
-          <a href="/pitch" className={styles.navLink}>Pitch</a>
-          <Link href="/demo" className={styles.navCta}>Demo →</Link>
-        </div>
+        <NavMenu />
       </nav>
 
       {/* ── HERO ── */}
