@@ -30,13 +30,13 @@ interface AccountInfo {
   tmxnBalance?: string;
 }
 
-const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
-  incomplete:                  { bg: "rgba(139,155,181,0.1)",  color: "#8B9BB5" },
-  pending_user_transfer_start: { bg: "rgba(212,168,67,0.12)",  color: "#D4A843" },
-  pending_anchor:              { bg: "rgba(79,158,248,0.12)",   color: "#7DBAFF" },
-  completed:                   { bg: "rgba(47,191,113,0.12)",   color: "#4CD68E" },
-  error:                       { bg: "rgba(224,82,82,0.1)",     color: "#F07070" },
-  expired:                     { bg: "rgba(224,82,82,0.1)",     color: "#F07070" },
+const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {
+  incomplete:                  { bg: "rgba(139,155,181,0.1)",  color: "#8B9BB5",  label: "Incompleto" },
+  pending_user_transfer_start: { bg: "rgba(212,168,67,0.15)",  color: "#D4A843",  label: "En proceso" },
+  pending_anchor:              { bg: "rgba(79,158,248,0.15)",   color: "#7DBAFF",  label: "Procesando" },
+  completed:                   { bg: "rgba(47,191,113,0.15)",   color: "#4CD68E",  label: "Completado" },
+  error:                       { bg: "rgba(224,82,82,0.12)",    color: "#F07070",  label: "Error" },
+  expired:                     { bg: "rgba(224,82,82,0.12)",    color: "#F07070",  label: "Expirado" },
 };
 
 export default function DemoPage() {
@@ -53,7 +53,6 @@ export default function DemoPage() {
   const [hasTrustline, setHasTrustline] = useState(false);
   const [balanceLoading, setBalanceLoading] = useState(false);
 
-  // Carga o genera wallet desde sessionStorage
   useEffect(() => {
     let kp: Keypair;
     const stored = sessionStorage.getItem("sp_keypair");
@@ -90,7 +89,7 @@ export default function DemoPage() {
       setHasTrustline(trust);
       setAccount((a) => a ? { ...a, xlmBalance: xlm, tmxnBalance: tmxn } : a);
     } catch {
-      setAccount((a) => a ? { ...a, xlmBalance: "Error" } : a);
+      setAccount((a) => a ? { ...a, xlmBalance: "—" } : a);
     }
     setBalanceLoading(false);
   }, [account?.publicKey, ASSET_CODE, ISSUER]);
@@ -116,7 +115,7 @@ export default function DemoPage() {
       });
       const data = await res.json();
       if (!res.ok) { notify(data.error, true); return; }
-      notify("✓ Cuenta fondeada con 10,000 XLM en testnet");
+      notify("Cuenta fondeada con 10,000 XLM en testnet");
       await loadBalances();
     } catch (e: unknown) { notify((e as Error).message, true); }
     finally { setLoading((l) => ({ ...l, faucet: false })); }
@@ -147,7 +146,7 @@ export default function DemoPage() {
       });
       const result = await res.json();
       if (!res.ok) { notify(result.detail ?? "Error al agregar trustline", true); return; }
-      notify(`✓ Trustline de ${ASSET_CODE} agregada — ya puedes recibir tokens`);
+      notify(`Trustline de ${ASSET_CODE} lista`);
       setHasTrustline(true);
       await loadBalances();
     } catch (e: unknown) { notify((e as Error).message, true); }
@@ -173,7 +172,7 @@ export default function DemoPage() {
       const authData = await authRes.json();
       if (!authRes.ok) { notify(authData.error, true); return; }
       setJwt(authData.token);
-      notify("✓ Sesión SEP-10 activa — puedes iniciar operaciones");
+      notify("Sesión SEP-10 activa");
       await loadTxs(authData.token);
     } catch (e: unknown) { notify((e as Error).message, true); }
     finally { setLoading((l) => ({ ...l, login: false })); }
@@ -186,7 +185,7 @@ export default function DemoPage() {
       });
       const data = await res.json();
       if (res.ok) setTxs(data.transactions ?? []);
-    } catch { /**/ }
+    } catch { }
   }
 
   function openInteractive(kind: "deposit" | "withdraw") {
@@ -203,286 +202,357 @@ export default function DemoPage() {
           window.open(data.url, "sep24_popup", "width=480,height=700");
           setTimeout(() => loadTxs(jwt), 3000);
         } else {
-          notify(data.error ?? "No se recibió URL de la operación", true);
+          notify(data.error ?? "No se recibió URL", true);
         }
       })
       .catch((e: Error) => notify(e.message, true));
   }
 
-  // Determinar estado de los pasos
-  const isFunded = account?.xlmBalance && account.xlmBalance !== "0" && account.xlmBalance !== "Error";
-  const stepState = {
-    fund:    isFunded ? "done" : "active",
-    trust:   !isFunded ? "" : hasTrustline ? "done" : "active",
-    auth:    !hasTrustline ? "" : jwt ? "done" : "active",
-    operate: !jwt ? "" : "active",
-  };
-
+  const isFunded = !!(account?.xlmBalance && account.xlmBalance !== "0" && account.xlmBalance !== "—");
+  const currentStep = jwt ? 4 : hasTrustline ? 3 : isFunded ? 2 : 1;
   const shortKey = account
-    ? `${account.publicKey.slice(0, 6)}···${account.publicKey.slice(-4)}`
+    ? `${account.publicKey.slice(0, 6)} ··· ${account.publicKey.slice(-6)}`
     : "···";
 
   return (
     <div className={styles.page}>
-      {/* Nav */}
+
       <nav className={styles.nav}>
-        <Link href="/" className={styles.navLogo}>
-          <span className={styles.navSymbol}>⟴</span>
+        <Link href="/" className={styles.navBrand}>
+          <span className={styles.navSym}>⟴</span>
           SEPuente
         </Link>
-        <span className={styles.navBadge}>Testnet</span>
-        <div className={styles.navLinks}>
+        <div className={styles.navPill}>
+          <span className={styles.navPillDot} />
+          Stellar Testnet · SEP-24
+        </div>
+        <div className={styles.navRight}>
           <a href="/devs" className={styles.navLink}>Docs</a>
           <a href="https://github.com/ALFA117/sepuente" target="_blank" rel="noreferrer" className={styles.navLink}>GitHub</a>
-          <a href="/pitch.html" className={styles.navLink}>Pitch →</a>
         </div>
       </nav>
 
-      {/* Notice */}
-      <div className={styles.notice}>
-        <strong>Cliente de ejemplo</strong> — el protocolo SEPuente corre en{" "}
-        <strong>sepuente.vercel.app</strong> y cualquier wallet compatible puede conectarse.{" "}
-        <a href="/devs">Docs para devs →</a>
-      </div>
+      <section className={styles.hero}>
+        <div className={styles.heroGlow} />
+        <div className={styles.heroContent}>
+          <div className={styles.heroBadge}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+            Wallet Demo — Flujo SEP-24 completo
+          </div>
+          <h1 className={styles.heroTitle}>
+            De pesos a Stellar<br />
+            <span className={styles.heroAccent}>sin intermediarios</span>
+          </h1>
+          <p className={styles.heroSub}>
+            Conecta, firma y opera con el anchor SEP-24 no custodial para el peso mexicano.
+          </p>
+        </div>
+      </section>
 
       <main className={styles.main}>
-        {/* Steps progress */}
-        <div className={styles.steps}>
-          <div className={`${styles.step} ${stepState.fund ? styles[stepState.fund] : ""}`}>
-            <div className={styles.stepDot}>{stepState.fund === "done" ? "✓" : "1"}</div>
-            <span className={styles.stepLabel}>Fondear</span>
-          </div>
-          <div className={`${styles.step} ${stepState.trust ? styles[stepState.trust] : ""}`}>
-            <div className={styles.stepDot}>{stepState.trust === "done" ? "✓" : "2"}</div>
-            <span className={styles.stepLabel}>Trustline</span>
-          </div>
-          <div className={`${styles.step} ${stepState.auth ? styles[stepState.auth] : ""}`}>
-            <div className={styles.stepDot}>{stepState.auth === "done" ? "✓" : "3"}</div>
-            <span className={styles.stepLabel}>Autenticar</span>
-          </div>
-          <div className={`${styles.step} ${stepState.operate ? styles[stepState.operate] : ""}`}>
-            <div className={styles.stepDot}>4</div>
-            <span className={styles.stepLabel}>Operar</span>
-          </div>
+
+        <div className={styles.stepsRow}>
+          {[
+            { n: 1, label: "Fondear",    sub: "Faucet XLM" },
+            { n: 2, label: "Trustline",  sub: ASSET_CODE },
+            { n: 3, label: "Autenticar", sub: "SEP-10" },
+            { n: 4, label: "Operar",     sub: "SEP-24" },
+          ].map((s, i, arr) => {
+            const done = currentStep > s.n;
+            const active = currentStep === s.n;
+            return (
+              <div key={s.n} className={styles.stepItem}>
+                <div className={`${styles.stepBubble} ${done ? styles.sDone : active ? styles.sActive : styles.sIdle}`}>
+                  {done
+                    ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                    : <span>{s.n}</span>
+                  }
+                </div>
+                <div className={styles.stepTexts}>
+                  <span className={`${styles.stepLbl} ${done ? styles.sLblDone : active ? styles.sLblActive : styles.sLblIdle}`}>{s.label}</span>
+                  <span className={styles.stepSub}>{s.sub}</span>
+                </div>
+                {i < arr.length - 1 && <div className={`${styles.stepLine} ${done ? styles.stepLineDone : ""}`} />}
+              </div>
+            );
+          })}
         </div>
 
-        <div className={styles.grid}>
-          {/* Wallet card */}
+        <div className={styles.twoCol}>
+
           <div className={styles.walletCard}>
-            <div className={styles.cardChip}>
-              <span /><span /><span /><span />
-            </div>
-            <div className={styles.cardTitle}>Clave pública</div>
-            <div className={styles.cardKey}>{shortKey}</div>
-
-            <div className={styles.balances}>
-              <div className={styles.balanceItem}>
-                <div className={styles.balanceLabel}>XLM</div>
-                <div className={`${styles.balanceValue} ${balanceLoading ? styles.loading : ""}`}>
-                  {balanceLoading ? "      " : (account?.xlmBalance ?? "—")}
-                </div>
-              </div>
-              <div className={styles.balanceItem}>
-                <div className={styles.balanceLabel}>{ASSET_CODE}</div>
-                <div className={`${styles.balanceValue} ${balanceLoading ? styles.loading : ""}`}>
-                  {balanceLoading ? "      " : (account?.tmxnBalance ?? "—")}
-                </div>
+            <div className={styles.cardShine} />
+            <div className={styles.cardTop}>
+              <span className={styles.cardLogo}>⟴</span>
+              <div className={styles.cardChipGrid}>
+                <div /><div /><div /><div />
               </div>
             </div>
-
-            <div className={styles.cardActions}>
+            <div className={styles.cardNetRow}>
+              <span className={styles.cardNetDot} />
+              Stellar Testnet
+            </div>
+            <div className={styles.cardKey} title={account?.publicKey}>{shortKey}</div>
+            <div className={styles.cardBalances}>
+              <div className={styles.cardBal}>
+                <span className={styles.cardBalLabel}>XLM</span>
+                <span className={`${styles.cardBalVal} ${balanceLoading ? styles.skel : ""}`}>
+                  {balanceLoading ? "" : (account?.xlmBalance ?? "—")}
+                </span>
+              </div>
+              <div className={styles.cardBalDivider} />
+              <div className={styles.cardBal}>
+                <span className={styles.cardBalLabel}>{ASSET_CODE}</span>
+                <span className={`${styles.cardBalVal} ${balanceLoading ? styles.skel : ""}`}>
+                  {balanceLoading ? "" : (account?.tmxnBalance ?? "—")}
+                </span>
+              </div>
+            </div>
+            <div className={styles.cardBtns}>
               <button
-                className={styles.btnGhost}
+                className={`${styles.cBtn} ${isFunded ? styles.cBtnGreenDone : styles.cBtnGold}`}
                 onClick={handleFaucet}
-                disabled={!!loading.faucet || !!isFunded}
+                disabled={!!loading.faucet || isFunded}
               >
-                {loading.faucet ? <span className={styles.spinner} /> : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-                  </svg>
-                )}
-                {loading.faucet ? "Fondeando…" : isFunded ? "XLM fondeado" : "Faucet XLM"}
+                {loading.faucet ? <span className={styles.spin} /> : isFunded ? <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg> : null}
+                {isFunded ? "Fondeado" : loading.faucet ? "Fondeando..." : "Faucet XLM"}
               </button>
-              {!hasTrustline && (
-                <button
-                  className={`${styles.btnGhost} ${styles.btnGhostGreen}`}
-                  onClick={handleTrustline}
-                  disabled={!!loading.trust || !isFunded}
-                >
-                  {loading.trust ? <span className={styles.spinner} /> : "+"}
-                  {loading.trust ? "Agregando…" : `Trustline ${ASSET_CODE}`}
+              <button
+                className={`${styles.cBtn} ${hasTrustline ? styles.cBtnBlueDone : styles.cBtnBlue}`}
+                onClick={handleTrustline}
+                disabled={!!loading.trust || !isFunded || hasTrustline}
+              >
+                {loading.trust ? <span className={styles.spinBlue} /> : hasTrustline ? <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg> : null}
+                {hasTrustline ? `Trust ${ASSET_CODE}` : loading.trust ? "Procesando..." : `+ Trust ${ASSET_CODE}`}
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.authCard}>
+            <div className={styles.authTop}>
+              <div className={styles.authIconBox}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </div>
+              <div className={styles.authTitles}>
+                <div className={styles.authTitle}>Autenticación SEP-10</div>
+                <div className={styles.authSubtitle}>Web Auth · Stellar</div>
+              </div>
+              <div className={`${styles.authPill} ${jwt ? styles.authPillOn : styles.authPillOff}`}>
+                <span className={`${styles.authPillDot} ${jwt ? styles.authPillDotOn : ""}`} />
+                {jwt ? "Activa" : "Sin sesión"}
+              </div>
+            </div>
+
+            <div className={styles.authMid}>
+              {jwt ? (
+                <div className={styles.jwtBlock}>
+                  <span className={styles.jwtLabel}>JWT</span>
+                  <span className={styles.jwtVal}>{jwt.slice(0, 36)}...</span>
+                </div>
+              ) : (
+                <p className={styles.authHint}>
+                  {hasTrustline
+                    ? "Tu cuenta está lista. Firma el challenge criptográfico para obtener acceso al protocolo."
+                    : isFunded
+                    ? "Agrega la trustline del token TMXN antes de autenticarte."
+                    : "Fondea la cuenta con XLM para comenzar."}
+                </p>
+              )}
+            </div>
+
+            <div className={styles.authBottom}>
+              {!jwt ? (
+                <button className={styles.authBtn} onClick={handleLogin} disabled={!!loading.login || !hasTrustline}>
+                  {loading.login
+                    ? <><span className={styles.spin} />Autenticando...</>
+                    : <>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>
+                        </svg>
+                        Iniciar sesión SEP-10
+                      </>
+                  }
                 </button>
+              ) : (
+                <div className={styles.authSuccess}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                  Sesión autenticada · SEP-10
+                </div>
               )}
             </div>
           </div>
-
-          {/* Session card */}
-          <div className={styles.sessionCard}>
-            <div className={styles.sessionTitle}>Sesión SEP-10</div>
-            <div className={styles.sessionStatus}>
-              <span className={`${styles.statusDot} ${jwt ? styles.active : styles.inactive}`} />
-              <span className={`${styles.statusText} ${jwt ? styles.authenticated : ""}`}>
-                {jwt
-                  ? "Autenticado — sesión activa"
-                  : hasTrustline
-                  ? "Listo para autenticar con SEP-10"
-                  : isFunded
-                  ? "Agrega la trustline para continuar"
-                  : "Fondea la cuenta con el faucet primero"}
-              </span>
-            </div>
-
-            {jwt && (
-              <div className={styles.sessionToken}>
-                JWT: {jwt.slice(0, 32)}…
-              </div>
-            )}
-
-            {!jwt ? (
-              <button
-                className={styles.btnPrimary}
-                onClick={handleLogin}
-                disabled={!!loading.login || !hasTrustline}
-              >
-                {loading.login ? <><span className={styles.spinner} /> Autenticando…</> : "Iniciar sesión (SEP-10)"}
-              </button>
-            ) : (
-              <button
-                className={styles.btnPrimary}
-                style={{ background: "rgba(47,191,113,0.15)", color: "#4CD68E", boxShadow: "none" }}
-                disabled
-              >
-                ✓ Sesión activa
-              </button>
-            )}
-          </div>
         </div>
 
-        {/* Operations */}
-        <div className={styles.opsCard}>
-          <div className={styles.opsTitle}>Operaciones SEP-24</div>
-
+        <section className={styles.opsSection}>
           {jwt ? (
             <>
-              <div className={styles.opsBtns}>
-                <button className={styles.opBtn} onClick={() => openInteractive("deposit")}>
-                  <div className={`${styles.opBtnIcon} ${styles.deposit}`}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <div className={styles.opsSectionHead}>
+                <span className={styles.opsSectionTitle}>Operaciones SEP-24</span>
+                <span className={styles.opsSectionSub}>{ASSET_CODE} · Stellar Testnet</span>
+              </div>
+              <div className={styles.opsGrid}>
+                <button className={`${styles.opCard} ${styles.opDeposit}`} onClick={() => openInteractive("deposit")}>
+                  <div className={styles.opGlow} />
+                  <div className={styles.opIconWrap}>
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 3v13M5 14l7 7 7-7"/>
                     </svg>
                   </div>
-                  <div className={styles.opBtnLabel}>Depositar</div>
-                  <div className={styles.opBtnSub}>SPEI → {ASSET_CODE}</div>
+                  <div className={styles.opBody}>
+                    <div className={styles.opTitle}>Depositar</div>
+                    <div className={styles.opDesc}>Transfiere pesos MXN vía SPEI y recibe {ASSET_CODE} en tu wallet Stellar al instante.</div>
+                  </div>
+                  <div className={styles.opRoute}>
+                    <span>SPEI</span>
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <span>{ASSET_CODE}</span>
+                  </div>
+                  <div className={styles.opArrow}>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </div>
                 </button>
-                <button className={styles.opBtn} onClick={() => openInteractive("withdraw")}>
-                  <div className={`${styles.opBtnIcon} ${styles.withdraw}`}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+
+                <button className={`${styles.opCard} ${styles.opWithdraw}`} onClick={() => openInteractive("withdraw")}>
+                  <div className={styles.opGlow} />
+                  <div className={styles.opIconWrap}>
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 21V8M5 10l7-7 7 7"/>
                     </svg>
                   </div>
-                  <div className={styles.opBtnLabel}>Retirar</div>
-                  <div className={styles.opBtnSub}>{ASSET_CODE} → SPEI</div>
+                  <div className={styles.opBody}>
+                    <div className={styles.opTitle}>Retirar</div>
+                    <div className={styles.opDesc}>Quema {ASSET_CODE} en Stellar y recibe pesos MXN directamente en tu cuenta SPEI.</div>
+                  </div>
+                  <div className={styles.opRoute}>
+                    <span>{ASSET_CODE}</span>
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <span>SPEI</span>
+                  </div>
+                  <div className={styles.opArrow}>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </div>
                 </button>
               </div>
             </>
           ) : (
             <div className={styles.opsLocked}>
-              <div className={styles.opsLockIcon}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
+              <div className={styles.opsLockedDecor} />
+              <div className={styles.opsLockedContent}>
+                <div className={styles.opsLockedIcon}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                </div>
+                <div className={styles.opsLockedTitle}>Operaciones SEP-24</div>
+                <div className={styles.opsLockedHint}>
+                  {4 - currentStep + 1 === 1 ? "Un paso más" : `${4 - currentStep + 1} pasos restantes`} para depositar o retirar pesos
+                </div>
+                <div className={styles.opsLockedBtns}>
+                  <div className={styles.opsGhostBtn}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v13M5 14l7 7 7-7"/></svg>
+                    Depositar
+                  </div>
+                  <div className={styles.opsGhostBtn}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21V8M5 10l7-7 7 7"/></svg>
+                    Retirar
+                  </div>
+                </div>
               </div>
-              <span>Completa los pasos anteriores para operar</span>
             </div>
           )}
 
-          {msg && <div className={`${styles.toast} ${styles.toastSuccess}`}>{msg}</div>}
-          {err && <div className={`${styles.toast} ${styles.toastError}`}>{err}</div>}
-        </div>
+          {msg && (
+            <div className={`${styles.toast} ${styles.toastOk}`} role="status" aria-live="polite">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+              {msg}
+            </div>
+          )}
+          {err && (
+            <div className={`${styles.toast} ${styles.toastErr}`} role="alert" aria-live="assertive">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              {err}
+            </div>
+          )}
+        </section>
 
-        {/* Transaction history */}
         {jwt && (
-          <div className={styles.historyCard}>
-            <div className={styles.historyHeader}>
-              <span className={styles.historyTitle}>Historial de transacciones</span>
-              <button className={styles.btnRefresh} onClick={() => loadTxs(jwt)}>
-                ↻ Actualizar
+          <section className={styles.histSection}>
+            <div className={styles.histHead}>
+              <span className={styles.histTitle}>Historial</span>
+              <button className={styles.histRefresh} onClick={() => loadTxs(jwt)}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+                </svg>
+                Actualizar
               </button>
             </div>
 
             {txs.length === 0 ? (
-              <div className={styles.emptyHistory}>
-                Sin transacciones — inicia un depósito o retiro para comenzar
+              <div className={styles.histEmpty}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>
+                </svg>
+                <span>Sin transacciones — inicia un depósito o retiro</span>
               </div>
             ) : (
-              <table className={styles.txTable}>
-                <thead>
-                  <tr>
-                    <th>Tipo</th>
-                    <th>Monto</th>
-                    <th>Fecha</th>
-                    <th>Estado</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {txs.map((tx) => {
-                    const s = STATUS_STYLE[tx.status] ?? STATUS_STYLE.incomplete;
-                    return (
-                      <tr key={tx.id}>
-                        <td>
-                          <span className={`${styles.txKindBadge} ${tx.kind === "deposit" ? styles.deposit : styles.withdraw}`}>
-                            {tx.kind === "deposit" ? "⬇ Depósito" : "⬆ Retiro"}
-                          </span>
-                        </td>
-                        <td className={styles.txAmount}>
-                          {tx.amount_out ?? tx.amount_in ?? "—"}{" "}
-                          <span style={{ color: "#8B9BB5", fontWeight: 400, fontSize: "0.75rem" }}>
-                            {tx.kind === "deposit" ? ASSET_CODE : "MXN"}
-                          </span>
-                        </td>
-                        <td className={styles.txDate}>
-                          {new Date(tx.started_at).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })}
-                        </td>
-                        <td>
-                          <span
-                            className={styles.txStatusBadge}
-                            style={{ background: s.bg, color: s.color }}
-                          >
-                            {tx.status.replace(/_/g, " ")}
-                          </span>
-                        </td>
-                        <td>
-                          {tx.stellar_transaction_id && (
-                            <a
-                              href={`https://stellar.expert/explorer/testnet/tx/${tx.stellar_transaction_id}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className={styles.txLink}
-                            >
-                              ↗ Explorer
-                            </a>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              <div className={styles.histList}>
+                {txs.map((tx) => {
+                  const s = STATUS_STYLE[tx.status] ?? STATUS_STYLE.incomplete;
+                  return (
+                    <div key={tx.id} className={styles.histRow}>
+                      <div className={`${styles.histIcon} ${tx.kind === "deposit" ? styles.histD : styles.histW}`}>
+                        {tx.kind === "deposit"
+                          ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v13M5 14l7 7 7-7"/></svg>
+                          : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21V8M5 10l7-7 7 7"/></svg>
+                        }
+                      </div>
+                      <div className={styles.histInfo}>
+                        <span className={styles.histKind}>{tx.kind === "deposit" ? "Depósito" : "Retiro"}</span>
+                        <span className={styles.histDate}>{new Date(tx.started_at).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })}</span>
+                      </div>
+                      <div className={styles.histAmt}>
+                        {tx.amount_out ?? tx.amount_in ?? "—"}
+                        <span className={styles.histCur}>{tx.kind === "deposit" ? ASSET_CODE : "MXN"}</span>
+                      </div>
+                      <div className={styles.histStatus} style={{ background: s.bg, color: s.color }}>{s.label}</div>
+                      {tx.stellar_transaction_id
+                        ? <a href={`https://stellar.expert/explorer/testnet/tx/${tx.stellar_transaction_id}`} target="_blank" rel="noreferrer" className={styles.histLink}>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                            </svg>
+                          </a>
+                        : <div />
+                      }
+                    </div>
+                  );
+                })}
+              </div>
             )}
-          </div>
+          </section>
         )}
 
+        <div className={styles.protoBar}>
+          {["SEP-1 stellar.toml", "SEP-10 Web Auth", "SEP-24 Hosted Transfers", "SEP-38 Anchor RFQ"].map((p) => (
+            <div key={p} className={styles.protoChip}>{p}</div>
+          ))}
+        </div>
+
         <footer className={styles.footer}>
-          <a href="/devs">Docs para devs</a>
-          <span>·</span>
-          <a href="https://github.com/ALFA117/sepuente" target="_blank" rel="noreferrer">GitHub</a>
-          <span>·</span>
-          <a href="/pitch.html">Pitch</a>
-          <span>·</span>
-          <span>Stellar Testnet</span>
+          <Link href="/" className={styles.footBrand}>⟴ SEPuente</Link>
+          <div className={styles.footLinks}>
+            <a href="/devs">Docs</a>
+            <span>·</span>
+            <a href="https://github.com/ALFA117/sepuente" target="_blank" rel="noreferrer">GitHub</a>
+            <span>·</span>
+            <a href="/pitch.html">Pitch</a>
+          </div>
+          <span className={styles.footMono}>Stellar Testnet</span>
         </footer>
+
       </main>
     </div>
   );
