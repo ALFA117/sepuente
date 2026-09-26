@@ -387,6 +387,8 @@
   line-height: 1;
 }
 
+.statNumGreen { color: var(--success, #4CD68E); }
+
 .statLabel {
   font-size: 0.7rem;
   color: rgba(139,155,181,0.7);

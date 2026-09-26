@@ -65,7 +65,7 @@ export default function LandingPage() {
             </div>
             <div className={styles.statDiv} />
             <div className={styles.statItem}>
-              <span className={styles.statNum}>0</span>
+              <span className={`${styles.statNum} ${styles.statNumGreen}`}>$0</span>
               <span className={styles.statLabel}>fondos en custodia</span>
             </div>
             <div className={styles.statDiv} />
