@@ -1,6 +1,8 @@
 import Link from "next/link";
 import styles from "./landing.module.css";
 import { SiteHeader, SiteFooter } from "./components/SiteHeader";
+import { Reveal, Stagger, StaggerItem, Enter } from "./components/motion";
+import { TransferPreview } from "./components/TransferPreview";
 
 const FEATURES = [
   {
@@ -58,91 +60,99 @@ export default function LandingPage() {
         {/* ── Hero ── */}
         <section className={styles.hero}>
           <div className={styles.heroInner}>
-            <p className={styles.chip}>
-              <span className={styles.chipDot} aria-hidden="true" />
-              Stellar Testnet · SEP-24
-            </p>
-            <h1 className={styles.title}>
-              Pesos mexicanos en Stellar, <span className={styles.titleAccent}>sin custodia</span>
-            </h1>
-            <p className={styles.lead}>
-              <strong>SEPuente</strong> es un anchor SEP-24 open source: conecta SPEI con el token TMXN para que cualquier wallet Stellar deposite y retire pesos.
-            </p>
-            <div className={styles.ctaRow}>
-              <Link href="/demo" className={styles.ctaPrimary}>
-                Probar la demo
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-              </Link>
-              <div className={styles.ctaSecondaryRow}>
-                <a href="/devs" className={styles.ctaGhost}>Documentación</a>
-                <a href="https://github.com/ALFA117/sepuente" target="_blank" rel="noreferrer" className={styles.ctaGhost}>GitHub</a>
-              </div>
+            <div className={styles.heroCopy}>
+              <Enter as="p" className={styles.chip}>
+                <span className={styles.chipDot} aria-hidden="true" />
+                Stellar Testnet · SEP-24
+              </Enter>
+              <Enter as="h1" className={styles.title} delay={0.06}>
+                Pesos mexicanos en Stellar, <span className={styles.titleAccent}>sin custodia</span>
+              </Enter>
+              <Enter as="p" className={styles.lead} delay={0.12}>
+                <strong>SEPuente</strong> es un anchor SEP-24 open source: conecta SPEI con el token TMXN para que cualquier wallet Stellar deposite y retire pesos.
+              </Enter>
+              <Enter className={styles.ctaRow} delay={0.18}>
+                <Link href="/demo" className={styles.ctaPrimary}>
+                  Probar la demo
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                </Link>
+                <div className={styles.ctaSecondaryRow}>
+                  <a href="/devs" className={styles.ctaGhost}>Documentación</a>
+                  <a href="https://github.com/ALFA117/sepuente" target="_blank" rel="noreferrer" className={styles.ctaGhost}>GitHub</a>
+                </div>
+              </Enter>
             </div>
 
-            <dl className={styles.stats}>
+            <Enter className={styles.heroVisual} delay={0.28} y={24}>
+              <TransferPreview />
+            </Enter>
+
+            <Enter as="dl" className={styles.stats} delay={0.34}>
               <div className={styles.stat}><dt>SEPs implementados</dt><dd>4</dd></div>
               <div className={styles.stat}><dt>Fondos en custodia</dt><dd className={styles.statGreen}>$0</dd></div>
               <div className={styles.stat}><dt>Comisión</dt><dd>0.5&nbsp;%</dd></div>
-            </dl>
+            </Enter>
           </div>
         </section>
 
         {/* ── Características ── */}
         <section className={styles.section} aria-labelledby="features-title">
           <div className={styles.sectionInner}>
-            <p className={styles.eyebrow}>Protocolo</p>
-            <h2 id="features-title" className={styles.h2}>Infraestructura abierta para el peso en Stellar</h2>
-            <ul className={styles.featureGrid}>
+            <Reveal as="p" className={styles.eyebrow}>Protocolo</Reveal>
+            <Reveal as="h2" id="features-title" className={styles.h2} delay={0.05}>Infraestructura abierta para el peso en Stellar</Reveal>
+            <Stagger as="ul" className={styles.featureGrid}>
               {FEATURES.map((f) => (
-                <li key={f.title} className={styles.feature} data-sr>
+                <StaggerItem as="li" key={f.title} className={styles.feature}>
                   <span className={styles.featureIcon} aria-hidden="true">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{f.icon}</svg>
                   </span>
-                  <h3 className={styles.h3}>{f.title}</h3>
-                  <p className={styles.featureDesc}>{f.desc}</p>
-                </li>
+                  <div className={styles.featureText}>
+                    <h3 className={styles.h3}>{f.title}</h3>
+                    <p className={styles.featureDesc}>{f.desc}</p>
+                  </div>
+                </StaggerItem>
               ))}
-            </ul>
+            </Stagger>
           </div>
         </section>
 
         {/* ── Flujo ── */}
         <section className={`${styles.section} ${styles.sectionAlt}`} aria-labelledby="flow-title">
           <div className={styles.sectionInner}>
-            <p className={styles.eyebrow}>Flujo completo</p>
-            <h2 id="flow-title" className={styles.h2}>De pesos a Stellar en 4 pasos</h2>
-            <ol className={styles.flow}>
+            <Reveal as="p" className={styles.eyebrow}>Flujo completo</Reveal>
+            <Reveal as="h2" id="flow-title" className={styles.h2} delay={0.05}>De pesos a Stellar en 4 pasos</Reveal>
+            <Stagger as="ol" className={styles.flow}>
               {FLOW.map((s) => (
-                <li key={s.n} className={styles.flowStep} data-sr>
+                <StaggerItem as="li" key={s.n} className={styles.flowStep}>
                   <span className={styles.flowNum}>{s.n}</span>
                   <div>
                     <h3 className={styles.h3}>{s.title}</h3>
                     <p className={styles.featureDesc}>{s.desc}</p>
                   </div>
-                </li>
+                </StaggerItem>
               ))}
-            </ol>
+            </Stagger>
           </div>
         </section>
 
         {/* ── Arquitectura ── */}
         <section className={styles.section} aria-labelledby="arch-title">
           <div className={styles.sectionInner}>
-            <p className={styles.eyebrow}>Arquitectura</p>
-            <h2 id="arch-title" className={styles.h2}>Cómo fluye el protocolo</h2>
-            <p className={styles.sectionLead}>SEPuente actúa como adaptador sin custodia entre el sistema bancario mexicano y la red Stellar.</p>
+            <Reveal as="p" className={styles.eyebrow}>Arquitectura</Reveal>
+            <Reveal as="h2" id="arch-title" className={styles.h2} delay={0.05}>Cómo fluye el protocolo</Reveal>
+            <Reveal as="p" className={styles.sectionLead} delay={0.1}>SEPuente actúa como adaptador sin custodia entre el sistema bancario mexicano y la red Stellar.</Reveal>
 
-            <div className={styles.arch} role="img" aria-label="La wallet habla con SEPuente por SEP-10 y SEP-24; SEPuente conecta con SPEI mediante un driver y con Stellar para mover TMXN.">
-              <div className={`${styles.node} ${styles.nodeInfo}`}>
+            <Stagger className={styles.arch} role="img" aria-label="La wallet habla con SEPuente por SEP-10 y SEP-24; SEPuente conecta con SPEI mediante un driver y con Stellar para mover TMXN.">
+              <StaggerItem className={`${styles.node} ${styles.nodeInfo}`}>
                 <span className={styles.nodeTitle}>Wallet</span>
                 <span className={styles.nodeSub}>Firma con su propia llave</span>
-              </div>
-              <div className={styles.link}><span>SEP-10 JWT · SEP-24</span></div>
-              <div className={`${styles.node} ${styles.nodeGold}`}>
+              </StaggerItem>
+              <StaggerItem className={styles.link}><span>SEP-10 JWT · SEP-24</span></StaggerItem>
+              <StaggerItem className={`${styles.node} ${styles.nodeGold}`}>
                 <span className={styles.nodeTitle}>SEPuente</span>
                 <span className={styles.nodeSub}>Anchor · no custodial</span>
-              </div>
-              <div className={styles.archSplit}>
+              </StaggerItem>
+              <StaggerItem className={styles.archSplit}>
                 <div className={styles.archBranch}>
                   <div className={styles.link}><span>Driver SPEI</span></div>
                   <div className={`${styles.node} ${styles.nodeMuted}`}>
@@ -157,39 +167,39 @@ export default function LandingPage() {
                     <span className={styles.nodeSub}>Testnet · Horizon</span>
                   </div>
                 </div>
-              </div>
-            </div>
+              </StaggerItem>
+            </Stagger>
           </div>
         </section>
 
         {/* ── Protocolos ── */}
         <section className={`${styles.section} ${styles.sectionAlt}`} aria-labelledby="proto-title">
           <div className={styles.sectionInner}>
-            <p className={styles.eyebrow}>Estándares implementados</p>
-            <h2 id="proto-title" className={styles.h2}>Stack SEP completo</h2>
-            <ul className={styles.protoGrid}>
+            <Reveal as="p" className={styles.eyebrow}>Estándares implementados</Reveal>
+            <Reveal as="h2" id="proto-title" className={styles.h2} delay={0.05}>Stack SEP completo</Reveal>
+            <Stagger as="ul" className={styles.protoGrid}>
               {PROTOCOLS.map((p) => (
-                <li key={p.n} className={styles.proto}>
+                <StaggerItem as="li" key={p.n} className={styles.proto}>
                   <span className={styles.protoNum}>{p.n}</span>
                   {p.href
                     ? <a href={p.href} className={styles.protoName} target="_blank" rel="noreferrer">{p.name}</a>
                     : <span className={styles.protoName}>{p.name}</span>}
-                </li>
+                </StaggerItem>
               ))}
-            </ul>
+            </Stagger>
           </div>
         </section>
 
         {/* ── CTA ── */}
         <section className={styles.cta}>
-          <div className={styles.ctaInner}>
+          <Reveal className={styles.ctaInner}>
             <h2 className={styles.h2}>Pruébalo ahora</h2>
             <p className={styles.sectionLead}>Wallet de testnet con faucet integrado. Sin registro, sin custodia, en menos de dos minutos.</p>
             <Link href="/demo" className={styles.ctaPrimary}>
               Abrir la demo
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </Link>
-          </div>
+          </Reveal>
         </section>
       </main>
 

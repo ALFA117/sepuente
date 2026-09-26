@@ -118,7 +118,7 @@
   padding-top: var(--sp-5);
   border-top: 1px solid var(--border);
 }
-.stat { display: flex; flex-direction: column-reverse; gap: var(--sp-1); min-width: 0; }
+.stat { display: flex; flex-direction: column-reverse; justify-content: flex-end; gap: var(--sp-1); min-width: 0; }
 .stat dd {
   font-family: var(--font-display);
   font-size: clamp(1.75rem, 1.4rem + 2vw, 2.5rem);
@@ -320,3 +320,21 @@ a.protoName { display: inline-flex; align-items: center; min-height: var(--tap);
 }
 .ctaInner .h2 { max-width: none; }
 .ctaInner .ctaPrimary { width: 100%; max-width: 360px; }
+
+/* ── Hero con vista previa ── */
+.heroCopy { display: flex; flex-direction: column; gap: var(--sp-5); min-width: 0; }
+.heroVisual { display: flex; justify-content: center; }
+@media (min-width: 960px) {
+  .heroInner { max-width: 1120px; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); align-items: center; column-gap: var(--sp-12); }
+  .heroVisual { justify-content: flex-end; }
+  .stats { grid-column: 1 / -1; }
+}
+
+/* ── Características compactas en móvil: icono + texto en fila ── */
+.feature { flex-direction: row; align-items: flex-start; gap: var(--sp-4); padding: var(--sp-4); }
+.featureIcon { flex-shrink: 0; margin-bottom: 0; }
+.featureText { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+@media (min-width: 640px) {
+  .feature { flex-direction: column; gap: var(--sp-2); padding: var(--sp-5); }
+  .featureIcon { margin-bottom: var(--sp-1); }
+}
