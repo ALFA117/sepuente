@@ -42,6 +42,12 @@ a{color:inherit;text-decoration:none}
   opacity:1;pointer-events:auto;
   transform:translateX(0);filter:blur(0);
 }
+.slide.enter-from-right{
+  opacity:0;transform:translateX(70px);filter:blur(6px);
+}
+.slide.enter-from-left{
+  opacity:0;transform:translateX(-70px);filter:blur(6px);
+}
 .slide.exit-left{
   opacity:0;transform:translateX(-70px);filter:blur(6px);
 }
@@ -757,32 +763,21 @@ a{color:inherit;text-decoration:none}
     const leaving = slides[cur];
     const entering = slides[next];
 
-    // Prep entering slide off-screen
-    entering.style.transition = 'none';
-    entering.style.transform = dir > 0 ? 'translateX(70px)' : 'translateX(-70px)';
-    entering.style.opacity = '0';
-    entering.style.filter = 'blur(6px)';
-    entering.classList.add('active');
+    // Position entering slide off-screen with a class (no inline styles)
+    const enterClass = dir > 0 ? 'enter-from-right' : 'enter-from-left';
+    entering.classList.add(enterClass);
+    entering.getBoundingClientRect(); // force reflow
 
-    // Force reflow before re-enabling transitions
-    entering.getBoundingClientRect();
-    entering.style.transition = '';
-
-    // Animate leaving slide out
+    // Kick off both animations simultaneously
     leaving.classList.add(dir > 0 ? 'exit-left' : 'exit-right');
     leaving.classList.remove('active');
-
-    // Animate entering slide in
-    requestAnimationFrame(() => {
-      entering.style.transform = '';
-      entering.style.opacity = '';
-      entering.style.filter = '';
-    });
+    entering.classList.add('active');
+    entering.classList.remove(enterClass);
 
     setTimeout(() => {
       leaving.classList.remove('exit-left', 'exit-right');
       animating = false;
-    }, 550);
+    }, 600);
 
     cur = next;
     updateUI();
