@@ -103,7 +103,7 @@ export default function LandingPage() {
             <p className={styles.fDesc}>SEPuente nunca toca llaves privadas. El protocolo solo facilita el intercambio.</p>
           </div>
 
-          <div className={styles.featureCard}>
+          <div className={styles.featureCard} data-sr="delay-1">
             <div className={`${styles.fIcon} ${styles.fIconBlue}`}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"/>
@@ -114,7 +114,7 @@ export default function LandingPage() {
             <p className={styles.fDesc}>Compatible con toda wallet Stellar que implemente SEP-24. Interoperable por diseño.</p>
           </div>
 
-          <div className={styles.featureCard}>
+          <div className={styles.featureCard} data-sr="delay-2">
             <div className={`${styles.fIcon} ${styles.fIconGold}`}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
@@ -124,7 +124,7 @@ export default function LandingPage() {
             <p className={styles.fDesc}>Corre en Vercel Edge + Supabase. Zero infraestructura que mantener.</p>
           </div>
 
-          <div className={styles.featureCard}>
+          <div className={styles.featureCard} data-sr="delay-3">
             <div className={`${styles.fIcon} ${styles.fIconGreen}`}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/>
@@ -134,7 +134,7 @@ export default function LandingPage() {
             <p className={styles.fDesc}>MIT License. Fork, extiende, integra tu propio driver de fiat. Código auditable.</p>
           </div>
 
-          <div className={styles.featureCard}>
+          <div className={styles.featureCard} data-sr="delay-4">
             <div className={`${styles.fIcon} ${styles.fIconBlue}`}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 22v-5M9 7V2M15 7V2M12 17a5 5 0 0 0 5-5V7H7v5a5 5 0 0 0 5 5z"/>
@@ -144,7 +144,7 @@ export default function LandingPage() {
             <p className={styles.fDesc}><code>RampDriver</code> para conectar Etherfuse, STP, SPEI o cualquier proveedor.</p>
           </div>
 
-          <div className={styles.featureCard}>
+          <div className={styles.featureCard} data-sr="delay-5">
             <div className={`${styles.fIcon} ${styles.fIconGreen}`}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
@@ -163,8 +163,8 @@ export default function LandingPage() {
           <div className={styles.sectionEyebrow} data-sr>Flujo completo</div>
           <h2 className={styles.sectionTitle} data-sr="delay-1">De pesos a Stellar en 4 pasos</h2>
 
-          <div className={styles.flowSteps} data-sr="delay-2">
-            <div className={styles.flowStep}>
+          <div className={styles.flowSteps}>
+            <div className={styles.flowStep} data-sr="delay-2">
               <div className={styles.flowStepNum}>01</div>
               <div className={styles.flowStepBody}>
                 <div className={styles.flowStepTitle}>Fondea tu wallet</div>
@@ -176,7 +176,7 @@ export default function LandingPage() {
                 <path d="M4 10h12M12 5l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <div className={styles.flowStep}>
+            <div className={styles.flowStep} data-sr="delay-3">
               <div className={styles.flowStepNum}>02</div>
               <div className={styles.flowStepBody}>
                 <div className={styles.flowStepTitle}>Trustline TMXN</div>
@@ -188,7 +188,7 @@ export default function LandingPage() {
                 <path d="M4 10h12M12 5l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <div className={styles.flowStep}>
+            <div className={styles.flowStep} data-sr="delay-4">
               <div className={styles.flowStepNum}>03</div>
               <div className={styles.flowStepBody}>
                 <div className={styles.flowStepTitle}>Auth SEP-10</div>
@@ -200,7 +200,7 @@ export default function LandingPage() {
                 <path d="M4 10h12M12 5l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <div className={styles.flowStep}>
+            <div className={styles.flowStep} data-sr="delay-5">
               <div className={styles.flowStepNum}>04</div>
               <div className={styles.flowStepBody}>
                 <div className={styles.flowStepTitle}>Deposita o retira</div>
@@ -216,12 +216,12 @@ export default function LandingPage() {
         <div className={styles.archInner}>
           <div className={styles.sectionEyebrow} data-sr>Arquitectura</div>
           <h2 className={styles.sectionTitle} data-sr="delay-1">Cómo fluye el protocolo</h2>
-          <p className={styles.archSub}>
+          <p className={styles.archSub} data-sr="delay-2">
             SEPuente actúa como adaptador sin custodia entre el sistema bancario mexicano y la red Stellar.
           </p>
 
           {/* SVG Diagram */}
-          <div className={styles.archDiagram}>
+          <div className={styles.archDiagram} data-sr="delay-1">
             <svg viewBox="0 0 700 320" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.archSvg}>
               <defs>
                 {/* Animated dash paths */}
@@ -343,7 +343,7 @@ export default function LandingPage() {
           </div>
 
           {/* Legend */}
-          <div className={styles.archLegend}>
+          <div className={styles.archLegend} data-sr="delay-3">
             <div className={styles.archLegendItem}>
               <span className={styles.archLegendDot} style={{background:"rgba(125,186,255,0.6)"}}/>
               <span>Wallet del usuario</span>
@@ -369,19 +369,19 @@ export default function LandingPage() {
         <div className={styles.protocolsInner}>
           <div className={styles.sectionEyebrow} data-sr>Estándares Stellar implementados</div>
           <div className={styles.protocolGrid}>
-            <div className={styles.protoBadge}>
+            <div className={styles.protoBadge} data-sr>
               <span className={styles.protoNum}>SEP-1</span>
               <span className={styles.protoName}>stellar.toml</span>
             </div>
-            <div className={styles.protoBadge}>
+            <div className={styles.protoBadge} data-sr="delay-1">
               <span className={styles.protoNum}>SEP-10</span>
               <span className={styles.protoName}>Web Auth</span>
             </div>
-            <div className={styles.protoBadge}>
+            <div className={styles.protoBadge} data-sr="delay-2">
               <span className={styles.protoNum}>SEP-24</span>
               <span className={styles.protoName}>Hosted Deposit & Withdrawal</span>
             </div>
-            <div className={styles.protoBadge}>
+            <div className={styles.protoBadge} data-sr="delay-3">
               <span className={styles.protoNum}>SEP-38</span>
               <span className={styles.protoName}>Anchor RFQ</span>
             </div>
@@ -408,7 +408,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className={styles.footer}>
+      <footer className={styles.footer} data-sr>
         <span className={styles.footerBrand}>
           <span className={styles.navSymbol} style={{fontSize:"1rem"}}>⟴</span>
           SEPuente
