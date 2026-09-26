@@ -14,7 +14,7 @@ export default function LandingPage() {
         <div className={styles.navLinks}>
           <a href="/devs" className={styles.navLink}>Docs</a>
           <a href="https://github.com/ALFA117/sepuente" target="_blank" rel="noreferrer" className={styles.navLink}>GitHub</a>
-          <a href="/pitch.html" className={styles.navLink}>Pitch</a>
+          <a href="/pitch" className={styles.navLink}>Pitch</a>
           <Link href="/demo" className={styles.navCta}>Demo →</Link>
         </div>
       </nav>
@@ -57,7 +57,7 @@ export default function LandingPage() {
               </svg>
               GitHub
             </a>
-            <a href="/pitch.html" className={styles.ctaGhost}>
+            <a href="/pitch" className={styles.ctaGhost}>
               Ver Pitch
             </a>
           </div>
@@ -416,7 +416,7 @@ export default function LandingPage() {
         <div className={styles.footerLinks}>
           <a href="/devs" className={styles.footerLink}>Docs</a>
           <a href="https://github.com/ALFA117/sepuente" target="_blank" rel="noreferrer" className={styles.footerLink}>GitHub</a>
-          <a href="/pitch.html" className={styles.footerLink}>Pitch</a>
+          <a href="/pitch" className={styles.footerLink}>Pitch</a>
         </div>
         <span className={styles.footerMono}>Stellar Testnet · SEP-24</span>
       </footer>

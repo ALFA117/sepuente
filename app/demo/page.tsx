@@ -548,7 +548,7 @@ export default function DemoPage() {
             <span>·</span>
             <a href="https://github.com/ALFA117/sepuente" target="_blank" rel="noreferrer">GitHub</a>
             <span>·</span>
-            <a href="/pitch.html">Pitch</a>
+            <a href="/pitch">Pitch</a>
           </div>
           <span className={styles.footMono}>Stellar Testnet</span>
         </footer>
