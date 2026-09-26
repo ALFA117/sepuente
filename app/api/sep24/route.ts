@@ -99,14 +99,11 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === "simulate") {
-    if (env.DRIVER !== "mock") {
+    if (!("simulateFiatReceived" in driver)) {
       return NextResponse.json(
-        { error: "simulate solo disponible con DRIVER=mock" },
+        { error: "Simulación solo disponible en modo sandbox (DRIVER=mock)" },
         { status: 400 }
       );
-    }
-    if (!("simulateFiatReceived" in driver)) {
-      return NextResponse.json({ error: "Driver no soporta simulación" }, { status: 400 });
     }
     await (driver as { simulateFiatReceived: (id: string) => Promise<void> })
       .simulateFiatReceived(txId)

@@ -907,9 +907,9 @@ function InteractiveContent() {
                   maxLength={18}
                   value={clabe}
                   onChange={(e) => setClabe(e.target.value.replace(/\D/g, ""))}
-                  placeholder="000000000000000000"
+                  placeholder="646180157000000004"
                 />
-                <span className="field-hint">18 dígitos · SPEI interbancario</span>
+                <span className="field-hint">18 dígitos · SPEI interbancario · Demo: <button type="button" style={{background:"none",border:"none",color:"var(--gold)",cursor:"pointer",font:"inherit",padding:0,fontSize:".7rem"}} onClick={() => setClabe("646180157000000004")}>usar CLABE de prueba</button></span>
               </div>
             )}
 
