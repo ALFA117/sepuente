@@ -6,6 +6,7 @@ import {
   TransactionBuilder,
   Operation,
   Asset,
+  Account,
 } from "@stellar/stellar-sdk";
 import styles from "./page.module.css";
 
@@ -112,9 +113,10 @@ export default function Home() {
       const accRes = await fetch(`${TESTNET}/accounts/${account.publicKey}`);
       if (!accRes.ok) { setErr("Fondea la cuenta primero con el faucet"); return; }
       const accData = await accRes.json();
+      const stellarAccount = new Account(accData.id, accData.sequence);
       const asset = new Asset(ASSET_CODE, ISSUER);
 
-      const tx = new TransactionBuilder(accData, {
+      const tx = new TransactionBuilder(stellarAccount, {
         fee: "100000",
         networkPassphrase: Networks.TESTNET,
       })
