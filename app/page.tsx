@@ -364,6 +364,7 @@ export default function LandingPage() {
       <section className={styles.protocols}>
         <div className={styles.protocolsInner}>
           <div className={styles.sectionEyebrow} data-sr>Estándares Stellar implementados</div>
+          <h2 className={styles.sectionTitle} data-sr="delay-1">Stack SEP completo</h2>
           <div className={styles.protocolGrid}>
             <div className={styles.protoBadge} data-sr>
               <span className={styles.protoNum}>SEP-1</span>
@@ -400,6 +401,20 @@ export default function LandingPage() {
               <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </Link>
+          <div className={styles.ctaTrust}>
+            <span className={styles.ctaTrustPill}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+              Sin registro
+            </span>
+            <span className={styles.ctaTrustPill}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+              Sin custodia
+            </span>
+            <span className={styles.ctaTrustPill}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+              MIT License
+            </span>
+          </div>
         </div>
       </section>
 
@@ -414,7 +429,10 @@ export default function LandingPage() {
           <a href="https://github.com/ALFA117/sepuente" target="_blank" rel="noreferrer" className={styles.footerLink}>GitHub</a>
           <a href="/pitch" className={styles.footerLink}>Pitch</a>
         </div>
-        <span className={styles.footerMono}>Stellar Testnet · SEP-24</span>
+        <div className={styles.footerRight}>
+          <span className={styles.footerMono}>Stellar Testnet · SEP-24</span>
+          <span className={styles.footerCopy}>© 2024 MIT License</span>
+        </div>
       </footer>
 
     </div>
