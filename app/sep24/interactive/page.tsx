@@ -712,8 +712,13 @@ function InteractiveContent() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...body, token }),
     });
-    const data = await res.json();
-    if (!res.ok || data.error) throw new Error(data.error ?? "Error desconocido");
+    const text = await res.text();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let data: any = {};
+    try { data = text ? JSON.parse(text) : {}; } catch { /* respuesta no-JSON */ }
+    if (!res.ok || data.error) {
+      throw new Error(data.error ?? `El servidor respondió ${res.status} sin detalle`);
+    }
     return data;
   }
 

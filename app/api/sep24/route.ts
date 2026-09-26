@@ -105,11 +105,12 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    await (driver as { simulateFiatReceived: (id: string) => Promise<void> })
-      .simulateFiatReceived(txId)
-      .catch((e: Error) => {
-        throw Object.assign(new Error(e.message), { status: 400 });
-      });
+    try {
+      await (driver as { simulateFiatReceived: (id: string) => Promise<void> })
+        .simulateFiatReceived(txId);
+    } catch (e: unknown) {
+      return NextResponse.json({ error: describeError(e) }, { status: 400 });
+    }
     return NextResponse.json({ ok: true });
   }
 
@@ -123,4 +124,15 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+}
+
+function describeError(e: unknown): string {
+  const codes = (e as { response?: { data?: { extras?: { result_codes?: { transaction?: string; operations?: string[] } } } } })
+    ?.response?.data?.extras?.result_codes;
+  const ops = codes?.operations ?? [];
+  if (ops.includes("op_no_trust")) return "Tu wallet no tiene trustline de TMXN. Agrégala en el paso 2 de la demo.";
+  if (ops.includes("op_underfunded")) return "La cuenta de distribución del anchor no tiene saldo TMXN suficiente.";
+  if (ops.includes("op_no_destination")) return "Tu wallet no existe en testnet. Fondéala con el faucet primero.";
+  if (codes) return `Stellar rechazó la transacción: ${[codes.transaction, ...ops].filter(Boolean).join(", ")}`;
+  return (e as Error)?.message ?? "Error desconocido al simular el depósito";
 }
