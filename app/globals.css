@@ -1,33 +1,36 @@
 :root {
   /* ── Palette ── */
-  --navy: #0A1A33;
-  --surface: #11284D;
-  --surface2: #162F59;
+  --navy: #0A0F1E;
+  --surface: #0F172A;
+  --surface2: #1E293B;
   /* alias used in inline CSS of interactive page */
-  --s2: #162F59;
-  --gold: #C9A227;
-  --gold-dim: rgba(201, 162, 39, 0.15);
-  --gold-hover: #E0C35A;
-  --gold-disabled: rgba(201, 162, 39, 0.35);
-  --cream: #F5F1E6;
-  --text: #E8E2D5;
-  --muted: #8B9BB5;
-  --error: #E05252;
+  --s2: #1E293B;
+  --gold: #F59E0B;
+  --gold-dim: rgba(245, 158, 11, 0.12);
+  --gold-hover: #FBBF24;
+  --gold-disabled: rgba(245, 158, 11, 0.35);
+  --accent: #8B5CF6;
+  --accent-dim: rgba(139, 92, 246, 0.12);
+  --cream: #F8FAFC;
+  --text: #E2E8F0;
+  --muted: #94A3B8;
+  --error: #EF4444;
   /* unified success color across all screens */
-  --success: #4CD68E;
-  --blue: #7DBAFF;
-  --warning: #F0A500;
-  --border: rgba(139, 155, 181, 0.18);
-  --border-gold: rgba(201, 162, 39, 0.25);
+  --success: #10B981;
+  --blue: #60A5FA;
+  --warning: #F59E0B;
+  --border: rgba(51, 65, 85, 0.8);
+  --border-gold: rgba(245, 158, 11, 0.3);
 
   /* ── Surface states ── */
-  --surface-hover: rgba(17, 40, 77, 0.8);
-  --surface-active: rgba(17, 40, 77, 1);
+  --surface-hover: rgba(30, 41, 59, 0.8);
+  --surface-active: rgba(30, 41, 59, 1);
 
   /* ── Shadows ── */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.35);
-  --shadow-gold: 0 4px 24px rgba(201, 162, 39, 0.15);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.5);
+  --shadow-gold: 0 4px 28px rgba(245, 158, 11, 0.2);
+  --shadow-accent: 0 4px 28px rgba(139, 92, 246, 0.2);
 
   /* ── Border radius ── */
   --radius: 12px;
@@ -43,7 +46,8 @@
 
   /* ── Typography ── */
   --font-serif: Georgia, 'Times New Roman', serif;
-  --font-syne: var(--font-syne, 'Syne', system-ui, sans-serif);
+  --font-display: var(--font-display, 'Space Grotesk', system-ui, sans-serif);
+  --font-syne: var(--font-display, 'Space Grotesk', system-ui, sans-serif);
   --font-mono: var(--font-mono, 'JetBrains Mono', 'Courier New', monospace);
 }
 
@@ -61,8 +65,8 @@ html {
 body {
   background: var(--navy);
   color: var(--text);
-  font-family: var(--font-inter), Inter, system-ui, sans-serif;
-  line-height: 1.55;
+  font-family: var(--font-inter), 'Inter', system-ui, sans-serif;
+  line-height: 1.6;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   min-height: 100dvh;
 }
