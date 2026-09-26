@@ -134,7 +134,13 @@ export default function DemoPage() {
               toast.success(f.kind === "deposit" ? `Depósito acreditado en tu wallet.` : `Retiro completado.`);
               loadBalances();
             }
-            list[i] = { ...list[i], status: f.status, stellar_transaction_id: f.stellar_transaction_id ?? list[i].stellar_transaction_id };
+            list[i] = {
+              ...list[i],
+              status: f.status,
+              amount_in: f.amount_in ?? list[i].amount_in,
+              amount_out: f.amount_out ?? list[i].amount_out,
+              stellar_transaction_id: f.stellar_transaction_id ?? list[i].stellar_transaction_id,
+            };
           }
         }
       }

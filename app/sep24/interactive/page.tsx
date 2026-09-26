@@ -296,7 +296,12 @@ function InteractiveContent() {
                 />
                 {touched && clabeErr
                   ? <span id="clabe-hint" className={ui.fieldError}>{clabeErr}</span>
-                  : <span id="clabe-hint" className={ui.hint}>{clabe.length}/18 dígitos.{sandbox && <> <button type="button" className={ui.linkBtn} onClick={() => setClabe(DEMO_CLABE)}>Usar CLABE de prueba</button></>}</span>}
+                  : <span id="clabe-hint" className={ui.hint}>{clabe.length}/18 dígitos.</span>}
+                {sandbox && (
+                  <button type="button" className={ui.linkBtn} style={{ alignSelf: "flex-start" }} onClick={() => setClabe(DEMO_CLABE)}>
+                    Usar CLABE de prueba
+                  </button>
+                )}
               </div>
             )}
 

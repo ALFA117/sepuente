@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
     .single();
 
   if (error || !data) return jsonCors({ error: "Transaction not found" }, 404);
+  let row = data;
 
   // Pull-on-read: actualiza estado desde el driver
   const driver = getDriver();
@@ -40,12 +41,12 @@ export async function GET(req: NextRequest) {
         stellar_transaction_id: fresh.stellar_transaction_id ?? data.stellar_transaction_id,
         updated_at: new Date().toISOString(),
       }).eq("id", txId);
-      data.status = fresh.status;
-      data.stellar_transaction_id = fresh.stellar_transaction_id ?? data.stellar_transaction_id;
+      const { data: reread } = await db.from("sep24_transactions").select("*").eq("id", txId).single();
+      row = reread ?? { ...data, status: fresh.status };
     }
   }
 
-  return jsonCors({ transaction: formatTx(data) });
+  return jsonCors({ transaction: formatTx(row) });
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
