@@ -2,6 +2,126 @@
 
 > Gateway **open source y no custodial** que presenta las rampas de pesos mexicanos como un anchor estándar de Stellar, para que cualquier wallet compatible con SEP-24 pueda ofrecer depósito y retiro de pesos por SPEI sin integrar APIs propietarias.
 
+---
+
+## FIX_NOTES
+
+*(generado por auditoría automática — 2026-09-26)*
+
+### Inventario de flujos
+
+| Flujo | Endpoint | Estado | Notas |
+|---|---|---|---|
+| SEP-1 | `GET /.well-known/stellar.toml` | ✅ | TOML real, CORS abierto, tokens de env vars |
+| SEP-10 GET | `GET /auth?account=G...` | ✅ | `buildChallengeTx` real con SIGNING_SECRET_KEY |
+| SEP-10 POST | `POST /auth` | ✅ | `verifyChallengeTxSigners` → JWT firmado con JWT_SECRET |
+| SEP-24 info | `GET /sep24/info` | ✅ | Activos y fees hardcodeados por diseño |
+| SEP-24 deposit | `POST /sep24/transactions/deposit/interactive` | ✅ | Crea fila en Supabase, devuelve URL interactiva con session token |
+| SEP-24 withdraw | `POST /sep24/transactions/withdraw/interactive` | ✅ | Ídem, kind=withdrawal |
+| SEP-24 transaction | `GET /sep24/transaction?id=` | ✅ | Pull-on-read actualiza estado via driver |
+| SEP-24 transactions | `GET /sep24/transactions` | ✅ | Historial paginado, filtrado por cuenta JWT |
+| SEP-38 info | `GET /sep38/info` | ✅ | Par iso4217:MXN ↔ stellar:TMXN |
+| SEP-38 prices | `GET /sep38/prices` | ✅ | Delega a driver.quote |
+| SEP-38 price | `GET /sep38/price` | ✅ | Cotización individual |
+| SEP-38 quote POST | `POST /sep38/quote` | ✅ | Persiste en sep38_quotes, devuelve id |
+| SEP-38 quote GET | `GET /sep38/quote/:id` | ✅ | Verifica expiración |
+| API interna | `POST /api/sep24` | ✅ | Acciones: quote, start_deposit, start_withdraw, simulate, status |
+| Faucet | `POST /api/faucet` | ✅ | Friendbot + rate limit 3/día por cuenta |
+| UI interactiva | `/sep24/interactive` | ✅ | 4 pasos (form→quote→instrucciones→done), polling de estado |
+| Demo | `/demo` | ✅ | Wallet demo con faucet, trustline, SEP-10 y SEP-24 integrados |
+
+### Mocks activos (DRIVER=mock)
+
+| Mock | Detalle | Por qué es aceptable |
+|---|---|---|
+| MockDriver CLABE | `646180157000000004` (ficticia) | Testnet; EtherfuseDriver devuelve CLABE real |
+| MockDriver precio | Siempre 1:1 + 0.5% fee | Suficiente para demos |
+| MockDriver SPEI | `simulateFiatReceived` envía TMXN real on-chain | Flujo real en testnet |
+
+### Bugs corregidos
+
+| Bug | Archivo | Fix |
+|---|---|---|
+| `findIncomingPayment` aceptaba pagos sin memo (`memo_type=none`) — falsos positivos en retiros | `lib/stellar.ts` | Eliminada la condición `\|\| txData.memo_type === "none"` — solo match exacto de memo |
+| `NEXT_PUBLIC_ASSET_CODE` y `NEXT_PUBLIC_ISSUER_PUBLIC_KEY` faltaban en `.env.example` | `.env.example` | Añadidas con comentario explicativo |
+| Dead code en `MockDriver.simulateFiatReceived` (rama `claimable_balance_id` idéntica en if/else) | `lib/drivers/mock.ts` | Rama colapsada a una sola llamada |
+| Token `--success` inconsistente (`#4CAF82` vs `#4CD68E`) | `app/globals.css` | Unificado a `#4CD68E` |
+| Tokens `--blue` y `--s2` faltaban en globals.css (usados en interactive/page.tsx) | `app/globals.css` | Añadidos |
+| Campo `context` faltaba en interfaz TypeScript `Sep38Quote` | `lib/supabase.ts` | Añadido como `context?: string` |
+| Import sin uso `import styles from "./landing.module.css"` en not-found.tsx | `app/not-found.tsx` | Eliminado |
+
+### Pendientes
+
+- EtherfuseDriver: sandbox requiere `ETHERFUSE_API_KEY` real para test de integración completo
+- SEP-10 anchor-tests requiere deploy activo con env vars correctas
+- No hay tests unitarios; la única cobertura es `anchor-tests` de SDF
+
+### Verificación rápida (2 min antes del demo)
+
+```bash
+# 1. stellar.toml responde con los campos correctos
+curl https://sepuente.vercel.app/.well-known/stellar.toml | head -20
+
+# 2. Challenge SEP-10 se genera con una clave válida
+curl "https://sepuente.vercel.app/auth?account=GAIEGXXX"
+
+# 3. Demo Wallet SDF apunta al anchor
+# → https://demo-wallet.stellar.org/?home_domain=sepuente.vercel.app
+
+# 4. Tabla sep24_transactions tiene filas nuevas tras un depósito
+# → Supabase Dashboard → Table editor → sep24_transactions
+```
+
+---
+
+## DESIGN_NOTES
+
+### Sistema de tokens CSS (`app/globals.css`)
+
+| Token | Valor | Notas |
+|---|---|---|
+| `--navy` | `#0A1A33` | Fondo principal |
+| `--surface` | `#11284D` | Superficies/cards |
+| `--surface2` / `--s2` | `#162F59` | Superficies elevadas (alias añadido) |
+| `--gold` | `#C9A227` | Acento primario, CTAs |
+| `--gold-hover` | `#E0C35A` | Hover del acento |
+| `--gold-disabled` | `rgba(201,162,39,0.35)` | Botón gold deshabilitado |
+| `--cream` | `#F5F1E6` | Texto principal |
+| `--text` | `#E8E2D5` | Texto cuerpo |
+| `--muted` | `#8B9BB5` | Texto secundario, placeholders |
+| `--error` | `#E05252` | Estados de error |
+| `--success` | `#4CD68E` | Estados de éxito (unificado) |
+| `--blue` | `#7DBAFF` | Info / Stellar accent |
+| `--warning` | `#F0A500` | Avisos |
+| `--border` | `rgba(139,155,181,0.18)` | Bordes de cards |
+| `--border-gold` | `rgba(201,162,39,0.25)` | Borde hover gold |
+| `--shadow-sm` | `0 2px 8px rgba(0,0,0,0.25)` | Sombra pequeña |
+| `--shadow-md` | `0 4px 24px rgba(0,0,0,0.35)` | Sombra media |
+| `--shadow-gold` | `0 4px 24px rgba(201,162,39,0.15)` | Sombra accent |
+| `--radius-sm/md/lg/xl` | `8/12/16/20px` | Escala de border-radius |
+| `--transition-fast/base/slow` | `150/250/400ms ease-out` | Escala de transición |
+
+### Decisiones de diseño
+
+- La UI interactiva (`/sep24/interactive`) usa CSS inline — intencional; se abre en popup y debe ser autocontenida.
+- El pitch (`/pitch`) es self-contained en React con su propio CSS inlined — no comparte el sistema de tokens del layout principal por diseño.
+- La landing, demo y devs usan sus propios módulos CSS que consumen las variables `:root`.
+- Fuentes: Syne 800 (headings), Inter (body), JetBrains Mono (mono) — cargadas via `next/font` en layout.tsx.
+- Keyframes globales en globals.css: `enterUp`, `fadeIn`, `pulse`, `shimmer`, `spin`.
+- Utility classes globales: `.animate-in`, `.skeleton`, `.spin`, `.btn`, `.card`, `.sr-only`, `.font-mono`, `.truncate-middle`.
+
+### Skills utilizadas
+
+- **ui-ux-pro-max**: Enterprise Gateway / Exaggerated Minimalism — trust signals prominentes, minimal noise, NO emojis como íconos
+- **motion**: implementado como CSS puro (framer-motion no instalado en el proyecto)
+
+### Pendientes visuales
+
+- La demo wallet (`/demo`) no tiene estado de error visual si Horizon no responde — aceptable para testnet demo.
+- La página `/devs` usa estilos inline — funcional, no reutilizable; candidato a CSS module en iteración futura.
+
+---
+
 **El producto es la capa de estándares. La app de demo es solo un cliente más.**
 
 ---

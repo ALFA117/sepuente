@@ -108,7 +108,7 @@ export async function findIncomingPayment(
     );
     if (!txResp.ok) continue;
     const txData = await txResp.json();
-    if (txData.memo === memo || txData.memo_type === "none") {
+    if (txData.memo === memo) {
       return {
         txHash: p.transaction_hash,
         amount: (p as { amount: string }).amount,

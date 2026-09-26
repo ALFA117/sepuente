@@ -67,4 +67,5 @@ export interface Sep38Quote {
   expires_at: string;
   created_at: string;
   stellar_account?: string;
+  context?: string;
 }

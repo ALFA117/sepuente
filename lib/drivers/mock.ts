@@ -45,7 +45,8 @@ export class MockDriver implements RampDriver {
     claimableBalanceSupported?: boolean;
   }): Promise<DepositInstructions> {
     const reference = `SP${params.txId.slice(0, 8).toUpperCase()}`;
-    const clabe = "646180157000000004"; // CLABE ficticia de Etherfuse sandbox
+    // CLABE ficticia solo para demo/testnet — en producción Etherfuse devuelve la real
+    const clabe = "646180157000000004";
 
     await db.from("sep24_transactions").update({
       status: "pending_user_transfer_start",
@@ -135,13 +136,8 @@ export class MockDriver implements RampDriver {
     const fee = parseFloat(amount) * FEE_RATE;
     const netAmount = (parseFloat(amount) - fee).toFixed(7);
 
-    let txHash: string;
-    if (data.claimable_balance_id) {
-      // Crear claimable balance — simplificado: envío directo
-      txHash = await sendTmxn(data.stellar_account, netAmount);
-    } else {
-      txHash = await sendTmxn(data.stellar_account, netAmount);
-    }
+    // Claimable balances no implementados en MockDriver: envío directo siempre
+    const txHash = await sendTmxn(data.stellar_account, netAmount);
 
     await db.from("sep24_transactions").update({
       status: "completed",
