@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { WebAuth, Networks, Keypair } from "@stellar/stellar-sdk";
+import { WebAuth, Networks, Keypair, TransactionBuilder } from "@stellar/stellar-sdk";
 import { jsonCors, optionsResponse } from "@/lib/cors";
 
 const { buildChallengeTx, verifyChallengeTxSigners } = WebAuth;
@@ -72,13 +72,19 @@ export async function POST(req: NextRequest) {
 
   try {
     const signingKp = Keypair.fromSecret(env.SIGNING_SECRET_KEY);
+
+    // Extraer la clave pública del cliente del challenge XDR
+    // (source de la primera operación, que es la cuenta que debe firmar)
+    const parsedTx = TransactionBuilder.fromXDR(transaction, networkPassphrase);
+    const clientAccount = (parsedTx.operations[0]?.source ?? parsedTx.source) as string;
+
     const result = verifyChallengeTxSigners(
       transaction,
       signingKp.publicKey(),
       networkPassphrase,
-      [domain],       // signers (el cliente es el único signer esperado)
-      domain,         // homeDomains
-      domain          // webAuthDomain
+      [clientAccount],  // G... key del firmante esperado
+      domain,           // homeDomains
+      domain            // webAuthDomain
     );
     const account = result[0];
     if (!account) {
