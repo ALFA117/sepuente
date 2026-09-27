@@ -9,7 +9,7 @@ Cualquier wallet compatible con Stellar puede ofrecer depósitos y retiros en pe
 | | |
 |---|---|
 | **Track** | Blockchain |
-| **Sponsor** | Stellar · BAF |
+| **Sponsors** | Stellar · BAF · Pollar (login por correo, trustline, firma SEP-10 y pago del retiro en la demo) |
 | **Demo en vivo** | https://sepuente.vercel.app (wallet de prueba en `/demo`, pitch en `/pitch`, docs en `/devs`) |
 | **Repositorio** | https://github.com/ALFA117/sepuente |
 | **Red** | Stellar Testnet · activo `TMXN` (1 TMXN = 1 peso de prueba) |
@@ -21,6 +21,36 @@ Cualquier wallet compatible con Stellar puede ofrecer depósitos y retiros en pe
 - Flujo completo de depósito y retiro en testnet, con transacciones reales visibles en stellar.expert (`node scripts/e2e-testnet.mjs https://sepuente.vercel.app`).
 - **75 de 76 pruebas oficiales de SDF (`@stellar/anchor-tests`) en SEP-1, 10, 24 y 38** contra producción (27 sep 2026). La única restante mide la hora del reto SEP-10 contra el reloj de la computadora que corre la prueba; ver [Validación con anchor-tests](#validación-con-anchor-tests).
 - SPEI simulado y marcado como "Modo prueba" en toda la interfaz (`DRIVER=mock`); el driver de Etherfuse está escrito pero no probado sin API key.
+
+### Para jueces: los 4 criterios en un minuto
+
+**1 · Ejecución técnica: corre en Stellar testnet.** Abre cualquiera de estos enlaces:
+
+| Qué | En stellar.expert |
+|---|---|
+| Depósito: el anchor paga 248.75 TMXN a una wallet | [`53cb393e…8ded5db`](https://stellar.expert/explorer/testnet/tx/53cb393ef250d27119a5a5ed6caef0e41be889a45f2d1edb81b3c361e8ded5db) |
+| Retiro: la wallet paga 100 TMXN al anchor con memo | [`555c38ce…91aac3b6`](https://stellar.expert/explorer/testnet/tx/555c38ce6eae6238300c7d8806e28339961c741c6a3e89714ee07dbe91aac3b6) |
+| Emisor del activo TMXN | [`GAIEJKMT…FX63UG`](https://stellar.expert/explorer/testnet/account/GAIEJKMT4RMRLTZ22KI7TMANXETIWO4T2H5RZG3MZDJKXDDLM4FX63UG) |
+| Cuenta de distribución del anchor | [`GC2UNTIN…IS3MGE2`](https://stellar.expert/explorer/testnet/account/GC2UNTINTDLHZE6UYO5JPTT5DAJ3Y6GYF7TPE2V5KCO2BJFX3IS3MGE2) |
+| Descubrimiento SEP-1 | [`/.well-known/stellar.toml`](https://sepuente.vercel.app/.well-known/stellar.toml) |
+
+Son de la corrida completa contra producción del 27 sep 2026. Para generar las tuyas: abre [`/demo`](https://sepuente.vercel.app/demo), completa los 3 pasos y haz un depósito; el historial enlaza cada pago a stellar.expert. La suite oficial de SDF da 75/76 ([detalle](#validación-con-anchor-tests)).
+
+**2 · Ajuste producto-problema: por qué Stellar.**
+- **Usuario:** una wallet o app de Stellar que quiere ofrecer pesos mexicanos (remesas, pagos a freelancers). **Tarea:** agregar depósito y retiro por SPEI sin integrar la API de cada banco ni custodiar fondos.
+- **Por qué Stellar:** anchors y SEP-24 son el estándar de rampas de Stellar; una wallet integra una vez y funciona con cualquier anchor, y SEPuente se descubre solo con `stellar.toml`. Emitir el peso (TMXN) es nativo, con trustline, sin contrato ni puente. La liquidación tarda unos 5 s y cuesta 0.00001 XLM, viable para montos chicos. En otra cadena no existe un estándar equivalente de rampas fiat.
+
+**3 · Impacto: quién se beneficia.**
+- La persona en México que recibe dinero en su wallet y necesita pesos en su CLABE (México recibió más de 60 mil millones de dólares en remesas en 2023, según Banxico).
+- Las wallets del ecosistema Stellar, que obtienen una rampa MXN abierta (MIT) sin depender de un proveedor.
+- La comunidad UNAM: el código es MIT y un `RampDriver` nuevo basta para conectar otro proveedor SPEI.
+- **Resultado visible en la demo:** un depósito que termina en un pago TMXN real en testnet y un retiro que la wallet firma y el anchor detecta en la red.
+
+**4 · Demostración y claridad.**
+- Video (≤ 3 min): guion en [`VIDEO.md`](VIDEO.md).
+- Repositorio público, licencia MIT.
+- Reproducir en 2 minutos: abre `/demo` en el teléfono, sin instalar nada. Para correrlo local: `npm install`, copia `.env.example` a `.env.local` y ejecuta `npm run dev` (ver [Probar en 2 minutos](#probar-en-2-minutos)).
+- Código reutilizado y asistentes de IA declarados en [Código y herramientas reutilizados](#código-y-herramientas-reutilizados). Todo el trabajo propio se hizo durante el hackathon (primer commit: 25 sep 2026).
 
 ---
 
