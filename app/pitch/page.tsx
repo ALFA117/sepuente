@@ -11,13 +11,31 @@ import { LogoWord } from "../components/brand/Logo";
 const CHAPTERS = [
   { id: "portada", label: "Portada" },
   { id: "problema", label: "El problema" },
+  { id: "usuario", label: "Para quién" },
   { id: "solucion", label: "La solución" },
   { id: "flujo", label: "Cómo funciona" },
   { id: "arquitectura", label: "Arquitectura" },
   { id: "estandares", label: "Estándares" },
   { id: "diferencia", label: "Diferenciación" },
   { id: "stack", label: "Stack" },
+  { id: "prueba", label: "Verifícalo" },
   { id: "empezar", label: "Empezar" },
+];
+
+const WHY_STELLAR = [
+  { t: "Un estándar de rampas que ya existe", d: "Anchors y SEP-24 son parte de Stellar: una wallet integra una vez y habla con cualquier anchor. Otras redes no tienen un estándar equivalente para rampas fiat." },
+  { t: "Emitir el peso es nativo", d: "TMXN es un activo de Stellar con trustline, sin contrato inteligente que auditar ni puente entre cadenas." },
+  { t: "Barato y rápido para montos chicos", d: "Liquidación en unos 5 segundos y 0.00001 XLM de comisión de red: sirve para remesas y pagos pequeños." },
+];
+
+// Transacciones reales en testnet de la corrida de producción del 27 sep 2026.
+const EXPLORER = "https://stellar.expert/explorer/testnet";
+const PROOF = [
+  { k: "Depósito · el anchor paga 248.75 TMXN", v: "53cb393e…8ded5db", href: `${EXPLORER}/tx/53cb393ef250d27119a5a5ed6caef0e41be889a45f2d1edb81b3c361e8ded5db` },
+  { k: "Retiro · la wallet paga 100 TMXN al anchor", v: "555c38ce…91aac3b6", href: `${EXPLORER}/tx/555c38ce6eae6238300c7d8806e28339961c741c6a3e89714ee07dbe91aac3b6` },
+  { k: "Emisor del activo TMXN", v: "GAIEJKMT…FX63UG", href: `${EXPLORER}/account/GAIEJKMT4RMRLTZ22KI7TMANXETIWO4T2H5RZG3MZDJKXDDLM4FX63UG` },
+  { k: "Cuenta de distribución del anchor", v: "GC2UNTIN…IS3MGE2", href: `${EXPLORER}/account/GC2UNTINTDLHZE6UYO5JPTT5DAJ3Y6GYF7TPE2V5KCO2BJFX3IS3MGE2` },
+  { k: "stellar.toml publicado", v: "/.well-known/stellar.toml", href: "/.well-known/stellar.toml" },
 ];
 
 const I = {
@@ -205,8 +223,26 @@ export default function PitchPage() {
           </Stagger>
         </Chapter>
 
-        {/* ── 3. Solución ── */}
-        <Chapter id="solucion" n={3} eyebrow="La solución" title={<>Una capa de <span className={styles.gold}>protocolo</span>, no una rampa nueva</>}>
+        {/* ── 3. Para quién y por qué Stellar ── */}
+        <Chapter id="usuario" n={3} eyebrow="Para quién" title={<>Wallets que quieren <span className={styles.gold}>pesos mexicanos</span></>}>
+          <Reveal as="p" className={styles.lead} delay={0.1}>
+            <strong>Usuario:</strong> una wallet o app de Stellar que quiere ofrecer depósitos y retiros en pesos, por ejemplo para remesas o pagos a freelancers. <strong>Su tarea:</strong> agregar SPEI sin integrar la API de cada banco ni custodiar el dinero de nadie.
+          </Reveal>
+          <Reveal as="p" className={styles.lead} delay={0.12}>
+            <strong>Quién se beneficia:</strong> la persona en México que recibe dinero en su wallet y necesita pesos en su CLABE (México recibió más de 60 mil millones de dólares en remesas en 2023, según Banxico), y la comunidad UNAM, que puede usar y extender el código MIT.
+          </Reveal>
+          <Stagger as="ul" className={styles.pains}>
+            {WHY_STELLAR.map((p) => (
+              <StaggerItem as="li" key={p.t} className={`${styles.pain} ${styles.painYes}`}>
+                <span className={`${styles.mark} ${styles.markYes}`}>{I.check}</span>
+                <div><strong>{p.t}</strong><p>{p.d}</p></div>
+              </StaggerItem>
+            ))}
+          </Stagger>
+        </Chapter>
+
+        {/* ── 4. Solución ── */}
+        <Chapter id="solucion" n={4} eyebrow="La solución" title={<>Una capa de <span className={styles.gold}>protocolo</span>, no una rampa nueva</>}>
           <Reveal as="p" className={styles.lead} delay={0.1}>
             SEPuente traduce la API del proveedor al estándar de Stellar. El KYC y el dinero se quedan en el proveedor regulado; SEPuente solo cambia la <strong>interfaz</strong>.
           </Reveal>
@@ -227,7 +263,7 @@ export default function PitchPage() {
         </Chapter>
 
         {/* ── 4. Flujo ── */}
-        <Chapter id="flujo" n={4} eyebrow="Protocolo" title="Cómo funciona">
+        <Chapter id="flujo" n={5} eyebrow="Protocolo" title="Cómo funciona">
           <Stagger as="ol" className={styles.timeline}>
             {STEPS.map((s, i) => (
               <StaggerItem as="li" key={s.t} className={styles.tStep}>
@@ -243,7 +279,7 @@ export default function PitchPage() {
         </Chapter>
 
         {/* ── 5. Arquitectura ── */}
-        <Chapter id="arquitectura" n={5} eyebrow="Arquitectura" title={<>Diseño <span className={styles.gold}>serverless</span></>}>
+        <Chapter id="arquitectura" n={6} eyebrow="Arquitectura" title={<>Diseño <span className={styles.gold}>serverless</span></>}>
           <Stagger className={styles.arch} role="img" aria-label="La wallet habla SEP-10 y SEP-24 con SEPuente; SEPuente usa un RampDriver hacia el proveedor SPEI y el banco, y mueve TMXN en Stellar.">
             <StaggerItem className={`${styles.node} ${styles.nodeInfo}`}><strong>Wallet / App</strong><span>Cualquier cliente SEP-24</span></StaggerItem>
             <StaggerItem className={styles.edge}><span>SEP-10 · SEP-24</span></StaggerItem>
@@ -269,7 +305,7 @@ export default function PitchPage() {
         </Chapter>
 
         {/* ── 6. Estándares ── */}
-        <Chapter id="estandares" n={6} eyebrow="Estándares" title={<>Cuatro SEPs, <span className={styles.gold}>una URL</span></>}>
+        <Chapter id="estandares" n={7} eyebrow="Estándares" title={<>Cuatro SEPs, <span className={styles.gold}>una URL</span></>}>
           <Stagger as="ul" className={styles.seps}>
             {SEPS.map((s) => (
               <StaggerItem as="li" key={s.n} className={styles.sep}>
@@ -286,7 +322,7 @@ export default function PitchPage() {
         </Chapter>
 
         {/* ── 7. Diferenciación ── */}
-        <Chapter id="diferencia" n={7} eyebrow="Diferenciación" title={<>¿Por qué no <span className={styles.gold}>algo existente?</span></>}>
+        <Chapter id="diferencia" n={8} eyebrow="Diferenciación" title={<>¿Por qué no <span className={styles.gold}>algo existente?</span></>}>
           <Stagger as="ul" className={styles.compare}>
             {COMPARE.map((c) => (
               <StaggerItem as="li" key={c.who} className={`${styles.cmp} ${c.hl ? styles.cmpHl : ""}`}>
@@ -305,10 +341,25 @@ export default function PitchPage() {
         </Chapter>
 
         {/* ── 8. Stack ── */}
-        <Chapter id="stack" n={8} eyebrow="Stack tecnológico" title={<>Construido sobre <span className={styles.gold}>tecnología probada</span></>}>
+        <Chapter id="stack" n={9} eyebrow="Stack tecnológico" title={<>Construido sobre <span className={styles.gold}>tecnología probada</span></>}>
           <Stagger as="ul" className={styles.stack}>
             {STACK.map((t) => (
               <StaggerItem as="li" key={t.n} className={styles.tech}><strong>{t.n}</strong><span>{t.r}</span></StaggerItem>
+            ))}
+          </Stagger>
+        </Chapter>
+
+        {/* ── 10. Verifícalo en la red ── */}
+        <Chapter id="prueba" n={10} eyebrow="Verifícalo" title={<>Transacciones reales en <span className={styles.gold}>Stellar testnet</span></>}>
+          <Reveal as="p" className={styles.lead} delay={0.1}>
+            Cada enlace abre stellar.expert. Son pagos de la corrida completa contra producción; puedes generar los tuyos en la demo en dos minutos.
+          </Reveal>
+          <Stagger as="ul" className={styles.proof}>
+            {PROOF.map((p) => (
+              <StaggerItem as="li" key={p.k} className={styles.proofRow}>
+                <span>{p.k}</span>
+                <a href={p.href} target="_blank" rel="noreferrer">{p.v} <span aria-hidden="true">↗</span></a>
+              </StaggerItem>
             ))}
           </Stagger>
         </Chapter>
@@ -317,7 +368,7 @@ export default function PitchPage() {
         <section id="empezar" className={`${styles.chapter} ${styles.closing}`} aria-labelledby="empezar-t">
           <div className={styles.coverGlow} aria-hidden="true" />
           <div className={styles.inner}>
-            <Reveal as="p" className={styles.eyebrow}><span className={styles.eyebrowNum}>09</span> Empezar</Reveal>
+            <Reveal as="p" className={styles.eyebrow}><span className={styles.eyebrowNum}>11</span> Empezar</Reveal>
             <Reveal as="h2" id="empezar-t" className={styles.closingTitle} delay={0.05}>Listo para usar en <span className={styles.gold}>testnet hoy</span></Reveal>
             <Reveal as="p" className={styles.lead} delay={0.1}>Apunta cualquier wallet SEP-24 a <code>sepuente.vercel.app</code> o prueba la wallet demo en tu teléfono.</Reveal>
             <Reveal className={styles.coverCtas} delay={0.15}>

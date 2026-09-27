@@ -426,3 +426,28 @@
 }
 .cover3d { width: 100%; }
 .coverWord { width: 70%; height: auto; color: var(--cream); }
+
+/* ── Verifícalo: enlaces a stellar.expert ── */
+.lead + .lead { margin-top: calc(-1 * var(--sp-2)); }
+.proof { list-style: none; border-top: 1px solid var(--border); }
+.proofRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-1) var(--sp-4);
+  padding-block: var(--sp-3);
+  border-bottom: 1px dashed var(--border);
+  min-width: 0;
+}
+.proofRow > span { color: var(--muted); font-size: var(--fs-small); }
+.proofRow a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap);
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  color: var(--gold-hover);
+  overflow-wrap: anywhere;
+}
