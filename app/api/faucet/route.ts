@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/supabase";
 import { StrKey } from "@stellar/stellar-sdk";
-import { friendbot, horizon } from "@/lib/stellar";
+import { friendbot, horizon, sendTestXlm } from "@/lib/stellar";
 import { env } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
@@ -36,14 +36,18 @@ export async function POST(req: NextRequest) {
   try {
     // Friendbot responde error si la cuenta ya existe; solo es fallo real si la cuenta sigue sin existir.
     const funded = await friendbot(account).then(() => true).catch(() => false);
+    let topupHash: string | undefined;
     if (!funded) {
-      const exists = await horizon.loadAccount(account).then(() => true).catch(() => false);
-      if (!exists) {
+      const acc = await horizon.loadAccount(account).catch(() => null);
+      if (!acc) {
         return NextResponse.json(
           { error: "Friendbot de Stellar no respondió. Intenta de nuevo en unos segundos." },
           { status: 502 }
         );
       }
+      // Cuenta que ya existe con casi 0 XLM (p. ej. wallet de Pollar): recarga de testnet para reservas y comisiones.
+      const xlm = parseFloat(acc.balances.find((b) => b.asset_type === "native")?.balance ?? "0");
+      if (xlm < 1) topupHash = await sendTestXlm(account, "2");
     }
 
     await db.from("faucet_requests").insert({
@@ -54,6 +58,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       ok: true,
+      topup_hash: topupHash,
       message: "Cuenta fondeada con XLM testnet. Agrega la trustline de TMXN desde la app.",
       asset_code: env.ASSET_CODE,
       asset_issuer: env.ISSUER_PUBLIC_KEY,

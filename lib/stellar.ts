@@ -52,6 +52,23 @@ export async function sendTmxn(
   return result.hash;
 }
 
+/**
+ * Solo testnet: envía XLM de prueba desde la cuenta de distribución a una cuenta que ya existe
+ * (Friendbot solo fondea cuentas nuevas; las wallets de Pollar nacen con saldo 0 y reserva patrocinada).
+ */
+export async function sendTestXlm(destination: string, amount: string): Promise<string> {
+  if (NETWORK_PASSPHRASE !== Networks.TESTNET) throw new Error("La recarga de XLM solo existe en testnet.");
+  const distKeypair = Keypair.fromSecret(env.DISTRIBUTION_SECRET_KEY);
+  const distAccount = await horizon.loadAccount(env.DISTRIBUTION_PUBLIC_KEY);
+  const tx = new TransactionBuilder(distAccount, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+    .addOperation(Operation.payment({ destination, asset: Asset.native(), amount }))
+    .setTimeout(30)
+    .build();
+  tx.sign(distKeypair);
+  const result = await horizon.submitTransaction(tx);
+  return result.hash;
+}
+
 export async function friendbot(account: string) {
   const res = await fetch(
     `https://friendbot.stellar.org?addr=${encodeURIComponent(account)}`

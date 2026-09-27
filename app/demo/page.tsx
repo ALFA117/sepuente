@@ -262,6 +262,19 @@ export default function DemoPage() {
         await new Promise((res) => setTimeout(res, 4000));
         out = await pw.client.setTrustline({ code: ASSET_CODE, issuer: ISSUER });
       }
+      // Si la app de Pollar no patrocina esta trustline, la wallet paga la reserva (0.5 XLM) y nace con 0 XLM:
+      // en testnet le mandamos XLM de prueba desde el anchor y reintentamos.
+      if (out.status === "error" && /insufficient xlm/i.test(out.details ?? "")) {
+        toast.success("Pollar no patrocinó la reserva; te enviamos 2 XLM de prueba para cubrirla…");
+        const r = await fetchJson<{ topup_hash?: string }>("/api/faucet", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ account: pw.address }),
+        }, 30000);
+        if (!r.ok) throw new Error(errorText(r, "No pudimos enviarte XLM de prueba"));
+        await new Promise((res) => setTimeout(res, 3000));
+        out = await pw.client.setTrustline({ code: ASSET_CODE, issuer: ISSUER });
+      }
       if (out.status === "error") throw new Error(out.details ? `Pollar: ${out.details}` : "Pollar no pudo activar los pesos digitales.");
       const ok = await waitForTrust();
       toast.success(ok ? `Trustline de ${ASSET_CODE} lista, sin pagar comisiones.` : "Trustline enviada; puede tardar unos segundos en aparecer.");
@@ -439,8 +452,8 @@ export default function DemoPage() {
           done: funded, action: handleFaucet, cta: "Obtener saldo de prueba", busyLabel: "Fondeando…", key: "faucet" as const, custom: null,
         },
     {
-      n: 2, title: "Activa los pesos digitales", tag: isEmail ? `Trustline ${ASSET_CODE} · patrocinada` : `Trustline ${ASSET_CODE}`,
-      desc: `Das permiso a tu wallet para recibir ${ASSET_CODE} (1 ${ASSET_CODE} = 1 peso). Se hace una sola vez.${isEmail ? " La comisión la cubre Pollar." : ""}`,
+      n: 2, title: "Activa los pesos digitales", tag: `Trustline ${ASSET_CODE}`,
+      desc: `Das permiso a tu wallet para recibir ${ASSET_CODE} (1 ${ASSET_CODE} = 1 peso). Se hace una sola vez.${isEmail ? " Si Pollar no cubre la reserva de 0.5 XLM, la demo te envía XLM de prueba." : ""}`,
       done: trusted, action: handleTrustline, cta: "Activar pesos digitales", busyLabel: isEmail ? "Activando con Pollar…" : "Firmando…", key: "trust" as const, custom: null,
     },
     {
@@ -540,7 +553,7 @@ export default function DemoPage() {
                 {balLoading && !bal ? "…" : <Swap k={bal?.exists ? bal.xlm ?? "0" : "0"}>{bal?.exists ? formatAmount(bal.xlm, 5) : pk ? "0.00000" : "—"}</Swap>}
               </span>
               <span className={styles.balHint}>
-                {isEmail ? "Comisiones de red pagadas por Pollar" : bal?.exists && parseFloat(bal.xlm ?? "0") < 10000
+                {isEmail ? "Para reservas y comisiones de red (Pollar patrocina lo que tu app tenga habilitado)" : bal?.exists && parseFloat(bal.xlm ?? "0") < 10000
                   ? `Comisiones pagadas: ${formatAmount(10000 - parseFloat(bal.xlm ?? "0"), 5)}`
                   : "Solo para la comisión de red"}
               </span>
