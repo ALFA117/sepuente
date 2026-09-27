@@ -130,6 +130,48 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
+
+  --shimmer: rgb(var(--white-rgb) / 0.06);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Modo claro: "papel de estado de cuenta". Mismos tokens, canales
+   redefinidos. El oro se oscurece para leerse como texto (≥ 4.5:1
+   sobre el papel) y el texto sobre oro pasa a papel.
+   ───────────────────────────────────────────────────────────── */
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+
+    --navy-rgb: 246 243 236;       /* #F6F3EC papel */
+    --navy-deep-rgb: 234 229 217;  /* #EAE5D9 papel hundido */
+    --surface-rgb: 255 255 255;    /* #FFFFFF tarjeta */
+    --surface-2-rgb: 250 247 240;  /* #FAF7F0 tarjeta elevada */
+    --surface-3-rgb: 238 233 221;  /* #EEE9DD hover */
+    --line-rgb: 104 116 140;       /* #68748C bordes (con alpha) */
+    --gold-rgb: 133 101 8;         /* #856508 oro tinta */
+    --gold-hover-rgb: 110 83 5;    /* #6E5305 */
+    --cream-rgb: 12 30 58;         /* #0C1E3A tinta marino */
+    --muted-rgb: 66 80 104;        /* #425068 */
+    --success-rgb: 24 118 74;      /* #18764A */
+    --danger-rgb: 178 44 38;       /* #B22C26 */
+    --warning-rgb: 140 90 6;       /* #8C5A06 */
+    --info-rgb: 34 86 150;         /* #225696 */
+    --shadow-rgb: 40 48 70;
+
+    --gold-active: #5C4504;
+    --on-gold: #FFFCF4;
+    --subtle: rgb(var(--muted-rgb) / 0.88);
+    --scrim: rgb(12 30 58 / 0.42);
+    --border: rgb(var(--line-rgb) / 0.3);
+    --border-strong: rgb(var(--line-rgb) / 0.55);
+    --shimmer: rgb(var(--line-rgb) / 0.1);
+
+    --shadow-sm: 0 1px 2px rgb(var(--shadow-rgb) / 0.08), 0 2px 8px rgb(var(--shadow-rgb) / 0.06);
+    --shadow-md: 0 4px 12px rgb(var(--shadow-rgb) / 0.1), 0 12px 32px rgb(var(--shadow-rgb) / 0.08);
+    --shadow-lg: 0 8px 24px rgb(var(--shadow-rgb) / 0.12), 0 24px 64px rgb(var(--shadow-rgb) / 0.12);
+    --shadow-gold: 0 6px 20px rgb(var(--gold-rgb) / 0.22);
+  }
 }
 
 *, *::before, *::after {
@@ -270,7 +312,7 @@ input, textarea, select { font-size: max(16px, 1em); }
 }
 
 .skeleton {
-  background: linear-gradient(90deg, var(--surface) 25%, rgb(var(--white-rgb) / 0.06) 50%, var(--surface) 75%);
+  background: linear-gradient(90deg, var(--surface) 25%, var(--shimmer) 50%, var(--surface) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: var(--radius-md);

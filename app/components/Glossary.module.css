@@ -15,7 +15,7 @@
   transition: background var(--transition-fast);
 }
 .summary::-webkit-details-marker { display: none; }
-.summary:hover { background: rgb(var(--white-rgb) / 0.03); }
+.summary:hover { background: var(--surface-hover); }
 .q {
   width: 32px;
   height: 32px;
