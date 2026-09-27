@@ -1,33 +1,25 @@
 import { NextRequest } from "next/server";
 import { jsonCors, optionsResponse } from "@/lib/cors";
-import { requireSep10 } from "@/lib/auth-middleware";
-import { getDriver } from "@/lib/drivers";
-import { env } from "@/lib/env";
+import { FIAT_ASSET, stellarAsset } from "@/lib/sep24";
+import { decimalsFor, priceFor } from "@/lib/sep38";
 
 export const dynamic = "force-dynamic";
 export async function OPTIONS() { return optionsResponse(); }
 
+/** GET /sep38/prices?sell_asset=&sell_amount= — precios indicativos (autenticación opcional). */
 export async function GET(req: NextRequest) {
-  const auth = await requireSep10(req);
-  if ("error" in auth) return jsonCors({ error: auth.error }, auth.status);
+  const q = req.nextUrl.searchParams;
+  const sellAsset = q.get("sell_asset");
+  const sellAmount = q.get("sell_amount");
+  if (!sellAsset || !sellAmount) return jsonCors({ error: "'sell_asset' and 'sell_amount' are required" }, 400);
 
-  const sellAsset = req.nextUrl.searchParams.get("sell_asset") ?? "iso4217:MXN";
-  const sellAmount = req.nextUrl.searchParams.get("sell_amount") ?? "100";
+  const buyAsset = sellAsset === FIAT_ASSET ? stellarAsset() : sellAsset === stellarAsset() ? FIAT_ASSET : null;
+  if (!buyAsset) return jsonCors({ error: "Unsupported sell_asset" }, 400);
 
-  const driver = getDriver();
-  const buyAsset = `stellar:${env.ASSET_CODE}:${env.ISSUER_PUBLIC_KEY}`;
-  const q = await driver.quote({ sell_asset: sellAsset, buy_asset: buyAsset, sell_amount: sellAmount })
-    .catch((e: Error) => ({ error: e.message }));
-
-  if ("error" in q) return jsonCors({ error: q.error }, 400);
-
-  return jsonCors({
-    buy_assets: [
-      {
-        asset: buyAsset,
-        price: q.price,
-        decimals: 7,
-      },
-    ],
-  });
+  try {
+    const p = await priceFor({ sell_asset: sellAsset, buy_asset: buyAsset, sell_amount: sellAmount });
+    return jsonCors({ buy_assets: [{ asset: buyAsset, price: p.total_price, decimals: decimalsFor(buyAsset) }] });
+  } catch (e) {
+    return jsonCors({ error: (e as Error).message }, 400);
+  }
 }
