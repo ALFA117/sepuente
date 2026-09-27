@@ -5,6 +5,7 @@ import { Reveal, Stagger, StaggerItem, Enter } from "./components/motion";
 import { TransferPreview } from "./components/TransferPreview";
 import { Glossary } from "./components/Glossary";
 import { Logo3D } from "./components/brand/Logo3D";
+import { ArchFlow } from "./components/ArchFlow";
 import { LogoWord } from "./components/brand/Logo";
 
 const SIMPLE = [
@@ -175,33 +176,9 @@ export default function LandingPage() {
             <Reveal as="h2" id="arch-title" className={styles.h2} delay={0.05}>Cómo fluye el protocolo</Reveal>
             <Reveal as="p" className={styles.sectionLead} delay={0.1}>SEPuente actúa como adaptador sin custodia entre el sistema bancario mexicano y la red Stellar.</Reveal>
 
-            <Stagger className={styles.arch} role="img" aria-label="La wallet habla con SEPuente por SEP-10 y SEP-24; SEPuente conecta con SPEI mediante un driver y con Stellar para mover TMXN.">
-              <StaggerItem className={`${styles.node} ${styles.nodeInfo}`}>
-                <span className={styles.nodeTitle}>Wallet</span>
-                <span className={styles.nodeSub}>Firma con su propia llave</span>
-              </StaggerItem>
-              <StaggerItem className={styles.link}><span>SEP-10 JWT · SEP-24</span></StaggerItem>
-              <StaggerItem className={`${styles.node} ${styles.nodeGold}`}>
-                <span className={styles.nodeTitle}>SEPuente</span>
-                <span className={styles.nodeSub}>Anchor · no custodial</span>
-              </StaggerItem>
-              <StaggerItem className={styles.archSplit}>
-                <div className={styles.archBranch}>
-                  <div className={styles.link}><span>Driver SPEI</span></div>
-                  <div className={`${styles.node} ${styles.nodeMuted}`}>
-                    <span className={styles.nodeTitle}>SPEI</span>
-                    <span className={styles.nodeSub}>Etherfuse · Mock (demo)</span>
-                  </div>
-                </div>
-                <div className={styles.archBranch}>
-                  <div className={styles.link}><span>Pagos TMXN</span></div>
-                  <div className={`${styles.node} ${styles.nodeSuccess}`}>
-                    <span className={styles.nodeTitle}>Stellar</span>
-                    <span className={styles.nodeSub}>Testnet · Horizon</span>
-                  </div>
-                </div>
-              </StaggerItem>
-            </Stagger>
+            <Reveal delay={0.1}>
+              <ArchFlow />
+            </Reveal>
           </div>
         </section>
 
