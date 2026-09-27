@@ -83,7 +83,7 @@
   text-anchor: middle;
 }
 .nodeAnchor .nodeLabel, .nodeActive .nodeLabel { fill: var(--gold-hover); }
-.nodeSub { font-family: var(--font-mono); font-size: 11px; fill: var(--muted); text-anchor: middle; }
+.nodeSub { font-family: var(--font-mono); font-size: 12px; fill: var(--muted); text-anchor: middle; }
 
 .tag rect { fill: var(--bg); stroke: var(--border-gold); stroke-width: 1; }
 .tag text { font-family: var(--font-mono); font-size: 12px; font-weight: 600; fill: var(--gold-hover); text-anchor: middle; }

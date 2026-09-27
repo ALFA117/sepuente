@@ -86,7 +86,7 @@
 .lead strong { color: var(--cream); font-weight: 600; }
 .lead code, .note code {
   font-family: var(--font-mono);
-  font-size: 0.85em;
+  font-size: max(12px, 0.85em);
   padding: 1px 6px;
   border-radius: 5px;
   background: var(--surface2);
