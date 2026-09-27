@@ -87,12 +87,22 @@
 | La demo abre una segunda ventana y rompe la continuidad | El flujo SEP-24 se abre en una hoja modal dentro de la wallet (`app/demo/AnchorSheet.tsx`, iframe de la misma origin, como permite SEP-24). Anchor y wallet se comunican por `postMessage` (origen y `source` validados): la pantalla del anchor avisa cambios de estado, pide cerrar, y en el retiro muestra "Enviar X TMXN desde mi wallet", que le pide a la wallet firmar el pago con su llave, sin salir del flujo. Verificado en producción: 0 ventanas nuevas. |
 | En la guía rápida aparece "THXN" en vez de "TMXN" | No existe la cadena "THXN" en el código ni en el HTML servido; el código del activo se mostraba en fuente monoespaciada pequeña, donde la "M" puede leerse como "H". Ahora se muestra con el componente `Token` (fuente de texto, negrita) y deletreado: "T-M-X-N: Test MXN". |
 
+### Ronda 27 sep 2026: correo con Pollar, modo claro y SEO
+
+| Qué | Por qué | Arreglo | Archivos |
+|---|---|---|---|
+| Entrar a la demo con correo | Pedido de usuario: verificación de correo "más completa" | Modo "Con mi correo" con Pollar: correo → código de 6 dígitos (pegar, autocompletar del teléfono, reenviar con espera de 30 s, cambiar correo, errores en español) → wallet creada. Trustline, firma SEP-10 y pago del retiro los hace Pollar con comisión patrocinada. La wallet con llave en el navegador sigue como alternativa | `app/demo/pollar.ts`, `app/demo/EmailVerify.tsx`, `app/demo/page.tsx` |
+| "Account … not found on network" al activar TMXN | Pollar fondea la cuenta unos segundos después del login y la trustline se pedía antes | La demo espera a que Horizon vea la cuenta (hasta 30 s) y reintenta una vez si Pollar responde "not found" | `app/demo/page.tsx` |
+| Solo existía modo oscuro | El sistema de diseño pide ambos temas | Modo claro por `prefers-color-scheme` redefiniendo los mismos tokens; `themeColor` por tema | `app/globals.css`, `app/layout.tsx` |
+| Sin `robots.txt`, `sitemap.xml` ni manifest; todas las páginas compartían título y sin canonical | SEO y vista previa al compartir | `app/robots.ts`, `app/sitemap.ts`, `app/manifest.ts`; metadatos por página (título, descripción, canonical, OG, X) con `lib/seo.ts`; `noindex` en `/sep24/interactive` | `lib/seo.ts`, `app/*/layout.tsx` |
+| Texto por debajo de 12 px | `<code>` en línea a 0.8 em (≈11 px) en docs y pitch; subtítulos del diagrama a 11 px | Piso de 12 px | `app/devs/page.module.css`, `app/pitch/page.module.css`, `app/components/ArchFlow.module.css` |
+
 ### Verificar en dos minutos en el celular
 
 1. Abre `sepuente.vercel.app` en el teléfono: el título serif, la vista previa animada del depósito y el botón oro "Probar la demo" se ven completos, nada se sale por los lados.
 2. Baja a "En palabras simples" y abre **¿Nuevo en Stellar?**: el glosario se despliega.
-3. Toca ☰ → **Demo**. **Obtener saldo de prueba** → en ~5 s el saldo XLM muestra 10,000.00 y el paso 1 queda en verde.
-4. **Activar pesos digitales** → el saldo TMXN pasa de "—" a 0.00.
+3. Toca ☰ → **Demo**. Con **Con mi correo** seleccionado, escribe tu correo → **Enviar código** → escribe el código de 6 dígitos que llega: el paso 1 queda "Correo verificado" y aparece tu dirección. (Alternativa: **Llave en el navegador** → **Obtener saldo de prueba** → en ~5 s el saldo XLM muestra 10,000.00.)
+4. **Activar pesos digitales** → el saldo TMXN pasa de "—" a 0.00 (con correo, sin pagar comisión).
 5. **Conectar mi wallet** → aparece "Sesión SEP-10 activa" y se desbloquean Depositar/Retirar.
 6. **Depositar** → se abre una hoja dentro de la misma página (no una ventana nueva). Escribe `250` → **Ver cotización** → **Confirmar operación**.
 7. **Simular SPEI recibido** → en ~5 s ves "TMXN acreditado"; toca **Ver en stellar.expert** y confirma la transacción.
@@ -101,6 +111,7 @@
 10. Toca **Enviar 100.00 TMXN desde mi wallet** dentro de la hoja → en ~10 s ves "Retiro completado".
 11. Abre `/pitch`: con el botón dorado inferior avanzas capítulo por capítulo; la barra dorada superior marca el progreso.
 12. Gira el teléfono: nada se desborda. Escribe un monto de `5`: aparece "El monto mínimo es $10 MXN".
+13. Cambia el teléfono a modo claro: todo pasa a fondo papel con texto marino y oro oscuro, sin textos ilegibles.
 
 ---
 
@@ -143,9 +154,20 @@ Alias heredados (`--navy`, `--s2`, `--accent`, `--error`, `--blue`, `--font-syne
 - **Hero del landing**: `TransferPreview` ilustra el flujo real (1,000 MXN → 995 TMXN con la comisión real de 0.5 %) y está rotulado como ilustración.
 - **Flujo SEP-24 dentro de la wallet**: hoja modal a pantalla completa en el teléfono (con safe-area) y panel centrado en escritorio; cierra con ✕, Escape o clic en el fondo, devuelve el foco y bloquea el scroll del fondo.
 
+### Modo claro ("papel de estado de cuenta")
+
+Se activa con la preferencia del sistema. No hay tokens nuevos por componente: `@media (prefers-color-scheme: light)` redefine los mismos canales (`--navy-rgb` pasa a papel #F6F3EC, `--surface-rgb` a blanco, `--cream-rgb` a tinta marino #0C1E3A). El oro de marca (#C9A227) no llega a 4.5:1 sobre papel, así que en claro se usa un oro tinta (#856508) y el texto sobre botones oro pasa a papel (`--on-gold`). Las sombras bajan de opacidad y el brillo de los esqueletos usa `--shimmer`. El logo 3D, el diagrama de arquitectura y la hoja del anchor heredan el tema sin cambios de código. Se revisó con capturas a 320, 380 y 1280 px en ambos temas.
+
+### Verificación por correo (Pollar)
+
+- Tres pasos visibles (Correo → Código → Wallet) con su propia barra de progreso dentro del paso 1 de la demo; las transiciones entre pasos son de 220 ms (entra desde la derecha y sale hacia la izquierda), y el check final se dibuja con resorte.
+- El código son 6 casillas de 52 px de alto; la primera acepta `one-time-code` para que el teléfono lo autocomplete, pegar el código completo llena todas y al completarse se verifica solo.
+- La tarjeta de la wallet muestra "Correo verificado" con el correo enmascarado (`el••••••@gmail.com`) y "Salir"; el saldo XLM dice "Comisiones de red pagadas por Pollar" en vez de un número que no aplica.
+- Honestidad: la nota de la wallet explica que Pollar resguarda la llave (MPC) y que SEPuente solo recibe la dirección pública y las firmas.
+
 ### Excepciones a "sin literales"
 
-- `app/layout.tsx` → `themeColor` del meta necesita un valor literal.
+- `app/layout.tsx` y `app/manifest.ts` → `themeColor` y los colores del manifest necesitan valores literales.
 - `app/icon.svg` y `app/opengraph-image.tsx` → se renderizan fuera del DOM (Satori no resuelve variables CSS); usan una constante que replica los tokens.
 
 ### Pendientes visuales
