@@ -55,10 +55,10 @@ const STEPS = [
 ];
 
 const SEPS = [
-  { n: "SEP-1", name: "Stellar Info", d: "stellar.toml dinámico con endpoints, activos y datos del anchor." },
-  { n: "SEP-10", name: "Web Auth", d: "Challenge transaction + JWT HS256. Sin sesiones en servidor." },
-  { n: "SEP-24", name: "Transferencias interactivas", d: "Depósito SPEI → TMXN y retiro TMXN → SPEI con historial." },
-  { n: "SEP-38", name: "Cotizaciones", d: "Precio indicativo y cotizaciones persistidas con vencimiento." },
+  { n: "SEP-1", name: "Stellar Info", d: "stellar.toml dinámico con endpoints, activos y datos del anchor.", score: "5/5" },
+  { n: "SEP-10", name: "Web Auth", d: "Inicio de sesión firmado por la wallet, con multisig. JWT sin sesiones en servidor.", score: "16/17" },
+  { n: "SEP-24", name: "Transferencias interactivas", d: "Depósito SPEI → TMXN y retiro TMXN → SPEI con historial.", score: "38/38" },
+  { n: "SEP-38", name: "Cotizaciones", d: "Precio con comisión transparente y cotizaciones con vencimiento.", score: "18/18" },
 ];
 
 const COMPARE = [
@@ -274,10 +274,13 @@ export default function PitchPage() {
                 <span className={styles.sepN}>{s.n}</span>
                 <strong>{s.name}</strong>
                 <p>{s.d}</p>
-                <span className={styles.sepOk}>{I.check} Implementado</span>
+                <span className={styles.sepOk}>{I.check} Suite oficial SDF: {s.score}</span>
               </StaggerItem>
             ))}
           </Stagger>
+          <Reveal as="p" className={styles.note}>
+            <strong>75 de 76 pruebas oficiales de <code>@stellar/anchor-tests</code></strong> contra producción. La restante compara la hora del reto de login con el reloj de la máquina que corre la prueba.
+          </Reveal>
         </Chapter>
 
         {/* ── 7. Diferenciación ── */}

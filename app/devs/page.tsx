@@ -14,7 +14,7 @@ const ISSUER = (process.env.NEXT_PUBLIC_ISSUER_PUBLIC_KEY ?? "").trim();
 
 const TOML_URL = `${APP_URL}/.well-known/stellar.toml`;
 const DEMO_WALLET = `https://demo-wallet.stellar.org/?home_domain=${encodeURIComponent(HOME_DOMAIN)}`;
-const ANCHOR_CMD = `npx -p @stellar/anchor-tests stellar-anchor-tests \\\n  --home-domain ${HOME_DOMAIN} \\\n  --seps 1 10 24 38`;
+const ANCHOR_CMD = `node scripts/make-anchor-test-config.mjs ${APP_URL} ./sep-config.json\nnpx -p @stellar/anchor-tests stellar-anchor-tests \\\n  --home-domain ${HOME_DOMAIN} \\\n  --seps 1 10 24 38 --sep-config ./sep-config.json`;
 
 const ENDPOINTS = [
   { sep: "SEP-1", method: "GET", path: "/.well-known/stellar.toml", note: "Descubrimiento · CORS abierto" },
@@ -164,7 +164,11 @@ export default function DevsPage() {
 
         <Section n="05" title="Suite de validación">
           <Code value={ANCHOR_CMD} label="Comando de anchor-tests" />
-          <p className={styles.note}>Requiere Node 18+ y el anchor con <code>DRIVER=mock</code>. Ejecuta la suite oficial de SDF para SEP-1, 10, 24 y 38 contra el dominio desplegado.</p>
+          <p className={styles.note}>
+            <strong>Resultado en producción (27 sep 2026): 75 de 76 pruebas oficiales de SDF</strong> — SEP-1 5/5, SEP-10 16/17, SEP-24 38/38, SEP-38 18/18.
+            La restante compara la hora del reto SEP-10 con el reloj de la computadora que corre la prueba; pasa con el reloj sincronizado.
+            El script crea en testnet una cuenta desechable con transacciones en cada estado, que la suite necesita; guarda el archivo fuera del repo.
+          </p>
         </Section>
 
         <Section n="06" title="Conecta tu wallet">

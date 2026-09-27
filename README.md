@@ -2,6 +2,24 @@
 
 > Gateway **open source y no custodial** que presenta las rampas de pesos mexicanos como un anchor estándar de Stellar, para que cualquier wallet compatible con SEP-24 pueda ofrecer depósito y retiro de pesos por SPEI sin integrar APIs propietarias.
 
+## GOYA HACK · CriptoUNAM 2026
+
+| | |
+|---|---|
+| **Track** | Blockchain |
+| **Sponsor** | Stellar · BAF |
+| **Demo en vivo** | https://sepuente.vercel.app (wallet de prueba en `/demo`, pitch en `/pitch`, docs en `/devs`) |
+| **Repositorio** | https://github.com/ALFA117/sepuente |
+| **Red** | Stellar Testnet · activo `TMXN` (1 TMXN = 1 peso de prueba) |
+| **Equipo** | [ALFA117](https://github.com/ALFA117) |
+
+**En una frase:** mandas pesos desde tu banco por SPEI y los recibes como pesos digitales en cualquier wallet de Stellar (y de regreso), sin que SEPuente custodie tu dinero ni tus llaves.
+
+**Qué funciona hoy, verificable:**
+- Flujo completo de depósito y retiro en testnet, con transacciones reales visibles en stellar.expert (`node scripts/e2e-testnet.mjs https://sepuente.vercel.app`).
+- **75 de 76 pruebas oficiales de SDF (`@stellar/anchor-tests`) en SEP-1, 10, 24 y 38** contra producción (27 sep 2026). La única restante mide la hora del reto SEP-10 contra el reloj de la computadora que corre la prueba; ver [Validación con anchor-tests](#validación-con-anchor-tests).
+- SPEI simulado y marcado como "Modo prueba" en toda la interfaz (`DRIVER=mock`); el driver de Etherfuse está escrito pero no probado sin API key.
+
 ---
 
 ## FIX_NOTES
@@ -59,7 +77,7 @@
 
 - Supabase de producción no está accesible desde este entorno; el esquema se asumió igual a `supabase/migrations/001_initial.sql`.
 - `EtherfuseDriver` no se probó (requiere `ETHERFUSE_API_KEY`).
-- El proyecto no tiene ESLint configurado ni tests unitarios; la cobertura es el script E2E y la suite `anchor-tests` de SDF.
+- El proyecto no tiene ESLint configurado ni tests unitarios; la cobertura es el script E2E y la suite `anchor-tests` de SDF (75/76, ver abajo).
 
 ### Ronda de feedback de usuario (2026-09-26)
 
@@ -227,13 +245,27 @@ npm run dev
 # https://demo-wallet.stellar.org/?home_domain=localhost:3000
 ```
 
-### Con anchor-tests
+### Validación con anchor-tests
+
+La suite oficial de SDF necesita una cuenta con transacciones reales en cada estado (depósito pendiente y completado, retiro esperando pago y completado). El script las crea en testnet y escribe la configuración; la llave es de una cuenta desechable, así que guarda el archivo fuera del repo.
 
 ```bash
-npx -p @stellar/anchor-tests stellar-anchor-tests \
-  --home-domain sepuente.vercel.app \
-  --seps 1 10 24 38
+node scripts/make-anchor-test-config.mjs https://sepuente.vercel.app ./sep-config.json
+npx -p @stellar/anchor-tests stellar-anchor-tests --home-domain sepuente.vercel.app --seps 1 10 24 38 --sep-config ./sep-config.json
 ```
+
+**Resultado en producción (27 sep 2026): 75 de 76.**
+
+| SEP | Resultado |
+|---|---|
+| SEP-1 stellar.toml | 5/5 |
+| SEP-10 Web Auth | 16/17 |
+| SEP-24 Hosted deposit/withdraw | 38/38 |
+| SEP-38 Quotes | 18/18 (contexto `sep6`; esta versión de la suite no admite `sep24`) |
+
+La prueba restante ("returns a valid GET /auth response") exige que el `minTime` del reto caiga entre el segundo de envío y el de recepción **según el reloj de la máquina que corre la prueba**. El anchor usa la hora del servidor (Vercel, sincronizado por NTP); la computadora donde se corrió iba 0.9 s atrasada respecto a `time.windows.com`. Con un reloj sincronizado la prueba pasa; adelantar o atrasar el `minTime` en el servidor la rompería para cualquier evaluador con la hora correcta.
+
+Qué se corrigió para llegar ahí (de 17/61 a 75/76): `POST /auth` aceptaba solo JSON (SEP-10 exige también formulario), la verificación ignoraba los firmantes y umbrales reales de la cuenta (multisig), `/sep24/info` enviaba montos como texto, faltaban validaciones de `asset_code`/`account`, búsquedas por `stellar_transaction_id`/`external_transaction_id`, filtros de `/transactions` (`no_older_than`, `kind`, `paging_id`), montos esperados en operaciones en curso, la página `more_info_url`, y en SEP-38 las fórmulas de precio (`total_price = sell / buy`), los métodos de entrega SPEI y que `GET /quote/:id` devolviera exactamente lo mismo que al crearla.
 
 ---
 
@@ -268,13 +300,27 @@ npx -p @stellar/anchor-tests stellar-anchor-tests \
 
 ## Código y herramientas reutilizados
 
-- **[@stellar/stellar-sdk](https://github.com/stellar/js-stellar-sdk)** — Challenge SEP-10, builders de transacciones, cliente Horizon
-- **[Etherfuse](https://etherfuse.com)** — API de rampa MXN/CETES (EtherfuseDriver)
-- **[Supabase JS](https://supabase.com)** — Persistencia serverless con RLS
-- **[jose](https://github.com/panva/jose)** — Firma y verificación JWT (SEP-10)
-- **[anchor-tests (SDF)](https://github.com/stellar/stellar-anchor-tests)** — Suite oficial de pruebas para anchors Stellar
-- **[Demo Wallet (SDF)](https://demo-wallet.stellar.org)** — Cliente de prueba para flujos SEP-24
-- **Claude (Anthropic)** — Asistente de IA usado para scaffolding y generación de código
+Todo el trabajo propio se construyó durante el hackathon (primer commit: 25 sep 2026). Se reutilizó:
+
+**Librerías y plataformas**
+- **[Next.js 15](https://nextjs.org) + React 18** — framework web (App Router y rutas API)
+- **[@stellar/stellar-sdk](https://github.com/stellar/js-stellar-sdk)** — transacciones, cliente Horizon y utilidades SEP-10 (`WebAuth`)
+- **[jose](https://github.com/panva/jose)** — firma y verificación de JWT (SEP-10)
+- **[Supabase](https://supabase.com) (supabase-js)** — base de datos Postgres con RLS
+- **[Vercel](https://vercel.com)** — hosting y despliegue
+- **[Motion](https://motion.dev)** — animaciones de la interfaz
+- **[three.js](https://threejs.org)** — logo 3D (extrusión del SVG, `SVGLoader` y `RoomEnvironment`)
+- **[Google Fonts vía next/font](https://fonts.google.com)** — Source Serif 4, Inter, JetBrains Mono
+- **[Etherfuse](https://etherfuse.com)** — API de rampa MXN (EtherfuseDriver, no probado sin API key)
+
+**Herramientas**
+- **[anchor-tests (SDF)](https://github.com/stellar/stellar-anchor-tests)** — suite oficial de pruebas para anchors
+- **[Demo Wallet (SDF)](https://demo-wallet.stellar.org)** — cliente de prueba SEP-24
+- **[potrace](https://www.npmjs.com/package/potrace)** — vectorización del logo desde el arte original (solo en el proceso de diseño, no es dependencia del proyecto)
+- **[Stellar Friendbot](https://developers.stellar.org/docs/learn/fundamentals/networks#friendbot)** — fondeo de cuentas de testnet
+
+**Asistentes de IA**
+- **Claude (Anthropic), vía Claude Code** — generación y revisión de código, diseño de interfaz, pruebas y documentación
 
 ---
 
@@ -294,7 +340,7 @@ npx -p @stellar/anchor-tests stellar-anchor-tests \
 | `DRIVER` | `mock` o `etherfuse` |
 | `ETHERFUSE_API_KEY` | Solo si `DRIVER=etherfuse` |
 | `NEXT_PUBLIC_APP_URL` | URL del deploy (sin trailing slash, siempre HTTPS) |
-| `NEXT_PUBLIC_ENABLE_POLLAR` | `false` por defecto; `true` activa patrocinio de fees |
+| `NEXT_PUBLIC_ASSET_CODE` / `NEXT_PUBLIC_ISSUER_PUBLIC_KEY` | Código y emisor del token para la wallet demo (públicos) |
 
 ---
 

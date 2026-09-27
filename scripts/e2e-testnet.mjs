@@ -58,7 +58,7 @@ const [s1, s2] = await Promise.allSettled([
 log("simulate x2 →", s1.status, s2.status, s2.reason?.message ?? s1.reason?.message ?? "");
 if ([s1, s2].filter((s) => s.status === "fulfilled").length !== 1) throw new Error("simulate debe tener éxito exactamente una vez");
 const depTx = await call(`/sep24/transaction?id=${dep.id}`, { headers: auth });
-log("deposit status", depTx.transaction.status, depTx.transaction.stellar_transaction_url);
+log("deposit status", depTx.transaction.status, `https://stellar.expert/explorer/testnet/tx/${depTx.transaction.stellar_transaction_id}`);
 acc = await horizon.loadAccount(kp.publicKey());
 const bal = acc.balances.find((b) => b.asset_code === "TMXN")?.balance;
 log("TMXN balance", bal);
