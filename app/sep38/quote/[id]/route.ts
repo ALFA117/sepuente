@@ -19,7 +19,7 @@ export async function GET(
     .from("sep38_quotes")
     .select("*")
     .eq("id", id)
-    .eq("stellar_account", claims.sub)
+    .eq("stellar_account", claims.account)
     .single();
 
   if (error || !data) return jsonCors({ error: "Quote not found" }, 404);

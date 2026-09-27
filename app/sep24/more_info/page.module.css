@@ -1,0 +1,12 @@
+.page { min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); }
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--sp-8) max(var(--gutter), var(--safe-left)) var(--sp-12) max(var(--gutter), var(--safe-right));
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.title { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 700; color: var(--cream); line-height: var(--lh-tight); }

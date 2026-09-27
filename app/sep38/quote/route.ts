@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     fee: q.fee,
     expires_at: q.expires_at,
     created_at: now,
-    stellar_account: claims.sub,
+    stellar_account: claims.account,
     context: context ?? "sep24",
   });
 

@@ -17,22 +17,24 @@ export interface Sep10Claims {
   client_domain?: string;
 }
 
-export async function signSep10(account: string, clientDomain?: string): Promise<string> {
-  const jti = crypto.randomUUID();
-  let builder = new SignJWT({ jti, client_domain: clientDomain })
-    .setProtectedHeader({ alg: "HS256" })
+/** JWT SEP-10. `jti` es el hash del challenge (SEP-10 §Token). */
+export async function signSep10(sub: string, opts: { clientDomain?: string; jti?: string } = {}): Promise<string> {
+  return new SignJWT(opts.clientDomain ? { client_domain: opts.clientDomain } : {})
+    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
     .setIssuedAt()
-    .setIssuer(env.APP_URL)
-    .setSubject(account)
-    .setExpirationTime(`${env.JWT_EXPIRY}s`);
-
-  return builder.sign(secret());
+    .setIssuer(`${env.APP_URL}/auth`)
+    .setSubject(sub)
+    .setJti(opts.jti ?? crypto.randomUUID())
+    .setExpirationTime(`${env.JWT_EXPIRY}s`)
+    .sign(secret());
 }
 
 export async function verifySep10(token: string): Promise<Sep10Claims> {
   const { payload } = await jwtVerify(token, secret(), {
-    issuer: env.APP_URL,
+    issuer: [`${env.APP_URL}/auth`, env.APP_URL],
   });
+  // Un token de sesión de la UI interactiva no sirve como JWT SEP-10.
+  if (typeof payload.sub !== "string" || "txId" in payload) throw new Error("Not a SEP-10 token");
   return payload as unknown as Sep10Claims;
 }
 
@@ -50,5 +52,6 @@ export async function verifySession(token: string): Promise<{ txId: string }> {
   const { payload } = await jwtVerify(token, secret(), {
     issuer: env.APP_URL,
   });
-  return { txId: payload.txId as string };
+  if (typeof payload.txId !== "string" || payload.sub) throw new Error("Not a session token");
+  return { txId: payload.txId };
 }
