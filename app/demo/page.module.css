@@ -129,6 +129,44 @@
 }
 .addr:hover { color: var(--gold-hover); }
 
+/* Saldo principal: los pesos, como en la app de un banco */
+.pesos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgb(var(--gold-rgb) / 0.14), transparent 70%), rgb(var(--navy-deep-rgb) / 0.55);
+  border: 1px solid var(--border-gold);
+  min-width: 0;
+}
+.pesosLabel { font-family: var(--font-mono); font-size: var(--fs-label); letter-spacing: 0.06em; text-transform: uppercase; color: var(--gold); }
+.pesosValue {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 1.8rem + 2.4vw, 3rem);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--cream);
+  font-variant-numeric: tabular-nums;
+  min-height: 1.1em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pesosSign { font-size: 0.6em; color: var(--gold); margin-right: 2px; vertical-align: 0.35em; }
+.pesosSkel { display: block; height: 0.9em; width: 60%; }
+.xlmRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: "label value" "hint hint";
+  align-items: baseline;
+  gap: 2px var(--sp-3);
+  padding: 0 var(--sp-1);
+}
+.xlmRow .balLabel { grid-area: label; }
+.xlmRow .balHint { grid-area: hint; }
+.xlmValue { grid-area: value; font-family: var(--font-mono); font-size: var(--fs-small); color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+
 .balances {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

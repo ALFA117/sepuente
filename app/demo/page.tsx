@@ -521,25 +521,29 @@ export default function DemoPage() {
               {pk && <CopyButton value={pk} label="Dirección" />}
             </div>
 
-            <div className={styles.balances}>
-              <div className={styles.balance}>
-                <span className={styles.balLabel}>XLM</span>
-                <span className={styles.balValue}>
-                  {balLoading && !bal ? <span className={ui.skeleton} /> : <Swap k={bal?.exists ? bal.xlm ?? "0" : "0"}>{bal?.exists ? formatAmount(bal.xlm, 5) : pk ? "0.00000" : "—"}</Swap>}
-                </span>
-                <span className={styles.balHint}>
-                  {isEmail ? "Comisiones de red pagadas por Pollar" : bal?.exists && parseFloat(bal.xlm ?? "0") < 10000
-                    ? `Comisiones de red pagadas: ${formatAmount(10000 - parseFloat(bal.xlm ?? "0"), 5)}`
-                    : "Solo paga la comisión de la red"}
-                </span>
-              </div>
-              <div className={styles.balance}>
-                <span className={styles.balLabel}>{ASSET_CODE}</span>
-                <span className={`${styles.balValue} ${styles.balGold}`}>
-                  {balLoading && !bal ? <span className={ui.skeleton} /> : <Swap k={bal?.trust ? bal.tmxn ?? "0" : "none"}>{bal?.trust ? formatAmount(bal.tmxn) : "—"}</Swap>}
-                </span>
-                <span className={styles.balHint}>1 = 1 peso · comisión del anchor 0.5 %</span>
-              </div>
+            <div className={styles.pesos}>
+              <span className={styles.pesosLabel}>Pesos digitales · {ASSET_CODE}</span>
+              <span className={styles.pesosValue}>
+                {balLoading && !bal ? <span className={`${ui.skeleton} ${styles.pesosSkel}`} /> : (
+                  <Swap k={bal?.trust ? bal.tmxn ?? "0" : "none"}>
+                    <span className={styles.pesosSign}>$</span>{bal?.trust ? formatAmount(bal.tmxn) : "—"}
+                  </Swap>
+                )}
+              </span>
+              <span className={styles.balHint}>
+                {bal?.trust ? "1 TMXN = 1 peso · comisión del anchor 0.5 %" : "Aún no activas los pesos digitales (paso 2)"}
+              </span>
+            </div>
+            <div className={styles.xlmRow}>
+              <span className={styles.balLabel}>XLM</span>
+              <span className={styles.xlmValue}>
+                {balLoading && !bal ? "…" : <Swap k={bal?.exists ? bal.xlm ?? "0" : "0"}>{bal?.exists ? formatAmount(bal.xlm, 5) : pk ? "0.00000" : "—"}</Swap>}
+              </span>
+              <span className={styles.balHint}>
+                {isEmail ? "Comisiones de red pagadas por Pollar" : bal?.exists && parseFloat(bal.xlm ?? "0") < 10000
+                  ? `Comisiones pagadas: ${formatAmount(10000 - parseFloat(bal.xlm ?? "0"), 5)}`
+                  : "Solo para la comisión de red"}
+              </span>
             </div>
             <p className={styles.keyNote}>
               {isEmail
