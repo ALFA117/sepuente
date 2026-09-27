@@ -1,5 +1,5 @@
 "use client";
-import { motion, useReducedMotion, type HTMLMotionProps, type Variants } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion, type HTMLMotionProps, type Variants } from "motion/react";
 
 // Tokens de movimiento: un solo ritmo para todo el sitio.
 export const EASE_OUT = [0.16, 1, 0.3, 1] as const;
@@ -74,6 +74,26 @@ export function Pressable({ children, ...rest }: HTMLMotionProps<"button">) {
     <motion.button whileTap={reduce || rest.disabled ? undefined : { scale: 0.97 }} transition={SPRING_PRESS} {...rest}>
       {children}
     </motion.button>
+  );
+}
+
+/** Cambia de contenido con un fundido corto cuando `k` cambia (saldos, estados, íconos). */
+export function Swap({ k, children, className, pop = false }: { k: string | number; children: React.ReactNode; className?: string; pop?: boolean }) {
+  const reduce = useReducedMotion();
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.span
+        key={k}
+        className={className}
+        style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", maxWidth: "100%" }}
+        initial={reduce ? { opacity: 0 } : pop ? { opacity: 0, scale: 0.4 } : { opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={reduce ? { opacity: 0 } : pop ? { opacity: 0, scale: 0.6 } : { opacity: 0, y: -6 }}
+        transition={reduce ? { duration: 0 } : pop ? { type: "spring", stiffness: 420, damping: 20 } : { duration: 0.18, ease: EASE_OUT }}
+      >
+        {children}
+      </motion.span>
+    </AnimatePresence>
   );
 }
 

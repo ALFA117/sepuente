@@ -199,10 +199,9 @@
   text-align: left;
   cursor: pointer;
   box-shadow: var(--shadow-sm);
-  transition: border-color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
+  transition: border-color var(--transition-fast), background var(--transition-fast), opacity var(--transition-base);
 }
 .op:hover:not(:disabled) { background: var(--surface2); border-color: var(--border-gold); }
-.op:active:not(:disabled) { transform: scale(0.99); }
 .op:disabled { cursor: not-allowed; opacity: 0.5; }
 
 .opIcon {

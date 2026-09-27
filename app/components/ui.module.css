@@ -265,7 +265,6 @@
   color: var(--cream);
   font-size: var(--fs-small);
   line-height: 1.45;
-  animation: toastIn 220ms var(--ease-out);
 }
 .toast svg { flex-shrink: 0; margin-top: 1px; }
 .toastSuccess svg { color: var(--success); }
@@ -289,10 +288,6 @@
 }
 .toastClose:hover { color: var(--cream); }
 
-@keyframes toastIn {
-  from { opacity: 0; transform: translateY(10px) scale(0.98); }
-  to { opacity: 1; transform: none; }
-}
 
 .extLink {
   display: inline-flex;

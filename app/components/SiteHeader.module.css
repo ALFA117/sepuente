@@ -90,8 +90,17 @@
   font-weight: 500;
   transition: color var(--transition-fast), background var(--transition-fast);
 }
+.link { position: relative; }
 .link:hover { color: var(--cream); background: var(--surface-hover); text-decoration: none; }
-.link[aria-current="page"] { color: var(--gold); }
+.link[aria-current="page"] { color: var(--gold); background: none; }
+.linkText { position: relative; z-index: 1; }
+.activePill {
+  position: absolute;
+  inset: 6px 0;
+  border-radius: var(--radius-sm);
+  background: var(--gold-dim);
+  border: 1px solid var(--border-gold);
+}
 
 .burger {
   display: inline-flex;
@@ -120,12 +129,6 @@
   border: 1px solid var(--border-strong);
   background: var(--surface);
   box-shadow: var(--shadow-lg);
-  animation: menuIn 160ms var(--ease-out);
-}
-
-@keyframes menuIn {
-  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
-  to { opacity: 1; transform: none; }
 }
 
 .menuLink {

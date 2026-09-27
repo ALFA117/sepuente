@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import ui from "./ui.module.css";
 import { txStatus } from "@/lib/status";
 
@@ -107,6 +108,7 @@ export function EmptyState({ title, text, art }: { title: string; text: string; 
 type Toast = { id: number; kind: "success" | "error"; msg: string };
 
 export function useToasts() {
+  const reduce = useReducedMotion();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const nextId = useRef(1);
   const dismiss = useCallback((id: number) => setToasts((t) => t.filter((x) => x.id !== id)), []);
@@ -118,13 +120,24 @@ export function useToasts() {
 
   const view = (
     <div className={ui.toasts} aria-live="polite">
-      {toasts.map((t) => (
-        <div key={t.id} className={`${ui.toast} ${t.kind === "success" ? ui.toastSuccess : ui.toastError}`} role={t.kind === "error" ? "alert" : "status"}>
-          {t.kind === "success" ? Icon.check(16) : Icon.alert(16)}
-          <span className={ui.toastMsg}>{t.msg}</span>
-          <button type="button" className={ui.toastClose} onClick={() => dismiss(t.id)} aria-label="Cerrar aviso">{Icon.x(14)}</button>
-        </div>
-      ))}
+      <AnimatePresence initial={false}>
+        {toasts.map((t) => (
+          <motion.div
+            key={t.id}
+            layout={!reduce}
+            className={`${ui.toast} ${t.kind === "success" ? ui.toastSuccess : ui.toastError}`}
+            role={t.kind === "error" ? "alert" : "status"}
+            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={reduce ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.96, transition: { duration: 0.15 } }}
+            transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 380, damping: 28 }}
+          >
+            {t.kind === "success" ? Icon.check(16) : Icon.alert(16)}
+            <span className={ui.toastMsg}>{t.msg}</span>
+            <button type="button" className={ui.toastClose} onClick={() => dismiss(t.id)} aria-label="Cerrar aviso">{Icon.x(14)}</button>
+          </motion.div>
+        ))}
+      </AnimatePresence>
     </div>
   );
 

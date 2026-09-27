@@ -17,6 +17,8 @@ import { truncateMiddle, formatAmount, EXPLORER_TX, EXPLORER_ACCOUNT } from "@/l
 import { PENDING_STATUSES } from "@/lib/status";
 import { AnchorSheet, type SheetState } from "./AnchorSheet";
 import { Glossary } from "../components/Glossary";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { Enter, Pressable, Swap } from "../components/motion";
 
 const HORIZON = "https://horizon-testnet.stellar.org";
 const ASSET_CODE = (process.env.NEXT_PUBLIC_ASSET_CODE ?? "TMXN").trim();
@@ -57,6 +59,7 @@ function store(key: string, value?: string | null) {
 
 export default function DemoPage() {
   const toast = useToasts();
+  const reduce = useReducedMotion();
   const [kp, setKp] = useState<Keypair | null>(null);
   const [bal, setBal] = useState<Balances | null>(null);
   const [balLoading, setBalLoading] = useState(true);
@@ -347,7 +350,7 @@ export default function DemoPage() {
       <SiteHeader badge="Testnet" />
 
       <main id="main" className={styles.main}>
-        <section className={styles.intro}>
+        <Enter as="section" className={styles.intro}>
           <p className={ui.eyebrow}>Wallet de prueba · SEP-24</p>
           <h1 className={styles.title}>Prueba el puente en 2 minutos</h1>
           <p className={styles.lead}>
@@ -357,11 +360,11 @@ export default function DemoPage() {
             Stellar testnet: los XLM y {ASSET_CODE} no tienen valor. El SPEI es simulado; no envíes dinero real.
           </SandboxNotice>
           <Glossary compact />
-        </section>
+        </Enter>
 
         <div className={styles.grid}>
           {/* ── Wallet ── */}
-          <section className={`${ui.card} ${styles.wallet}`} aria-labelledby="wallet-title">
+          <Enter as="section" delay={0.08} className={`${ui.card} ${styles.wallet}`} aria-labelledby="wallet-title">
             <div className={styles.walletHead}>
               <h2 id="wallet-title" className={ui.cardTitle}>Tu wallet</h2>
               <button type="button" className={`${ui.btn} ${ui.ghost} ${ui.btnSm}`} onClick={loadBalances} disabled={balLoading} aria-label="Actualizar saldos">
@@ -390,21 +393,21 @@ export default function DemoPage() {
               <div className={styles.balance}>
                 <span className={styles.balLabel}>XLM</span>
                 <span className={styles.balValue}>
-                  {balLoading && !bal ? <span className={ui.skeleton} /> : bal?.exists ? formatAmount(bal.xlm) : "0.00"}
+                  {balLoading && !bal ? <span className={ui.skeleton} /> : <Swap k={bal?.exists ? bal.xlm ?? "0" : "0"}>{bal?.exists ? formatAmount(bal.xlm) : "0.00"}</Swap>}
                 </span>
               </div>
               <div className={styles.balance}>
                 <span className={styles.balLabel}>{ASSET_CODE}</span>
                 <span className={`${styles.balValue} ${styles.balGold}`}>
-                  {balLoading && !bal ? <span className={ui.skeleton} /> : bal?.trust ? formatAmount(bal.tmxn) : "—"}
+                  {balLoading && !bal ? <span className={ui.skeleton} /> : <Swap k={bal?.trust ? bal.tmxn ?? "0" : "none"}>{bal?.trust ? formatAmount(bal.tmxn) : "—"}</Swap>}
                 </span>
               </div>
             </div>
             <p className={styles.keyNote}>La llave privada vive solo en esta pestaña (sessionStorage). SEPuente nunca la recibe.</p>
-          </section>
+          </Enter>
 
           {/* ── Pasos ── */}
-          <section className={`${ui.card} ${styles.stepsCard}`} aria-labelledby="steps-title">
+          <Enter as="section" delay={0.14} className={`${ui.card} ${styles.stepsCard}`} aria-labelledby="steps-title">
             <h2 id="steps-title" className={ui.cardTitle}>Prepárate en 3 pasos</h2>
             <ol className={styles.steps}>
               {steps.map((s) => {
@@ -412,12 +415,12 @@ export default function DemoPage() {
                 const locked = step < s.n;
                 return (
                   <li key={s.n} className={styles.step} data-state={s.done ? "done" : active ? "active" : "locked"}>
-                    <span className={styles.stepNum} aria-hidden="true">{s.done ? Icon.check(14) : s.n}</span>
+                    <span className={styles.stepNum} aria-hidden="true"><Swap k={s.done ? "done" : "n"} pop>{s.done ? Icon.check(14) : s.n}</Swap></span>
                     <div className={styles.stepBody}>
                       <span className={styles.stepTitle}>{s.title} <span className={styles.stepTag}>{s.tag}</span></span>
                       <span className={styles.stepDesc}>{s.desc}</span>
                       {active && !s.done && (
-                        <button
+                        <Pressable
                           type="button"
                           className={`${ui.btn} ${ui.primary} ${styles.stepBtn}`}
                           onClick={s.action}
@@ -425,7 +428,7 @@ export default function DemoPage() {
                           disabled={!!busy || !kp || (balLoading && !bal)}
                         >
                           {busy === s.key ? <><Spinner />{s.busyLabel}</> : s.cta}
-                        </button>
+                        </Pressable>
                       )}
                     </div>
                     <span className="sr-only">{s.done ? "Completado" : locked ? "Pendiente" : "Paso actual"}</span>
@@ -434,12 +437,12 @@ export default function DemoPage() {
               })}
             </ol>
             {jwt && (
-              <div className={styles.session}>
+              <Enter className={styles.session} y={8}>
                 <span className={`${ui.badge} ${ui["tone-success"]}`}>Sesión SEP-10 activa</span>
                 <button type="button" className={ui.linkBtn} onClick={logout}>Cerrar sesión</button>
-              </div>
+              </Enter>
             )}
-          </section>
+          </Enter>
         </div>
 
         {/* ── Operaciones ── */}
@@ -449,22 +452,22 @@ export default function DemoPage() {
             {!jwt && <span className={styles.lockHint}>Completa los 3 pasos para desbloquear</span>}
           </div>
           <div className={styles.opsGrid}>
-            <button type="button" className={`${styles.op} ${styles.opDeposit}`} onClick={() => openInteractive("deposit")} disabled={!jwt || !!busy}>
+            <Pressable type="button" className={`${styles.op} ${styles.opDeposit}`} onClick={() => openInteractive("deposit")} disabled={!jwt || !!busy}>
               <span className={styles.opIcon}>{busy === "deposit" ? <Spinner /> : Icon.down(22)}</span>
               <span className={styles.opText}>
                 <span className={styles.opTitle}>Depositar</span>
                 <span className={styles.opDesc}>Pesos de tu banco (SPEI simulado) → pesos digitales en tu wallet</span>
               </span>
               <span className={styles.opArrow}>{Icon.arrow(18)}</span>
-            </button>
-            <button type="button" className={`${styles.op} ${styles.opWithdraw}`} onClick={() => openInteractive("withdraw")} disabled={!jwt || !!busy}>
+            </Pressable>
+            <Pressable type="button" className={`${styles.op} ${styles.opWithdraw}`} onClick={() => openInteractive("withdraw")} disabled={!jwt || !!busy}>
               <span className={styles.opIcon}>{busy === "withdraw" ? <Spinner /> : Icon.up(22)}</span>
               <span className={styles.opText}>
                 <span className={styles.opTitle}>Retirar</span>
                 <span className={styles.opDesc}>Pesos digitales de tu wallet → pesos a tu cuenta bancaria (simulado)</span>
               </span>
               <span className={styles.opArrow}>{Icon.arrow(18)}</span>
-            </button>
+            </Pressable>
           </div>
         </section>
 
@@ -498,13 +501,21 @@ export default function DemoPage() {
               txError ? null : <EmptyState title="Aún no hay operaciones" text="Cuando deposites o retires, verás aquí cada movimiento con su estado en tiempo real." />
             ) : (
               <ul className={styles.txList}>
+                <AnimatePresence initial={false}>
                 {txs.map((tx) => {
                   const isDep = tx.kind === "deposit";
                   const amount = tx.amount_out ?? tx.amount_in;
                   const unit = tx.amount_out ? (isDep ? ASSET_CODE : "MXN") : (isDep ? "MXN" : ASSET_CODE);
                   const needsPay = !isDep && tx.status === "pending_user_transfer_start";
                   return (
-                    <li key={tx.id} className={styles.txRow}>
+                    <motion.li
+                      key={tx.id}
+                      layout={reduce ? false : "position"}
+                      className={styles.txRow}
+                      initial={reduce ? false : { opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 28 }}
+                    >
                       <span className={`${styles.txIcon} ${isDep ? styles.txDep : styles.txWd}`} aria-hidden="true">
                         {isDep ? Icon.down(16) : Icon.up(16)}
                       </span>
@@ -514,7 +525,7 @@ export default function DemoPage() {
                           <span className={styles.txAmt}>{amount ? `${formatAmount(amount)} ${unit}` : "—"}</span>
                         </div>
                         <div className={styles.txBottom}>
-                          <StatusBadge status={tx.status} />
+                          <Swap k={tx.status}><StatusBadge status={tx.status} /></Swap>
                           <time className={styles.txDate} dateTime={tx.started_at}>
                             {new Date(tx.started_at).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })}
                           </time>
@@ -538,9 +549,10 @@ export default function DemoPage() {
                           </a>
                         )}
                       </div>
-                    </li>
+                    </motion.li>
                   );
                 })}
+                </AnimatePresence>
               </ul>
             )}
           </section>

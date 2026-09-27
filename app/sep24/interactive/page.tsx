@@ -1,14 +1,31 @@
 "use client";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, Suspense } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import styles from "./page.module.css";
 import { SiteHeader } from "../../components/SiteHeader";
+import { DrawCheck, EASE_OUT } from "../../components/motion";
 import { ui, Icon, Spinner, StatusBadge, SandboxNotice, CopyButton } from "../../components/ui";
 import { amountError, MIN_AMOUNT, MAX_AMOUNT } from "@/lib/amount";
 import { clabeError } from "@/lib/clabe";
 import { truncateMiddle, formatAmount, EXPLORER_TX } from "@/lib/format";
 
 const ASSET = (process.env.NEXT_PUBLIC_ASSET_CODE ?? "TMXN").trim();
+
+/** Cada paso entra desde la derecha y sale hacia la izquierda: el flujo "avanza". */
+function StepPane({ children, onEntered }: { children: React.ReactNode; onEntered?: () => void }) {
+  const reduce = useReducedMotion();
+  return (
+    <motion.div
+      initial={reduce ? { opacity: 0 } : { opacity: 0, x: 18 }}
+      animate={{ opacity: 1, x: 0, transition: reduce ? { duration: 0 } : { duration: 0.28, ease: EASE_OUT } }}
+      exit={reduce ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, x: -14, transition: { duration: 0.16, ease: EASE_OUT } }}
+      onAnimationComplete={(def) => { if ((def as { opacity?: number })?.opacity === 1) onEntered?.(); }}
+    >
+      {children}
+    </motion.div>
+  );
+}
 const DEMO_CLABE = "646180157000000004";
 
 interface QuoteResult { sell_amount: string; buy_amount: string; price: string; fee: string; expires_at: string; sandbox?: boolean }
@@ -33,6 +50,7 @@ function InteractiveContent() {
   const params = useSearchParams();
   const token = params.get("token") ?? "";
   const isDeposit = (params.get("kind") ?? "deposit") !== "withdraw";
+  const reduce = useReducedMotion();
 
   const [step, setStep] = useState<Step>("loading");
   const [amount, setAmount] = useState(params.get("amount") ?? "");
@@ -133,7 +151,6 @@ function InteractiveContent() {
   }, [api, isDeposit, token]);
 
   useEffect(() => {
-    if (step === "form") firstField.current?.focus({ preventScroll: true });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [step]);
 
@@ -270,24 +287,30 @@ function InteractiveContent() {
           </ol>
         )}
 
+        <AnimatePresence mode="wait" initial={false}>
         {step === "loading" && (
-          <div className={styles.center} role="status">
-            <Spinner />
-            <span>Cargando tu operación…</span>
-          </div>
+          <StepPane key="loading">
+            <div className={styles.center} role="status">
+              <Spinner />
+              <span>Cargando tu operación…</span>
+            </div>
+          </StepPane>
         )}
 
         {step === "fatal" && (
+          <StepPane key="fatal">
           <div className={`${ui.card} ${styles.result}`}>
             <span className={`${styles.resultIcon} ${styles.resultErr}`}>{Icon.alert(30)}</span>
             <h2 className={styles.resultTitle}>No pudimos abrir la operación</h2>
             <p className={ui.muted}>{fatal}</p>
             <button type="button" className={`${ui.btn} ${ui.secondary} ${ui.btnBlock}`} onClick={backToWallet}>Volver a la wallet</button>
           </div>
+          </StepPane>
         )}
 
         {/* ── Monto ── */}
         {step === "form" && (
+          <StepPane key="form" onEntered={() => firstField.current?.focus({ preventScroll: true })}>
           <form className={styles.stack} onSubmit={handleQuote} noValidate>
             <div className={ui.field}>
               <label className={ui.label} htmlFor="amount">Monto a {isDeposit ? "depositar" : "retirar"}</label>
@@ -353,10 +376,12 @@ function InteractiveContent() {
               </button>
             </div>
           </form>
+          </StepPane>
         )}
 
         {/* ── Cotización ── */}
         {step === "quote" && quote && (
+          <StepPane key="quote">
           <div className={styles.stack}>
             <div className={`${ui.card} ${styles.swap}`}>
               <div className={styles.swapSide}>
@@ -385,15 +410,17 @@ function InteractiveContent() {
               <button type="button" className={`${ui.btn} ${ui.primary} ${ui.btnBlock}`} onClick={handleConfirm} disabled={loading} aria-busy={loading}>
                 {loading ? <><Spinner />Confirmando…</> : "Confirmar operación"}
               </button>
-              <button type="button" className={`${ui.btn} ${ui.ghost} ${ui.btnBlock}`} onClick={() => { setErr(""); setStep("form"); }} disabled={loading} aria-busy={loading}>
+              <button type="button" className={`${ui.btn} ${ui.ghost} ${ui.btnBlock}`} onClick={() => { setErr(""); setStep("form"); }} disabled={loading}>
                 Cambiar monto
               </button>
             </div>
           </div>
+          </StepPane>
         )}
 
         {/* ── Instrucciones de pago ── */}
         {step === "instructions" && (
+          <StepPane key="instructions">
           <div className={styles.stack}>
             {isDeposit && dep?.clabe ? (
               <>
@@ -458,13 +485,21 @@ function InteractiveContent() {
 
             {err && <div className={ui.alert} role="alert">{Icon.alert(16)}<span>{err}</span></div>}
           </div>
+          </StepPane>
         )}
 
         {/* ── Resultado ── */}
         {step === "done" && tx && (
-          tx.status === "completed" ? (
+          <StepPane key="done">{tx.status === "completed" ? (
             <div className={`${ui.card} ${styles.result}`}>
-              <span className={`${styles.resultIcon} ${styles.resultOk}`}>{Icon.check(30)}</span>
+              <motion.span
+                className={`${styles.resultIcon} ${styles.resultOk}`}
+                initial={reduce ? false : { scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 360, damping: 18, delay: 0.05 }}
+              >
+                <DrawCheck size={30} />
+              </motion.span>
               <h2 className={styles.resultTitle}>{isDeposit ? `${ASSET} acreditado` : "Retiro completado"}</h2>
               <p className={ui.muted}>
                 {isDeposit
@@ -487,8 +522,9 @@ function InteractiveContent() {
               <p className={ui.muted}>{tx.error_message ?? "No se movió ningún fondo. Puedes iniciar una operación nueva desde tu wallet."}</p>
               <button type="button" className={`${ui.btn} ${ui.primary} ${ui.btnBlock}`} onClick={backToWallet}>Volver a la wallet</button>
             </div>
-          )
+          )}</StepPane>
         )}
+        </AnimatePresence>
       </main>
     </div>
   );

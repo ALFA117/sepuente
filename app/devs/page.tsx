@@ -5,6 +5,7 @@ import { SiteHeader, SiteFooter } from "../components/SiteHeader";
 import { ui, CopyButton, Icon } from "../components/ui";
 import { truncateMiddle } from "@/lib/format";
 import { Glossary, Token } from "../components/Glossary";
+import { Enter, Reveal, Stagger, StaggerItem } from "../components/motion";
 
 const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "https://sepuente.vercel.app").trim().replace(/\/$/, "");
 const HOME_DOMAIN = APP_URL.replace(/^https?:\/\//, "");
@@ -58,13 +59,13 @@ const QUICK = [
 
 function Section({ n, title, children }: { n: string; title: string; children: React.ReactNode }) {
   return (
-    <section className={styles.section} aria-labelledby={`s-${n}`}>
+    <Reveal as="section" className={styles.section} aria-labelledby={`s-${n}`}>
       <div className={styles.sectionHead}>
         <span className={styles.sectionNum}>{n}</span>
         <h2 id={`s-${n}`} className={styles.h2}>{title}</h2>
       </div>
       {children}
-    </section>
+    </Reveal>
   );
 }
 
@@ -83,7 +84,7 @@ export default function DevsPage() {
       <SiteHeader badge="Docs" />
 
       <main id="main" className={styles.main}>
-        <header className={styles.hero}>
+        <Enter as="section" className={styles.hero}>
           <p className={ui.eyebrow}>Documentación técnica</p>
           <h1 className={styles.title}>Integra rampas MXN en <span className={styles.accent}>Stellar</span></h1>
           <p className={styles.lead}>
@@ -93,9 +94,9 @@ export default function DevsPage() {
             {["SEP-1", "SEP-10", "SEP-24", "SEP-38", "CORS abierto", "No custodial", "MIT"].map((t) => <li key={t}>{t}</li>)}
           </ul>
           <Glossary compact />
-        </header>
+        </Enter>
 
-        <ul className={styles.quick}>
+        <Stagger as="ul" className={styles.quick}>
           {QUICK.map((q) => {
             const inner = (
               <>
@@ -104,14 +105,14 @@ export default function DevsPage() {
               </>
             );
             return (
-              <li key={q.title}>
+              <StaggerItem as="li" key={q.title}>
                 {q.internal
                   ? <Link href={q.href} className={styles.quickCard}>{inner}</Link>
                   : <a href={q.href} target="_blank" rel="noreferrer" className={styles.quickCard}>{inner}</a>}
-              </li>
+              </StaggerItem>
             );
           })}
-        </ul>
+        </Stagger>
 
         <Section n="01" title="Endpoints">
           <div className={styles.baseRow}>
