@@ -21,8 +21,8 @@ const FEATURES = [
     icon: <><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></>,
   },
   {
-    title: "Cualquier wallet",
-    desc: "Compatible con toda wallet Stellar que implemente SEP-24. Interoperable por diseño.",
+    title: "Cualquier wallet, incluso tu correo",
+    desc: "Compatible con toda wallet Stellar que implemente SEP-24. En la demo puedes entrar solo con tu correo gracias a Pollar.",
     icon: <><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></>,
   },
   {
@@ -48,8 +48,8 @@ const FEATURES = [
 ];
 
 const FLOW = [
-  { n: "01", title: "Fondea tu wallet", desc: "Genera una llave Stellar y obtén XLM de testnet con el faucet integrado." },
-  { n: "02", title: "Trustline TMXN", desc: "Firma changeTrust para poder recibir el token de pesos." },
+  { n: "01", title: "Entra con tu correo", desc: "Verificas tu correo con un código y Pollar crea tu wallet Stellar, sin XLM ni instalaciones. O genera una llave en el navegador con el faucet." },
+  { n: "02", title: "Trustline TMXN", desc: "Activa el token de pesos (changeTrust). Con correo, Pollar paga la comisión de red." },
   { n: "03", title: "Auth SEP-10", desc: "Firma el challenge del anchor; el JWT resultante autoriza tus operaciones." },
   { n: "04", title: "Deposita o retira", desc: "SPEI → TMXN o TMXN → SPEI con el flujo interactivo SEP-24." },
 ];
@@ -204,7 +204,7 @@ export default function LandingPage() {
         <section className={styles.cta}>
           <Reveal className={styles.ctaInner}>
             <h2 className={styles.h2}>Pruébalo ahora</h2>
-            <p className={styles.sectionLead}>Wallet de testnet con faucet integrado. Sin registro, sin custodia, en menos de dos minutos.</p>
+            <p className={styles.sectionLead}>Entra con tu correo y un código, o con una llave generada en tu navegador. Sin instalar nada, en menos de dos minutos.</p>
             <Link href="/demo" className={styles.ctaPrimary}>
               Abrir la demo
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
