@@ -26,8 +26,16 @@ export function formatSep24Tx(row: any) {
   const inAsset = isDeposit ? FIAT_ASSET : stellarAsset();
   const outAsset = isDeposit ? stellarAsset() : FIAT_ASSET;
   const amountIn = amount(row.amount_in);
-  const amountOut = amount(row.amount_out);
-  const amountFee = amount(row.amount_fee);
+  let amountOut = amount(row.amount_out);
+  let amountFee = amount(row.amount_fee);
+  // Mientras la operación está en curso, SEP-24 pide informar lo que se recibirá. Con el MockDriver
+  // la cotización es fija (entrada − 0.5 %), así que el monto esperado es exacto.
+  if (env.DRIVER === "mock" && amountIn && !amountOut && row.status !== "incomplete") {
+    const inNum = Number(amountIn);
+    const fee = inNum * (FEE_PERCENT / 100);
+    amountFee = amountFee ?? fee.toFixed(7);
+    amountOut = (inNum - fee).toFixed(isDeposit ? 7 : 2);
+  }
 
   return clean({
     id: row.id,
