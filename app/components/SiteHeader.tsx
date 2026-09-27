@@ -8,6 +8,7 @@ import { EASE_OUT } from "./motion";
 import { LogoLockup } from "./brand/Logo";
 
 const LINKS = [
+  { href: "/", label: "Inicio" },
   { href: "/demo", label: "Demo" },
   { href: "/devs", label: "Docs" },
   { href: "/pitch", label: "Pitch" },
