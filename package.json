@@ -27,5 +27,6 @@
     "@types/three": "^0.170.0",
     "tsx": "^4.19.1",
     "typescript": "^5"
-  }
+  },
+  "license": "MIT"
 }
