@@ -104,7 +104,7 @@
 .balLabel { font-family: var(--font-mono); font-size: var(--fs-label); color: var(--subtle); letter-spacing: 0.06em; }
 .balValue {
   font-family: var(--font-mono);
-  font-size: 1.25rem;
+  font-size: clamp(1rem, 4.4vw, 1.25rem);
   font-weight: 500;
   color: var(--cream);
   font-variant-numeric: tabular-nums;
@@ -114,6 +114,7 @@
   min-height: 1.5em;
 }
 .balGold { color: var(--gold-hover); }
+.balHint { font-size: var(--fs-label); line-height: 1.35; color: var(--subtle); }
 
 .keyNote { font-size: var(--fs-label); color: var(--subtle); line-height: 1.5; }
 

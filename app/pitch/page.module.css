@@ -114,11 +114,9 @@
   content: "";
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(rgb(var(--line-rgb) / 0.12) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(var(--line-rgb) / 0.12) 1px, transparent 1px);
-  background-size: 44px 44px;
-  mask-image: radial-gradient(ellipse 90% 70% at 50% 20%, black 15%, transparent 70%);
+  /* Arcos concéntricos: evocan los arcos de un puente (reemplaza la cuadrícula genérica) */
+  background-image: repeating-radial-gradient(circle at 50% 135%, transparent 0 46px, rgb(var(--gold-rgb) / 0.075) 46px 47px);
+  mask-image: radial-gradient(ellipse 100% 80% at 50% 100%, black 25%, transparent 78%);
 }
 .chip {
   align-self: flex-start;
@@ -392,6 +390,31 @@
 .dockName { font-size: var(--fs-small); font-weight: 600; color: var(--cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 
 /* ── Marca 3D en la portada ── */
+/* Portada: una columna en móvil; texto a la izquierda y logo 3D a la derecha en escritorio */
+.coverGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "chip" "logo" "word" "lead" "tags" "ctas";
+  justify-items: start;
+}
+.coverChip { grid-area: chip; }
+.coverLogo { grid-area: logo; width: 100%; max-width: 440px; justify-self: center; margin-top: calc(-1 * var(--sp-4)); }
+.coverWordWrap { grid-area: word; width: 100%; max-width: 440px; justify-self: center; display: flex; justify-content: center; }
+.coverGrid .coverLead { grid-area: lead; }
+.coverGrid .coverTags { grid-area: tags; }
+.coverGrid .coverCtas { grid-area: ctas; }
+@media (min-width: 900px) {
+  .coverGrid {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    grid-template-areas: "chip logo" "word logo" "lead logo" "tags logo" "ctas logo";
+    column-gap: var(--sp-10);
+    align-items: center;
+  }
+  .coverLogo { max-width: 520px; margin-top: 0; align-self: center; }
+  .coverWordWrap { justify-self: start; justify-content: flex-start; max-width: 460px; }
+  .coverWordWrap .coverWord { width: 100%; }
+}
+
 .coverBrand {
   display: flex;
   flex-direction: column;

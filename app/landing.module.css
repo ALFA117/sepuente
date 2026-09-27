@@ -21,11 +21,9 @@
   content: "";
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(rgb(var(--line-rgb) / 0.12) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(var(--line-rgb) / 0.12) 1px, transparent 1px);
-  background-size: 40px 40px;
-  mask-image: radial-gradient(ellipse 100% 80% at 50% 0%, black 20%, transparent 75%);
+  /* Arcos concéntricos: evocan los arcos de un puente (reemplaza la cuadrícula genérica) */
+  background-image: repeating-radial-gradient(circle at 50% 135%, transparent 0 46px, rgb(var(--gold-rgb) / 0.075) 46px 47px);
+  mask-image: radial-gradient(ellipse 100% 85% at 50% 100%, black 25%, transparent 78%);
   pointer-events: none;
 }
 

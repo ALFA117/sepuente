@@ -164,11 +164,13 @@ export default function PitchPage() {
         {/* ── 1. Portada ── */}
         <section id="portada" className={`${styles.chapter} ${styles.cover}`} aria-labelledby="portada-t">
           <div className={styles.coverGlow} aria-hidden="true" />
-          <div className={styles.inner}>
-            <Enter as="p" className={styles.chip}><span className={styles.chipDot} aria-hidden="true" />Stellar Testnet · en vivo</Enter>
+          <div className={`${styles.inner} ${styles.coverGrid}`}>
+            <Enter as="p" className={`${styles.chip} ${styles.coverChip}`}><span className={styles.chipDot} aria-hidden="true" />Stellar Testnet · en vivo</Enter>
             <h1 id="portada-t" className="sr-only">SEPuente</h1>
-            <Enter className={styles.coverBrand} delay={0.06} y={20}>
+            <Enter className={styles.coverLogo} delay={0.06} y={20}>
               <Logo3D className={styles.cover3d} />
+            </Enter>
+            <Enter className={styles.coverWordWrap} delay={0.08}>
               <LogoWord className={styles.coverWord} />
             </Enter>
             <Enter as="p" className={styles.coverLead} delay={0.12}>

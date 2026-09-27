@@ -216,6 +216,22 @@ function InteractiveContent() {
     }
   }
 
+  async function handleEditAmount() {
+    if (loading || paying || paid) return;
+    setErr("");
+    setLoading(true);
+    try {
+      await api({ action: "edit_amount" });
+      setInstr(null);
+      setQuote(null);
+      setStep("form");
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleSimulate() {
     if (simulating) return;
     setSimulating(true);
@@ -476,6 +492,12 @@ function InteractiveContent() {
               </>
             ) : (
               <div className={styles.center}><Spinner /><span>Preparando instrucciones…</span></div>
+            )}
+
+            {sandbox && !paid && !paying && !simulating && (
+              <button type="button" className={`${ui.btn} ${ui.ghost} ${ui.btnBlock}`} onClick={handleEditAmount} disabled={loading} aria-busy={loading}>
+                {loading ? <><Spinner />Volviendo…</> : "Cambiar monto"}
+              </button>
             )}
 
             <div className={styles.polling} role="status">

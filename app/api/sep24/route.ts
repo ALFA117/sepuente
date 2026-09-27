@@ -1,6 +1,6 @@
 /**
  * API interna para la UI interactiva.
- * Acciones: quote | start_deposit | start_withdraw | simulate | status
+ * Acciones: quote | start_deposit | start_withdraw | edit_amount | simulate | status
  * Protegido con session token (no JWT SEP-10).
  */
 import { NextRequest, NextResponse } from "next/server";
@@ -110,6 +110,22 @@ async function handle(body: Record<string, string>) {
       quoteId: params.quote_id,
     });
     return NextResponse.json({ ...instructions, sandbox });
+  }
+
+  if (action === "edit_amount") {
+    // Volver al paso "Monto" antes de pagar. Solo en sandbox: con un proveedor real
+    // la orden ya creada del otro lado quedaría abierta.
+    if (!sandbox) {
+      return NextResponse.json({ error: "Para cambiar el monto, cancela y empieza una operación nueva." }, { status: 409 });
+    }
+    if (tx.status !== "pending_user_transfer_start" || tx.stellar_transaction_id) {
+      return NextResponse.json({ error: "El pago ya se detectó; ya no se puede cambiar el monto." }, { status: 409 });
+    }
+    await db
+      .from("sep24_transactions")
+      .update({ status: "incomplete", amount_in: null, updated_at: new Date().toISOString() })
+      .eq("id", txId);
+    return NextResponse.json({ ok: true });
   }
 
   if (action === "simulate") {

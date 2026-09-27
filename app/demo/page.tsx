@@ -333,7 +333,7 @@ export default function DemoPage() {
 
   const steps = [
     {
-      n: 1, title: "Obtén saldo de prueba", tag: "Faucet · XLM", desc: "Stellar cobra centavos por cada movimiento; te regalamos XLM de prueba para cubrirlos.",
+      n: 1, title: "Obtén saldo de prueba", tag: "Faucet · XLM", desc: "Cada movimiento en Stellar cuesta 0.00001 XLM de comisión de red. Te regalamos XLM de prueba para cubrirla; no se convierten en pesos.",
       done: funded, action: handleFaucet, cta: "Obtener saldo de prueba", busyLabel: "Fondeando…", key: "faucet" as const,
     },
     {
@@ -401,7 +401,12 @@ export default function DemoPage() {
               <div className={styles.balance}>
                 <span className={styles.balLabel}>XLM</span>
                 <span className={styles.balValue}>
-                  {balLoading && !bal ? <span className={ui.skeleton} /> : <Swap k={bal?.exists ? bal.xlm ?? "0" : "0"}>{bal?.exists ? formatAmount(bal.xlm) : "0.00"}</Swap>}
+                  {balLoading && !bal ? <span className={ui.skeleton} /> : <Swap k={bal?.exists ? bal.xlm ?? "0" : "0"}>{bal?.exists ? formatAmount(bal.xlm, 5) : "0.00000"}</Swap>}
+                </span>
+                <span className={styles.balHint}>
+                  {bal?.exists && parseFloat(bal.xlm ?? "0") < 10000
+                    ? `Comisiones de red pagadas: ${formatAmount(10000 - parseFloat(bal.xlm ?? "0"), 5)}`
+                    : "Solo paga la comisión de la red"}
                 </span>
               </div>
               <div className={styles.balance}>
@@ -409,6 +414,7 @@ export default function DemoPage() {
                 <span className={`${styles.balValue} ${styles.balGold}`}>
                   {balLoading && !bal ? <span className={ui.skeleton} /> : <Swap k={bal?.trust ? bal.tmxn ?? "0" : "none"}>{bal?.trust ? formatAmount(bal.tmxn) : "—"}</Swap>}
                 </span>
+                <span className={styles.balHint}>1 = 1 peso · comisión del anchor 0.5 %</span>
               </div>
             </div>
             <p className={styles.keyNote}>La llave privada vive solo en esta pestaña (sessionStorage). SEPuente nunca la recibe.</p>
