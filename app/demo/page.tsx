@@ -242,11 +242,26 @@ export default function DemoPage() {
     return false;
   }
 
+  async function waitForAccount(tries = 15) {
+    for (let i = 0; i < tries; i++) {
+      const r = await fetchJson(`${HORIZON}/accounts/${pk}`).catch(() => null);
+      if (r?.ok) return true;
+      await new Promise((res) => setTimeout(res, 2000));
+    }
+    return false;
+  }
+
   const handleTrustline = () => run("trust", async () => {
     if (!ISSUER) throw new Error("La demo no tiene configurado el emisor del token.");
     if (mode === "email") {
       if (!pw.client || !pw.address) throw new Error("Primero verifica tu correo.");
-      const out = await pw.client.setTrustline({ code: ASSET_CODE, issuer: ISSUER });
+      // Pollar fondea la cuenta unos segundos después del login; hasta entonces Stellar no la conoce.
+      if (!(await waitForAccount())) throw new Error("Pollar todavía está creando tu cuenta en Stellar. Intenta de nuevo en unos segundos.");
+      let out = await pw.client.setTrustline({ code: ASSET_CODE, issuer: ISSUER });
+      if (out.status === "error" && /not found/i.test(out.details ?? "")) {
+        await new Promise((res) => setTimeout(res, 4000));
+        out = await pw.client.setTrustline({ code: ASSET_CODE, issuer: ISSUER });
+      }
       if (out.status === "error") throw new Error(out.details ? `Pollar: ${out.details}` : "Pollar no pudo activar los pesos digitales.");
       const ok = await waitForTrust();
       toast.success(ok ? `Trustline de ${ASSET_CODE} lista, sin pagar comisiones.` : "Trustline enviada; puede tardar unos segundos en aparecer.");
