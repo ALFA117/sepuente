@@ -73,7 +73,7 @@ const STACK = [
   { n: "Stellar SDK", r: "WebAuth · Horizon" },
   { n: "Supabase", r: "Postgres · RLS" },
   { n: "Vercel", r: "Serverless · CI/CD" },
-  { n: "jose", r: "JWT HS256" },
+  { n: "Tokens de sesión", r: "Librería jose · JWT HS256" },
   { n: "TypeScript", r: "Tipos de punta a punta" },
   { n: "MockDriver", r: "Testnet · 1 TMXN = 1 MXN" },
   { n: "Etherfuse", r: "Driver sandbox SPEI" },
