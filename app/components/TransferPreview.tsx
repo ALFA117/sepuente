@@ -13,7 +13,7 @@ const STAGES = [
 
 export function TransferPreview() {
   const reduce = useReducedMotion();
-  const [stage, setStage] = useState(reduce ? 2 : 0);
+  const [stage, setStage] = useState(0);
 
   useEffect(() => {
     if (reduce) { setStage(2); return; }

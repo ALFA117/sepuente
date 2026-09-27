@@ -8,7 +8,11 @@ export const SPRING_PANEL = { type: "spring", stiffness: 300, damping: 28 } as c
 
 type Tag = "div" | "section" | "li" | "ul" | "ol" | "dl" | "p" | "h1" | "h2" | "span" | "article";
 
-/** Aparece al entrar en pantalla. En reposo (sin JS o reduced-motion) el contenido ya es visible. */
+// El HTML del servidor sale con el estado inicial (opacity 0). Con reduced-motion no se omite la
+// animación: se lleva al estado final en 0 ms, para que nada quede oculto tras hidratar.
+const INSTANT = { duration: 0 };
+
+/** Aparece al entrar en pantalla. */
 export function Reveal({
   as = "div",
   delay = 0,
@@ -18,7 +22,9 @@ export function Reveal({
 }: { as?: Tag; delay?: number; y?: number } & HTMLMotionProps<"div">) {
   const reduce = useReducedMotion();
   const M = motion[as] as typeof motion.div;
-  if (reduce) return <M {...rest}>{children}</M>;
+  if (reduce) {
+    return <M initial={{ opacity: 0, y }} animate={{ opacity: 1, y: 0 }} transition={INSTANT} {...rest}>{children}</M>;
+  }
   return (
     <M
       initial={{ opacity: 0, y }}
@@ -37,11 +43,15 @@ const staggerChild: Variants = {
   hidden: { opacity: 0, y: 16 },
   show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: EASE_OUT } },
 };
+const staggerChildInstant: Variants = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: INSTANT },
+};
 
 export function Stagger({ as = "div", children, ...rest }: { as?: Tag } & HTMLMotionProps<"div">) {
   const reduce = useReducedMotion();
   const M = motion[as] as typeof motion.div;
-  if (reduce) return <M {...rest}>{children}</M>;
+  if (reduce) return <M variants={{ hidden: {}, show: {} }} initial="hidden" animate="show" {...rest}>{children}</M>;
   return (
     <M variants={staggerParent} initial="hidden" whileInView="show" viewport={{ once: true, margin: "0px 0px -40px 0px" }} {...rest}>
       {children}
@@ -52,16 +62,20 @@ export function Stagger({ as = "div", children, ...rest }: { as?: Tag } & HTMLMo
 export function StaggerItem({ as = "div", children, ...rest }: { as?: Tag } & HTMLMotionProps<"div">) {
   const reduce = useReducedMotion();
   const M = motion[as] as typeof motion.div;
-  return <M variants={reduce ? undefined : staggerChild} {...rest}>{children}</M>;
+  return <M variants={reduce ? staggerChildInstant : staggerChild} {...rest}>{children}</M>;
 }
 
 /** Entrada inmediata al montar (hero, encabezados de pantalla). */
 export function Enter({ as = "div", delay = 0, y = 14, children, ...rest }: { as?: Tag; delay?: number; y?: number } & HTMLMotionProps<"div">) {
   const reduce = useReducedMotion();
   const M = motion[as] as typeof motion.div;
-  if (reduce) return <M {...rest}>{children}</M>;
   return (
-    <M initial={{ opacity: 0, y }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, ease: EASE_OUT, delay }} {...rest}>
+    <M
+      initial={{ opacity: 0, y }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={reduce ? INSTANT : { duration: 0.55, ease: EASE_OUT, delay }}
+      {...rest}
+    >
       {children}
     </M>
   );

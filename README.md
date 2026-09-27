@@ -133,8 +133,19 @@ Alias heredados (`--navy`, `--s2`, `--accent`, `--error`, `--blue`, `--font-syne
 ### Pendientes visuales
 
 - `public/pitch.html` (estático) no usa el sistema.
-- Menú del encabezado, toasts y cambios de paso de la pantalla SEP-24 aún usan transiciones CSS, no Motion.
-- `/devs` y la demo todavía no usan las entradas animadas de Motion; `app/components/ScrollReveal.tsx` sigue montado aunque landing y pitch ya no lo usan.
+
+### Dónde hay movimiento (Motion)
+
+| Lugar | Qué anima |
+|---|---|
+| Encabezado | Menú móvil con resorte y ítems escalonados (sale más rápido de lo que entra); ícono ☰ ↔ ✕ con rotación; en escritorio, indicador de la página activa que se desliza (`layoutId`). |
+| Avisos (toasts) | Entran con resorte desde abajo, salen en 150 ms y los restantes se reacomodan (`layout`). |
+| Pantalla SEP-24 | Cada paso entra desde la derecha y sale hacia la izquierda (`AnimatePresence mode="wait"`); al completar, el círculo aparece con resorte y el check se dibuja (`pathLength`). |
+| Demo | Entrada escalonada de la pantalla; el número del paso se convierte en check con resorte; saldos y estados cambian con fundido; filas nuevas del historial entran desde arriba; tarjetas de operación con escala al tocar. |
+| Hoja del anchor | Sube con resorte sobre un fondo desenfocado; se cierra con salida corta. |
+| Landing, pitch y docs | Entradas al cargar y apariciones al hacer scroll (escalonado 60 ms); vista previa del depósito y barra de progreso del pitch. |
+
+Con "reducir movimiento" activado en el sistema, todo se muestra en su estado final al instante. Se verificó con Chrome emulando `prefers-reduced-motion: reduce` (0 elementos ocultos en landing, docs, pitch y demo) y con scroll completo en modo normal. Se eliminó `ScrollReveal.tsx` y sus reglas CSS.
 
 ---
 
