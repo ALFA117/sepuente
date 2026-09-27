@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { MARK } from "./components/brand/paths";
+import { MARK, WORD } from "./components/brand/paths";
 
 export const runtime = "edge";
 export const alt = "SEPuente – Anchor SEP-24 para pesos mexicanos en Stellar";
@@ -76,11 +76,10 @@ export default function OgImage() {
           </svg>
 
           {/* Symbol + Title row */}
-          <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 20 }}>
-            <span style={{
-              fontSize: 88, fontWeight: 700, letterSpacing: "-0.02em",
-              color: C.cream, lineHeight: 1, fontFamily: "Georgia, serif", display: "flex",
-            }}><span style={{ color: C.gold }}>SEP</span>uente</span>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 24 }}>
+            <svg width={420} height={(420 * WORD.h) / WORD.w} viewBox={`0 0 ${WORD.w} ${WORD.h}`}>
+              <path fill={C.cream} fillRule="evenodd" d={WORD.d} />
+            </svg>
           </div>
 
           {/* Tagline */}
