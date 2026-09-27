@@ -338,3 +338,28 @@ a.protoName { display: inline-flex; align-items: center; min-height: var(--tap);
   .feature { flex-direction: column; gap: var(--sp-2); padding: var(--sp-5); }
   .featureIcon { margin-bottom: var(--sp-1); }
 }
+/* ── En palabras simples ── */
+.simple { list-style: none; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); margin-top: var(--sp-2); }
+@media (min-width: 860px) { .simple { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.simpleStep {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.simpleNum {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: var(--on-gold);
+  background: var(--gold);
+}

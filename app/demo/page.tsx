@@ -15,6 +15,8 @@ import { ui, Icon, Spinner, StatusBadge, SandboxNotice, CopyButton, EmptyState, 
 import { fetchJson, errorText, horizonError } from "@/lib/client";
 import { truncateMiddle, formatAmount, EXPLORER_TX, EXPLORER_ACCOUNT } from "@/lib/format";
 import { PENDING_STATUSES } from "@/lib/status";
+import { AnchorSheet, type SheetState } from "./AnchorSheet";
+import { Glossary } from "../components/Glossary";
 
 const HORIZON = "https://horizon-testnet.stellar.org";
 const ASSET_CODE = (process.env.NEXT_PUBLIC_ASSET_CODE ?? "TMXN").trim();
@@ -64,6 +66,8 @@ export default function DemoPage() {
   const [txError, setTxError] = useState("");
   const [busy, setBusy] = useState<Busy>(null);
   const busyRef = useRef<Busy>(null);
+  const [sheet, setSheet] = useState<SheetState | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const run = async (key: NonNullable<Busy>, fn: () => Promise<void>) => {
     if (busyRef.current) return;
@@ -237,36 +241,34 @@ export default function DemoPage() {
 
   const openInteractive = (kind: "deposit" | "withdraw") => {
     if (busyRef.current || !jwt) return;
-    // La ventana se abre dentro del gesto del usuario; si se abre después del fetch, Safari/Chrome móvil la bloquean.
-    const isNarrow = window.matchMedia("(max-width: 720px)").matches;
-    const win = window.open("", "sep24_popup", isNarrow ? undefined : "width=480,height=760");
-    if (win) {
-      try { win.document.title = "SEPuente · cargando…"; } catch { /* otra origin */ }
-    }
     run(kind, async () => {
-      const r = await fetchJson<{ url: string }>(`/sep24/transactions/${kind}/interactive`, {
+      const r = await fetchJson<{ url: string; id: string }>(`/sep24/transactions/${kind}/interactive`, {
         method: "POST",
         headers: { Authorization: `Bearer ${jwt}`, "Content-Type": "application/json" },
         body: JSON.stringify({ asset_code: ASSET_CODE }),
       });
       if (!r.ok || !r.data.url) {
-        win?.close();
         if (r.status === 403) { setJwt(""); store("sp_jwt", null); }
         throw new Error(errorText(r, "El anchor no devolvió la URL interactiva"));
       }
-      // Misma origin: usa la ruta relativa para que funcione también en previews y localhost.
+      // Misma origin: ruta relativa para que funcione también en previews y localhost.
       const u = new URL(r.data.url);
-      const target = `/sep24/interactive${u.search}`;
-      if (win && !win.closed) win.location.href = target;
-      else window.location.href = target;
+      setSheet({ url: `/sep24/interactive${u.search}&embed=1`, kind, id: r.data.id });
       loadTxs(jwt, true);
     });
   };
 
-  const payWithdrawal = (tx: Tx) => run(`pay:${tx.id}`, async () => {
-    if (!kp) return;
+  const closeSheet = useCallback(() => {
+    setSheet(null);
+    if (jwt) { loadTxs(jwt, true); loadBalances(); }
+  }, [jwt, loadTxs, loadBalances]);
+
+  const payWithdrawal = (tx: Tx) => run(`pay:${tx.id}`, () => payWithdrawalCore(tx.id));
+
+  async function payWithdrawalCore(txId: string) {
+    if (!kp) throw new Error("La wallet aún no está lista.");
     const info = await fetchJson<{ transaction: { withdraw_anchor_account: string | null; withdraw_memo: string | null; withdraw_memo_type: string | null; amount_in: string | null } }>(
-      `/sep24/transaction?id=${tx.id}`, { headers: { Authorization: `Bearer ${jwt}` } }
+      `/sep24/transaction?id=${txId}`, { headers: { Authorization: `Bearer ${jwt}` } }
     );
     if (!info.ok) throw new Error(errorText(info, "No pudimos leer el retiro"));
     const { withdraw_anchor_account: dest, withdraw_memo: memo, withdraw_memo_type: memoType, amount_in } = info.data.transaction;
@@ -286,7 +288,37 @@ export default function DemoPage() {
     toast.success(`Enviaste ${formatAmount(amount)} ${ASSET_CODE} al anchor. Confirmando…`);
     await loadBalances();
     await loadTxs(jwt, true);
-  });
+  }
+
+  // Mensajes de la pantalla del anchor incrustada. Solo se aceptan de la misma origin y del iframe abierto.
+  const payRef = useRef(payWithdrawalCore);
+  payRef.current = payWithdrawalCore;
+  useEffect(() => {
+    if (!sheet) return;
+    const onMessage = async (e: MessageEvent) => {
+      if (e.origin !== window.location.origin || e.source !== iframeRef.current?.contentWindow) return;
+      const msg = e.data as { type?: string };
+      if (msg?.type === "sepuente:close") closeSheet();
+      if (msg?.type === "sepuente:status") { loadTxs(jwt, true); loadBalances(); }
+      if (msg?.type === "sepuente:pay_request") {
+        const reply = (data: Record<string, unknown>) => iframeRef.current?.contentWindow?.postMessage({ type: "sepuente:pay_result", ...data }, window.location.origin);
+        if (busyRef.current) { reply({ ok: false, error: "La wallet está ocupada, intenta en un momento." }); return; }
+        busyRef.current = `pay:${sheet.id}`;
+        setBusy(`pay:${sheet.id}`);
+        try {
+          await payRef.current(sheet.id);
+          reply({ ok: true });
+        } catch (err) {
+          reply({ ok: false, error: (err as Error).message || "No se pudo enviar el pago." });
+        } finally {
+          busyRef.current = null;
+          setBusy(null);
+        }
+      }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [sheet, jwt, closeSheet, loadTxs, loadBalances]);
 
   const logout = () => { setJwt(""); store("sp_jwt", null); setTxs(null); };
 
@@ -297,16 +329,16 @@ export default function DemoPage() {
 
   const steps = [
     {
-      n: 1, title: "Fondear cuenta", desc: "Obtén XLM de testnet para pagar comisiones de red.",
-      done: funded, action: handleFaucet, cta: "Usar faucet", busyLabel: "Fondeando…", key: "faucet" as const,
+      n: 1, title: "Obtén saldo de prueba", tag: "Faucet · XLM", desc: "Stellar cobra centavos por cada movimiento; te regalamos XLM de prueba para cubrirlos.",
+      done: funded, action: handleFaucet, cta: "Obtener saldo de prueba", busyLabel: "Fondeando…", key: "faucet" as const,
     },
     {
-      n: 2, title: `Agregar trustline ${ASSET_CODE}`, desc: "Firma changeTrust para poder recibir el token de pesos.",
-      done: trusted, action: handleTrustline, cta: "Firmar trustline", busyLabel: "Firmando…", key: "trust" as const,
+      n: 2, title: "Activa los pesos digitales", tag: `Trustline ${ASSET_CODE}`, desc: `Das permiso a tu wallet para recibir ${ASSET_CODE} (1 ${ASSET_CODE} = 1 peso). Se hace una sola vez.`,
+      done: trusted, action: handleTrustline, cta: "Activar pesos digitales", busyLabel: "Firmando…", key: "trust" as const,
     },
     {
-      n: 3, title: "Iniciar sesión SEP-10", desc: "Firma el challenge del anchor y obtén un JWT.",
-      done: !!jwt, action: handleLogin, cta: "Firmar y entrar", busyLabel: "Autenticando…", key: "login" as const,
+      n: 3, title: "Conéctate al anchor", tag: "SEP-10", desc: "Tu wallet firma un mensaje para demostrar que es tuya. Sin contraseñas ni registro.",
+      done: !!jwt, action: handleLogin, cta: "Conectar mi wallet", busyLabel: "Autenticando…", key: "login" as const,
     },
   ];
 
@@ -317,13 +349,14 @@ export default function DemoPage() {
       <main id="main" className={styles.main}>
         <section className={styles.intro}>
           <p className={ui.eyebrow}>Wallet de prueba · SEP-24</p>
-          <h1 className={styles.title}>De pesos a Stellar, paso a paso</h1>
+          <h1 className={styles.title}>Prueba el puente en 2 minutos</h1>
           <p className={styles.lead}>
-            Esta página actúa como una wallet Stellar: genera una llave en tu navegador y habla con el anchor SEPuente por los protocolos oficiales.
+            Esta página es una wallet de prueba: crea una cuenta en tu navegador para que deposites y retires pesos digitales con SEPuente, sin instalar nada.
           </p>
           <SandboxNotice>
             Stellar testnet: los XLM y {ASSET_CODE} no tienen valor. El SPEI es simulado; no envíes dinero real.
           </SandboxNotice>
+          <Glossary compact />
         </section>
 
         <div className={styles.grid}>
@@ -381,7 +414,7 @@ export default function DemoPage() {
                   <li key={s.n} className={styles.step} data-state={s.done ? "done" : active ? "active" : "locked"}>
                     <span className={styles.stepNum} aria-hidden="true">{s.done ? Icon.check(14) : s.n}</span>
                     <div className={styles.stepBody}>
-                      <span className={styles.stepTitle}>{s.title}</span>
+                      <span className={styles.stepTitle}>{s.title} <span className={styles.stepTag}>{s.tag}</span></span>
                       <span className={styles.stepDesc}>{s.desc}</span>
                       {active && !s.done && (
                         <button
@@ -420,7 +453,7 @@ export default function DemoPage() {
               <span className={styles.opIcon}>{busy === "deposit" ? <Spinner /> : Icon.down(22)}</span>
               <span className={styles.opText}>
                 <span className={styles.opTitle}>Depositar</span>
-                <span className={styles.opDesc}>MXN por SPEI (simulado) → {ASSET_CODE} en tu wallet</span>
+                <span className={styles.opDesc}>Pesos de tu banco (SPEI simulado) → pesos digitales en tu wallet</span>
               </span>
               <span className={styles.opArrow}>{Icon.arrow(18)}</span>
             </button>
@@ -428,7 +461,7 @@ export default function DemoPage() {
               <span className={styles.opIcon}>{busy === "withdraw" ? <Spinner /> : Icon.up(22)}</span>
               <span className={styles.opText}>
                 <span className={styles.opTitle}>Retirar</span>
-                <span className={styles.opDesc}>{ASSET_CODE} al anchor → MXN a tu CLABE (simulado)</span>
+                <span className={styles.opDesc}>Pesos digitales de tu wallet → pesos a tu cuenta bancaria (simulado)</span>
               </span>
               <span className={styles.opArrow}>{Icon.arrow(18)}</span>
             </button>
@@ -515,6 +548,7 @@ export default function DemoPage() {
       </main>
 
       <SiteFooter />
+      <AnchorSheet sheet={sheet} onClose={closeSheet} iframeRef={iframeRef} />
       {toast.view}
     </div>
   );

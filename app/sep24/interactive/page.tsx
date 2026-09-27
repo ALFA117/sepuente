@@ -48,6 +48,34 @@ function InteractiveContent() {
   const [fatal, setFatal] = useState("");
   const [pollFails, setPollFails] = useState(0);
   const firstField = useRef<HTMLInputElement>(null);
+  const [embedded, setEmbedded] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [paid, setPaid] = useState(false);
+
+  // Incrustada en la wallet (iframe de la misma origin): se comunica por postMessage en lugar de abrir ventanas.
+  useEffect(() => {
+    setEmbedded(params.get("embed") === "1" && window.self !== window.top);
+  }, [params]);
+
+  useEffect(() => {
+    if (!embedded) return;
+    const onMessage = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin || e.source !== window.parent) return;
+      const msg = e.data as { type?: string; ok?: boolean; error?: string };
+      if (msg?.type !== "sepuente:pay_result") return;
+      setPaying(false);
+      if (msg.ok) setPaid(true);
+      else setErr(msg.error ?? "La wallet no pudo enviar el pago.");
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [embedded]);
+
+  useEffect(() => {
+    if (embedded && tx?.status) {
+      window.parent.postMessage({ type: "sepuente:status", status: tx.status }, window.location.origin);
+    }
+  }, [embedded, tx?.status]);
 
   const api = useCallback(async (body: Record<string, string>, timeoutMs = 25000) => {
     let res: Response;
@@ -187,7 +215,18 @@ function InteractiveContent() {
     }
   }
 
+  function requestPayment() {
+    if (!embedded || paying || paid) return;
+    setErr("");
+    setPaying(true);
+    window.parent.postMessage({ type: "sepuente:pay_request" }, window.location.origin);
+  }
+
   function backToWallet() {
+    if (embedded) {
+      window.parent.postMessage({ type: "sepuente:close" }, window.location.origin);
+      return;
+    }
     // Solo cerrar si somos un popup: si la wallet navegó en esta misma pestaña, cerrarla la perdería.
     if (window.opener && !window.opener.closed) {
       try { window.opener.focus(); } catch { /* otra origin */ }
@@ -206,10 +245,10 @@ function InteractiveContent() {
 
   return (
     <div className={styles.page}>
-      <SiteHeader minimal badge={sandbox ? "Modo prueba" : "Testnet"} />
+      {!embedded && <SiteHeader minimal badge={sandbox ? "Modo prueba" : "Testnet"} />}
 
       <main id="main" className={styles.main}>
-        <div className={styles.kindHead}>
+        {!embedded && <div className={styles.kindHead}>
           <span className={`${styles.kindIcon} ${isDeposit ? styles.kindDep : styles.kindWd}`} aria-hidden="true">
             {isDeposit ? Icon.down(22) : Icon.up(22)}
           </span>
@@ -218,7 +257,7 @@ function InteractiveContent() {
             <p className={styles.kindSub}>{isDeposit ? `SPEI → Stellar` : `Stellar → SPEI`}</p>
           </div>
           {tx && tx.status !== "incomplete" && <StatusBadge status={tx.status} />}
-        </div>
+        </div>}
 
         {step !== "fatal" && step !== "loading" && (
           <ol className={styles.stepper} aria-label="Progreso">
@@ -243,7 +282,7 @@ function InteractiveContent() {
             <span className={`${styles.resultIcon} ${styles.resultErr}`}>{Icon.alert(30)}</span>
             <h2 className={styles.resultTitle}>No pudimos abrir la operación</h2>
             <p className={ui.muted}>{fatal}</p>
-            <a href="/demo" className={`${ui.btn} ${ui.secondary} ${ui.btnBlock}`}>Ir a la wallet demo</a>
+            <button type="button" className={`${ui.btn} ${ui.secondary} ${ui.btnBlock}`} onClick={backToWallet}>Volver a la wallet</button>
           </div>
         )}
 
@@ -392,11 +431,20 @@ function InteractiveContent() {
                   </div>
                 </div>
                 <p className={ui.muted}>
-                  Tu wallet firma este pago, no SEPuente. En la wallet demo toca <strong>«Enviar {ASSET} al anchor»</strong> en el historial; esta pantalla se actualiza sola al detectarlo.
+                  {embedded
+                    ? <>Tu wallet firma este pago con tu llave; SEPuente nunca la ve. Al confirmar, esta pantalla detecta el pago sola.</>
+                    : <>Tu wallet firma este pago, no SEPuente. En la wallet demo toca <strong>«Enviar {ASSET} al anchor»</strong> en el historial; esta pantalla se actualiza sola al detectarlo.</>}
                 </p>
                 {sandbox && <SandboxNotice>El pago en Stellar es real (testnet); el SPEI a tu CLABE es simulado.</SandboxNotice>}
+                {paid && <div className={ui.notice} role="status" style={{ borderColor: "rgb(var(--success-rgb) / 0.35)", background: "var(--success-dim)" }}>{Icon.check(16)}<span>Pago enviado desde tu wallet. Esperando que el anchor lo confirme…</span></div>}
                 <div className={styles.actions}>
-                  <button type="button" className={`${ui.btn} ${ui.secondary} ${ui.btnBlock}`} onClick={backToWallet}>Volver a la wallet</button>
+                  {embedded ? (
+                    <button type="button" className={`${ui.btn} ${ui.primary} ${ui.btnBlock}`} onClick={requestPayment} disabled={paying || paid} aria-busy={paying}>
+                      {paying ? <><Spinner />Firmando en tu wallet…</> : paid ? <>{Icon.check(16)} Pago enviado</> : <>Enviar {formatAmount(amount)} {ASSET} desde mi wallet</>}
+                    </button>
+                  ) : (
+                    <button type="button" className={`${ui.btn} ${ui.secondary} ${ui.btnBlock}`} onClick={backToWallet}>Volver a la wallet</button>
+                  )}
                 </div>
               </>
             ) : (

@@ -4,6 +4,7 @@ import styles from "./page.module.css";
 import { SiteHeader, SiteFooter } from "../components/SiteHeader";
 import { ui, CopyButton, Icon } from "../components/ui";
 import { truncateMiddle } from "@/lib/format";
+import { Glossary, Token } from "../components/Glossary";
 
 const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "https://sepuente.vercel.app").trim().replace(/\/$/, "");
 const HOME_DOMAIN = APP_URL.replace(/^https?:\/\//, "");
@@ -91,6 +92,7 @@ export default function DevsPage() {
           <ul className={styles.tags}>
             {["SEP-1", "SEP-10", "SEP-24", "SEP-38", "CORS abierto", "No custodial", "MIT"].map((t) => <li key={t}>{t}</li>)}
           </ul>
+          <Glossary compact />
         </header>
 
         <ul className={styles.quick}>
@@ -133,7 +135,7 @@ export default function DevsPage() {
 
         <Section n="02" title={`Activo ${ASSET}`}>
           <div className={`${ui.card} ${ui.kvList}`}>
-            <div className={ui.kv}><span className={ui.kvKey}>Código</span><span className={`${ui.kvVal} ${ui.kvMono}`}>{ASSET}</span></div>
+            <div className={ui.kv}><span className={ui.kvKey}>Código</span><span className={ui.kvVal}><Token>{ASSET}</Token> · Test MXN</span></div>
             <div className={ui.kv}>
               <span className={ui.kvKey}>Emisor</span>
               <span className={`${ui.kvVal} ${ui.kvMono}`} title={ISSUER}>{ISSUER ? truncateMiddle(ISSUER, 8, 8) : "Configura NEXT_PUBLIC_ISSUER_PUBLIC_KEY"}</span>
@@ -153,7 +155,7 @@ export default function DevsPage() {
           <ol className={styles.steps}>
             <li><strong>Abre la Demo Wallet de SDF</strong><span>Entra a <a href={DEMO_WALLET} target="_blank" rel="noreferrer">demo-wallet.stellar.org</a>, ya apuntando a este anchor.</span></li>
             <li><strong>Crea y fondea una cuenta</strong><span>Genera un keypair de testnet y usa “Fund with Friendbot”.</span></li>
-            <li><strong>Agrega el activo</strong><span>Código <code>{ASSET}</code>, emisor <code>{truncateMiddle(ISSUER, 6, 4)}</code>.</span></li>
+            <li><strong>Agrega el activo</strong><span>Código <Token>{ASSET}</Token> (se escribe T-M-X-N: “Test MXN”, peso de prueba), emisor <code>{truncateMiddle(ISSUER, 6, 4)}</code>.</span></li>
             <li><strong>Conecta el anchor</strong><span>Home domain: <code>{HOME_DOMAIN}</code>.</span></li>
             <li><strong>Deposita o retira</strong><span>Sigue el flujo interactivo SEP-24 y verifica el saldo en stellar.expert.</span></li>
           </ol>

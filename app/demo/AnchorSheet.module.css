@@ -1,0 +1,80 @@
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: var(--scrim);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.sheet {
+  width: 100%;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  overflow: hidden;
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+}
+
+@media (min-width: 640px) {
+  .scrim { align-items: center; padding: var(--sp-6); }
+  .sheet {
+    width: min(480px, 100%);
+    height: min(820px, calc(100dvh - 2 * var(--sp-6)));
+    padding-top: 0;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.dep { background: var(--success-dim); color: var(--success); }
+.wd { background: var(--gold-dim); color: var(--gold); }
+.titles { flex: 1; min-width: 0; }
+.title { font-family: var(--font-display); font-size: 1.125rem; font-weight: 700; color: var(--cream); line-height: 1.2; }
+.sub { font-size: var(--fs-label); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.close {
+  width: var(--tap);
+  height: var(--tap);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--cream);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.close:hover { background: var(--surface3); }
+.close:active { transform: scale(0.95); }
+
+.frame {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: var(--bg);
+}

@@ -149,6 +149,19 @@
 .stepBody { display: flex; flex-direction: column; gap: 2px; padding-top: 4px; min-width: 0; }
 .stepTitle { font-weight: 600; color: var(--cream); }
 .step[data-state="locked"] .stepTitle { color: var(--muted); }
+.stepTag {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  font-family: var(--font-body);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  color: var(--subtle);
+  vertical-align: 2px;
+  white-space: nowrap;
+}
 .stepDesc { font-size: var(--fs-small); color: var(--subtle); line-height: 1.5; }
 .stepBtn { margin-top: var(--sp-3); width: 100%; }
 @media (min-width: 480px) { .stepBtn { width: auto; align-self: flex-start; } }

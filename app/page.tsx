@@ -3,6 +3,13 @@ import styles from "./landing.module.css";
 import { SiteHeader, SiteFooter } from "./components/SiteHeader";
 import { Reveal, Stagger, StaggerItem, Enter } from "./components/motion";
 import { TransferPreview } from "./components/TransferPreview";
+import { Glossary } from "./components/Glossary";
+
+const SIMPLE = [
+  { t: "Mandas pesos desde tu banco", d: "Haces una transferencia SPEI normal, como a cualquier cuenta." },
+  { t: "Recibes pesos digitales", d: "El anchor te entrega la misma cantidad en TMXN (1 TMXN = 1 peso) en tu wallet de Stellar, menos una comisión de 0.5 %." },
+  { t: "Los usas o regresas a tu banco", d: "Cuando quieras, envías tus TMXN de vuelta y recibes pesos en tu CLABE. Tú firmas cada movimiento." },
+];
 
 const FEATURES = [
   {
@@ -63,13 +70,13 @@ export default function LandingPage() {
             <div className={styles.heroCopy}>
               <Enter as="p" className={styles.chip}>
                 <span className={styles.chipDot} aria-hidden="true" />
-                Stellar Testnet · SEP-24
+                Demo en vivo · red de prueba
               </Enter>
               <Enter as="h1" className={styles.title} delay={0.06}>
                 Pesos mexicanos en Stellar, <span className={styles.titleAccent}>sin custodia</span>
               </Enter>
               <Enter as="p" className={styles.lead} delay={0.12}>
-                <strong>SEPuente</strong> es un anchor SEP-24 open source: conecta SPEI con el token TMXN para que cualquier wallet Stellar deposite y retire pesos.
+                Manda pesos desde tu banco y recíbelos como <strong>pesos digitales</strong> en cualquier wallet de Stellar, y regrésalos a tu cuenta cuando quieras. <strong>SEPuente</strong> es el puente abierto entre SPEI y Stellar, y nunca guarda tu dinero.
               </Enter>
               <Enter className={styles.ctaRow} delay={0.18}>
                 <Link href="/demo" className={styles.ctaPrimary}>
@@ -92,6 +99,26 @@ export default function LandingPage() {
               <div className={styles.stat}><dt>Fondos en custodia</dt><dd className={styles.statGreen}>$0</dd></div>
               <div className={styles.stat}><dt>Comisión</dt><dd>0.5&nbsp;%</dd></div>
             </Enter>
+          </div>
+        </section>
+
+        {/* ── En palabras simples ── */}
+        <section className={`${styles.section} ${styles.sectionAlt}`} aria-labelledby="simple-title">
+          <div className={styles.sectionInner}>
+            <Reveal as="p" className={styles.eyebrow}>En palabras simples</Reveal>
+            <Reveal as="h2" id="simple-title" className={styles.h2} delay={0.05}>Tu banco y tu wallet, conectados</Reveal>
+            <Stagger as="ol" className={styles.simple}>
+              {SIMPLE.map((s, i) => (
+                <StaggerItem as="li" key={s.t} className={styles.simpleStep}>
+                  <span className={styles.simpleNum}>{i + 1}</span>
+                  <div>
+                    <h3 className={styles.h3}>{s.t}</h3>
+                    <p className={styles.featureDesc}>{s.d}</p>
+                  </div>
+                </StaggerItem>
+              ))}
+            </Stagger>
+            <Reveal><Glossary /></Reveal>
           </div>
         </section>
 
