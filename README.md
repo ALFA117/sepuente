@@ -1,6 +1,8 @@
 # SEPuente
 
-> Gateway **open source y no custodial** que presenta las rampas de pesos mexicanos como un anchor estándar de Stellar, para que cualquier wallet compatible con SEP-24 pueda ofrecer depósito y retiro de pesos por SPEI sin integrar APIs propietarias.
+> La primera capa open source que convierte transferencias SPEI en una rampa estándar SEP-24 para Stellar.
+
+Cualquier wallet compatible con Stellar puede ofrecer depósitos y retiros en pesos mexicanos sin integrar APIs bancarias propietarias ni custodiar fondos de los usuarios.
 
 ## GOYA HACK · CriptoUNAM 2026
 
