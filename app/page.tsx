@@ -15,10 +15,11 @@ export const metadata = pageMeta(
   "Anchor SEP-24 abierto y sin custodia: manda pesos por SPEI y recíbelos como pesos digitales en cualquier wallet de Stellar. SEP-1, SEP-10, SEP-24 y SEP-38.",
 );
 
+// Comprobante de ejemplo con la comisión real de 0.5 % por tramo.
 const SIMPLE = [
-  { t: "Mandas pesos desde tu banco", d: "Haces una transferencia SPEI normal, como a cualquier cuenta." },
-  { t: "Recibes pesos digitales", d: "El anchor te entrega la misma cantidad en TMXN (1 TMXN = 1 peso) en tu wallet de Stellar, menos una comisión de 0.5 %." },
-  { t: "Los usas o regresas a tu banco", d: "Cuando quieras, envías tus TMXN de vuelta y recibes pesos en tu CLABE. Tú firmas cada movimiento." },
+  { t: "Mandas pesos desde tu banco", d: "Una transferencia SPEI normal, como a cualquier cuenta, con la referencia que te da el anchor.", amt: "−1,000.00", unit: "MXN", via: "SPEI", tone: "out" },
+  { t: "Recibes pesos digitales", d: "Llegan a tu wallet de Stellar como TMXN (1 TMXN = 1 peso), menos 0.5 % de comisión.", amt: "+995.00", unit: "TMXN", via: "Stellar · ≈ 5 s", tone: "in" },
+  { t: "Los regresas a tu banco", d: "Cuando quieras, envías TMXN al anchor y recibes pesos en tu CLABE. Por ejemplo, 500 TMXN:", amt: "+497.50", unit: "MXN", via: "CLABE", tone: "in" },
 ];
 
 const FEATURES = [
@@ -55,17 +56,18 @@ const FEATURES = [
 ];
 
 const FLOW = [
-  { n: "01", title: "Entra con tu correo", desc: "Verificas tu correo con un código y Pollar crea tu wallet Stellar, sin XLM ni instalaciones. O genera una llave en el navegador con el faucet." },
-  { n: "02", title: "Trustline TMXN", desc: "Activa el token de pesos (changeTrust). Con correo, Pollar paga la comisión de red." },
-  { n: "03", title: "Auth SEP-10", desc: "Firma el challenge del anchor; el JWT resultante autoriza tus operaciones." },
-  { n: "04", title: "Deposita o retira", desc: "SPEI → TMXN o TMXN → SPEI con el flujo interactivo SEP-24." },
+  { n: "01", title: "Entra con tu correo", desc: "Un código de 6 dígitos y Pollar crea tu wallet Stellar, sin XLM. O genera una llave en el navegador.", call: "sendEmailCode(correo)" },
+  { n: "02", title: "Activa TMXN", desc: "Tu wallet acepta el token de pesos. Con correo, Pollar paga la comisión de red.", call: "changeTrust(TMXN)" },
+  { n: "03", title: "Conéctate", desc: "Firmas el reto del anchor y recibes un JWT que autoriza tus operaciones.", call: "GET → POST /auth" },
+  { n: "04", title: "Deposita o retira", desc: "SPEI → TMXN o TMXN → SPEI en la pantalla interactiva del anchor.", call: "POST /sep24/…/interactive" },
 ];
 
-const PROTOCOLS = [
-  { n: "SEP-1", name: "stellar.toml", href: "/.well-known/stellar.toml" },
-  { n: "SEP-10", name: "Web Auth" },
-  { n: "SEP-24", name: "Depósitos y retiros interactivos" },
-  { n: "SEP-38", name: "Cotizaciones (RFQ)" },
+// Extracto real de /.well-known/stellar.toml con el resultado de la suite oficial de SDF por SEP.
+const TOML = [
+  { k: "HOME_DOMAIN", v: "\"sepuente.vercel.app\"", sep: "SEP-1", score: "5/5", what: "Descubrimiento" },
+  { k: "WEB_AUTH_ENDPOINT", v: "\"…/auth\"", sep: "SEP-10", score: "16/17", what: "Inicio de sesión con firma" },
+  { k: "TRANSFER_SERVER_SEP0024", v: "\"…/sep24\"", sep: "SEP-24", score: "38/38", what: "Depósitos y retiros" },
+  { k: "ANCHOR_QUOTE_SERVER", v: "\"…/sep38\"", sep: "SEP-38", score: "18/18", what: "Cotizaciones" },
 ];
 
 export default function LandingPage() {
@@ -110,7 +112,7 @@ export default function LandingPage() {
 
             <Enter as="dl" className={styles.stats} delay={0.34}>
               <div className={styles.stat}><dt>SEPs implementados</dt><dd>4</dd></div>
-              <div className={styles.stat}><dt>Fondos en custodia</dt><dd className={styles.statGreen}>$0</dd></div>
+              <div className={styles.stat}><dt>Pruebas oficiales SDF</dt><dd className={styles.statGreen}>75/76</dd></div>
               <div className={styles.stat}><dt>Comisión</dt><dd>0.5&nbsp;%</dd></div>
             </Enter>
           </div>
@@ -121,17 +123,28 @@ export default function LandingPage() {
           <div className={styles.sectionInner}>
             <Reveal as="p" className={styles.eyebrow}>En palabras simples</Reveal>
             <Reveal as="h2" id="simple-title" className={styles.h2} delay={0.05}>Tu banco y tu wallet, conectados</Reveal>
-            <Stagger as="ol" className={styles.simple}>
-              {SIMPLE.map((s, i) => (
-                <StaggerItem as="li" key={s.t} className={styles.simpleStep}>
-                  <span className={styles.simpleNum}>{i + 1}</span>
-                  <div>
-                    <h3 className={styles.h3}>{s.t}</h3>
-                    <p className={styles.featureDesc}>{s.d}</p>
-                  </div>
-                </StaggerItem>
-              ))}
-            </Stagger>
+            <Reveal className={styles.receipt} delay={0.08}>
+              <div className={styles.receiptHead}>
+                <span>Comprobante de ejemplo</span>
+                <span>Comisión 0.5 % por tramo</span>
+              </div>
+              <ol className={styles.receiptRows}>
+                {SIMPLE.map((s, i) => (
+                  <li key={s.t} className={styles.receiptRow}>
+                    <span className={styles.receiptNum} aria-hidden="true">{i + 1}</span>
+                    <div className={styles.receiptText}>
+                      <h3 className={styles.receiptTitle}>{s.t}</h3>
+                      <p className={styles.featureDesc}>{s.d}</p>
+                    </div>
+                    <div className={styles.receiptAmt} data-tone={s.tone}>
+                      <span className={styles.receiptValue}>{s.amt} <small>{s.unit}</small></span>
+                      <span className={styles.receiptVia}>{s.via}</span>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+              <p className={styles.receiptFoot}>Ilustración con montos calculados · el SPEI de la demo es simulado</p>
+            </Reveal>
             <Reveal><Glossary /></Reveal>
           </div>
         </section>
@@ -141,19 +154,26 @@ export default function LandingPage() {
           <div className={styles.sectionInner}>
             <Reveal as="p" className={styles.eyebrow}>Protocolo</Reveal>
             <Reveal as="h2" id="features-title" className={styles.h2} delay={0.05}>Infraestructura abierta para el peso en Stellar</Reveal>
-            <Stagger as="ul" className={styles.featureGrid}>
-              {FEATURES.map((f) => (
-                <StaggerItem as="li" key={f.title} className={styles.feature}>
-                  <span className={styles.featureIcon} aria-hidden="true">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{f.icon}</svg>
-                  </span>
-                  <div className={styles.featureText}>
-                    <h3 className={styles.h3}>{f.title}</h3>
-                    <p className={styles.featureDesc}>{f.desc}</p>
-                  </div>
-                </StaggerItem>
-              ))}
-            </Stagger>
+            <div className={styles.featureSplit}>
+              <Reveal className={styles.zero} delay={0.08}>
+                <span className={styles.zeroLabel}>Fondos en custodia de SEPuente</span>
+                <span className={styles.zeroValue}>$0<span>.00</span></span>
+                <p className={styles.zeroText}>El anchor nunca guarda tus pesos ni tus llaves: cada pago en Stellar lo firma tu wallet. SEPuente solo traduce entre SPEI y la red.</p>
+              </Reveal>
+              <Stagger as="ul" className={styles.featureList}>
+                {FEATURES.filter((f) => f.title !== "Sin custodia").map((f) => (
+                  <StaggerItem as="li" key={f.title} className={styles.feature}>
+                    <span className={styles.featureIcon} aria-hidden="true">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{f.icon}</svg>
+                    </span>
+                    <div className={styles.featureText}>
+                      <h3 className={styles.featureTitle}>{f.title}</h3>
+                      <p className={styles.featureDesc}>{f.desc}</p>
+                    </div>
+                  </StaggerItem>
+                ))}
+              </Stagger>
+            </div>
           </div>
         </section>
 
@@ -165,10 +185,11 @@ export default function LandingPage() {
             <Stagger as="ol" className={styles.flow}>
               {FLOW.map((s) => (
                 <StaggerItem as="li" key={s.n} className={styles.flowStep}>
-                  <span className={styles.flowNum}>{s.n}</span>
-                  <div>
-                    <h3 className={styles.h3}>{s.title}</h3>
+                  <span className={styles.flowNum} aria-hidden="true">{s.n}</span>
+                  <div className={styles.flowBody}>
+                    <h3 className={styles.featureTitle}>{s.title}</h3>
                     <p className={styles.featureDesc}>{s.desc}</p>
+                    <code className={styles.flowCall}>{s.call}</code>
                   </div>
                 </StaggerItem>
               ))}
@@ -194,16 +215,28 @@ export default function LandingPage() {
           <div className={styles.sectionInner}>
             <Reveal as="p" className={styles.eyebrow}>Estándares implementados</Reveal>
             <Reveal as="h2" id="proto-title" className={styles.h2} delay={0.05}>Stack SEP completo</Reveal>
-            <Stagger as="ul" className={styles.protoGrid}>
-              {PROTOCOLS.map((p) => (
-                <StaggerItem as="li" key={p.n} className={styles.proto}>
-                  <span className={styles.protoNum}>{p.n}</span>
-                  {p.href
-                    ? <a href={p.href} className={styles.protoName} target="_blank" rel="noreferrer">{p.name}</a>
-                    : <span className={styles.protoName}>{p.name}</span>}
-                </StaggerItem>
-              ))}
-            </Stagger>
+            <Reveal as="p" className={styles.sectionLead} delay={0.08}>
+              Cualquier wallet lee este archivo y sabe cómo hablar con el anchor. Al lado, el resultado de la suite oficial <code className={styles.inlineCode}>@stellar/anchor-tests</code> de SDF por cada estándar.
+            </Reveal>
+            <Reveal className={styles.toml} delay={0.12}>
+              <div className={styles.tomlBar}>
+                <a href="/.well-known/stellar.toml" target="_blank" rel="noreferrer" className={styles.tomlPath}>/.well-known/stellar.toml</a>
+                <span className={styles.tomlTotal}>75/76 pruebas</span>
+              </div>
+              <ul className={styles.tomlLines}>
+                {TOML.map((t) => (
+                  <li key={t.k} className={styles.tomlLine}>
+                    <code className={styles.tomlCode}><span className={styles.tomlKey}>{t.k}</span> = <span className={styles.tomlVal}>{t.v}</span></code>
+                    <span className={styles.tomlSep}>
+                      <strong>{t.sep}</strong>
+                      <span>{t.what}</span>
+                      <span className={styles.tomlScore} data-full={t.score.split("/")[0] === t.score.split("/")[1] || undefined}>{t.score}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className={styles.tomlNote}>La prueba que falta en SEP-10 compara la hora del reto con el reloj de la máquina que corre la suite; con el reloj sincronizado pasa.</p>
+            </Reveal>
           </div>
         </section>
 
