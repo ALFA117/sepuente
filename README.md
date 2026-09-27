@@ -60,7 +60,6 @@
 - Supabase de producción no está accesible desde este entorno; el esquema se asumió igual a `supabase/migrations/001_initial.sql`.
 - `EtherfuseDriver` no se probó (requiere `ETHERFUSE_API_KEY`).
 - El proyecto no tiene ESLint configurado ni tests unitarios; la cobertura es el script E2E y la suite `anchor-tests` de SDF.
-- `public/pitch.html` es una versión estática heredada, fuera del sistema de diseño.
 
 ### Ronda de feedback de usuario (2026-09-26)
 
@@ -132,7 +131,7 @@ Alias heredados (`--navy`, `--s2`, `--accent`, `--error`, `--blue`, `--font-syne
 
 ### Pendientes visuales
 
-- `public/pitch.html` (estático) no usa el sistema.
+- Ninguno conocido. La versión estática `public/pitch.html` se eliminó; el pitch vive solo en `/pitch`.
 
 ### Dónde hay movimiento (Motion)
 
