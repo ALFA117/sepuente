@@ -17,6 +17,7 @@ import { truncateMiddle, formatAmount, EXPLORER_TX, EXPLORER_ACCOUNT } from "@/l
 import { PENDING_STATUSES } from "@/lib/status";
 import { AnchorSheet, type SheetState } from "./AnchorSheet";
 import { Glossary } from "../components/Glossary";
+import { Logo3D } from "../components/brand/Logo3D";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Enter, Pressable, Swap } from "../components/motion";
 
@@ -351,15 +352,22 @@ export default function DemoPage() {
 
       <main id="main" className={styles.main}>
         <Enter as="section" className={styles.intro}>
-          <p className={ui.eyebrow}>Wallet de prueba · SEP-24</p>
-          <h1 className={styles.title}>Prueba el puente en 2 minutos</h1>
-          <p className={styles.lead}>
-            Esta página es una wallet de prueba: crea una cuenta en tu navegador para que deposites y retires pesos digitales con SEPuente, sin instalar nada.
-          </p>
-          <SandboxNotice>
-            Stellar testnet: los XLM y {ASSET_CODE} no tienen valor. El SPEI es simulado; no envíes dinero real.
-          </SandboxNotice>
-          <Glossary compact />
+          <div className={styles.introBrand}>
+            <Logo3D />
+          </div>
+          <div className={styles.introText}>
+            <p className={ui.eyebrow}>Wallet de prueba · SEP-24</p>
+            <h1 className={styles.title}>Prueba el puente en 2 minutos</h1>
+            <p className={styles.lead}>
+              Esta página es una wallet de prueba: crea una cuenta en tu navegador para que deposites y retires pesos digitales con SEPuente, sin instalar nada.
+            </p>
+          </div>
+          <div className={styles.introNotes}>
+            <SandboxNotice>
+              Stellar testnet: los XLM y {ASSET_CODE} no tienen valor. El SPEI es simulado; no envíes dinero real.
+            </SandboxNotice>
+            <Glossary compact />
+          </div>
         </Enter>
 
         <div className={styles.grid}>

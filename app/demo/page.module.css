@@ -19,7 +19,20 @@
 }
 
 /* ── Intro ── */
-.intro { display: flex; flex-direction: column; gap: var(--sp-3); }
+.intro { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); }
+.introText, .introNotes { display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
+.introBrand { width: 100%; max-width: 300px; margin: calc(-1 * var(--sp-4)) auto calc(-1 * var(--sp-2)); }
+@media (min-width: 880px) {
+  .intro {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    grid-template-areas: "text brand" "notes notes";
+    column-gap: var(--sp-8);
+    align-items: center;
+  }
+  .introText { grid-area: text; }
+  .introNotes { grid-area: notes; }
+  .introBrand { grid-area: brand; max-width: 360px; margin: 0 auto; }
+}
 .title {
   font-family: var(--font-display);
   font-size: var(--fs-h1);
