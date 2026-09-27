@@ -19,9 +19,6 @@ export const dynamic = "force-dynamic";
 const HOME_DOMAIN = env.APP_URL.replace(/^https?:\/\//, "");
 const WEB_AUTH_DOMAIN = HOME_DOMAIN;
 const CHALLENGE_TTL = 900; // 15 min
-// Margen hacia atrás en minTime: si el reloj del servidor va unos ms adelante del cliente,
-// el reto no debe llegar "del futuro" (SEP-10 exige minTime <= momento de recepción).
-const CLOCK_SKEW = 5;
 
 export async function OPTIONS() {
   return optionsResponse();
@@ -59,7 +56,8 @@ export async function GET(req: NextRequest) {
     let builder = new TransactionBuilder(new Account(signingKp.publicKey(), "-1"), {
       fee: BASE_FEE,
       networkPassphrase: NETWORK_PASSPHRASE,
-      timebounds: { minTime: now - CLOCK_SKEW, maxTime: now + CHALLENGE_TTL },
+      // SEP-10: minTime es el momento en que se emite el reto (reloj del servidor, sincronizado por NTP).
+      timebounds: { minTime: now, maxTime: now + CHALLENGE_TTL },
     })
       .addOperation(Operation.manageData({ name: `${HOME_DOMAIN} auth`, value: nonce, source: account }))
       .addOperation(Operation.manageData({ name: "web_auth_domain", value: WEB_AUTH_DOMAIN, source: signingKp.publicKey() }));
