@@ -7,6 +7,13 @@ import { Glossary } from "./components/Glossary";
 import { Logo3D } from "./components/brand/Logo3D";
 import { ArchFlow } from "./components/ArchFlow";
 import { LogoWord } from "./components/brand/Logo";
+import { pageMeta } from "@/lib/seo";
+
+export const metadata = pageMeta(
+  "/",
+  "SEPuente – Pesos mexicanos en Stellar, sin custodia",
+  "Anchor SEP-24 abierto y sin custodia: manda pesos por SPEI y recíbelos como pesos digitales en cualquier wallet de Stellar. SEP-1, SEP-10, SEP-24 y SEP-38.",
+);
 
 const SIMPLE = [
   { t: "Mandas pesos desde tu banco", d: "Haces una transferencia SPEI normal, como a cualquier cuenta." },
