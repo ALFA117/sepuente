@@ -390,3 +390,16 @@
 .dockLabel { display: flex; flex-direction: column; align-items: center; min-width: 0; overflow: hidden; }
 .dockCount { font-family: var(--font-mono); font-size: var(--fs-label); color: var(--gold); letter-spacing: 0.08em; }
 .dockName { font-size: var(--fs-small); font-weight: 600; color: var(--cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+/* ── Marca 3D en la portada ── */
+.coverBrand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  max-width: 440px;
+  margin: calc(-1 * var(--sp-4)) 0 var(--sp-2);
+}
+.cover3d { width: 100%; }
+.coverWord { width: 70%; height: auto; color: var(--cream); }

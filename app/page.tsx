@@ -4,6 +4,8 @@ import { SiteHeader, SiteFooter } from "./components/SiteHeader";
 import { Reveal, Stagger, StaggerItem, Enter } from "./components/motion";
 import { TransferPreview } from "./components/TransferPreview";
 import { Glossary } from "./components/Glossary";
+import { Logo3D } from "./components/brand/Logo3D";
+import { LogoWord } from "./components/brand/Logo";
 
 const SIMPLE = [
   { t: "Mandas pesos desde tu banco", d: "Haces una transferencia SPEI normal, como a cualquier cuenta." },
@@ -67,6 +69,10 @@ export default function LandingPage() {
         {/* ── Hero ── */}
         <section className={styles.hero}>
           <div className={styles.heroInner}>
+            <Enter className={styles.brand} y={20}>
+              <Logo3D className={styles.brand3d} />
+              <LogoWord className={styles.brandWord} />
+            </Enter>
             <div className={styles.heroCopy}>
               <Enter as="p" className={styles.chip}>
                 <span className={styles.chipDot} aria-hidden="true" />

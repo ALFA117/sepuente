@@ -5,6 +5,8 @@ import { motion, useReducedMotion, useScroll, useSpring, AnimatePresence } from 
 import styles from "./page.module.css";
 import { SiteHeader } from "../components/SiteHeader";
 import { Reveal, Stagger, StaggerItem, Enter, EASE_OUT } from "../components/motion";
+import { Logo3D } from "../components/brand/Logo3D";
+import { LogoWord } from "../components/brand/Logo";
 
 const CHAPTERS = [
   { id: "portada", label: "Portada" },
@@ -164,8 +166,10 @@ export default function PitchPage() {
           <div className={styles.coverGlow} aria-hidden="true" />
           <div className={styles.inner}>
             <Enter as="p" className={styles.chip}><span className={styles.chipDot} aria-hidden="true" />Stellar Testnet · en vivo</Enter>
-            <Enter as="h1" id="portada-t" className={styles.coverTitle} delay={0.06}>
-              <span className={styles.gold}>SEP</span>uente
+            <h1 id="portada-t" className="sr-only">SEPuente</h1>
+            <Enter className={styles.coverBrand} delay={0.06} y={20}>
+              <Logo3D className={styles.cover3d} />
+              <LogoWord className={styles.coverWord} />
             </Enter>
             <Enter as="p" className={styles.coverLead} delay={0.12}>
               El anchor open source que conecta <strong>SPEI</strong> con <strong>Stellar</strong>, sin custodiar un solo peso.

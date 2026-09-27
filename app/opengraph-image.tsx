@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { MARK } from "./components/brand/paths";
 
 export const runtime = "edge";
 export const alt = "SEPuente – Anchor SEP-24 para pesos mexicanos en Stellar";
@@ -68,6 +69,11 @@ export default function OgImage() {
               Stellar Testnet · SEP-24
             </span>
           </div>
+
+          {/* Símbolo del puente (vector trazado del logo) */}
+          <svg width={230} height={(230 * MARK.h) / MARK.w} viewBox={`0 0 ${MARK.w} ${MARK.h}`} style={{ marginBottom: 18 }}>
+            <path fill={C.gold} fillRule="evenodd" d={MARK.d} />
+          </svg>
 
           {/* Symbol + Title row */}
           <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 20 }}>

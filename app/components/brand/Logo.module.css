@@ -1,0 +1,18 @@
+.lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  line-height: 0;
+}
+.lockMark { height: 26px; width: auto; color: var(--gold); flex-shrink: 0; }
+.lockWord { height: 17px; width: auto; color: var(--cream); }
+
+.stacked {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8%;
+  line-height: 0;
+}
+.stackMark { width: 56%; height: auto; color: var(--gold); }
+.stackWord { width: 100%; height: auto; color: var(--cream); }

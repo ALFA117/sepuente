@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import styles from "./SiteHeader.module.css";
 import { EASE_OUT } from "./motion";
+import { LogoLockup } from "./brand/Logo";
 
 const LINKS = [
   { href: "/demo", label: "Demo" },
@@ -14,11 +15,7 @@ const LINKS = [
 ];
 
 export function Wordmark({ href = "/" }: { href?: string | null }) {
-  const mark = (
-    <span className={styles.wordmark}>
-      <span className={styles.wmGold}>SEP</span>uente
-    </span>
-  );
+  const mark = <LogoLockup />;
   return href ? <Link href={href} className={styles.brand} aria-label="SEPuente, inicio">{mark}</Link> : mark;
 }
 
