@@ -156,6 +156,17 @@ Alias heredados (`--navy`, `--s2`, `--accent`, `--error`, `--blue`, `--font-syne
 - **Hero del landing**: `TransferPreview` ilustra el flujo real (1,000 MXN → 995 TMXN con la comisión real de 0.5 %) y está rotulado como ilustración.
 - **Flujo SEP-24 dentro de la wallet**: hoja modal a pantalla completa en el teléfono (con safe-area) y panel centrado en escritorio; cierra con ✕, Escape o clic en el fondo, devuelve el foco y bloquea el scroll del fondo.
 
+### Landing sin rejillas de tarjetas iguales (27 sep)
+
+Cada sección del landing era "eyebrow + título + rejilla de tarjetas con el mismo borde y sombra". Se reemplazó cada rejilla por un objeto propio del tema:
+
+- **En palabras simples → comprobante SPEI de ejemplo**: filas con montos en mono (−1,000.00 MXN → +995.00 TMXN → +497.50 MXN por 500 TMXN), calculados con la comisión real de 0.5 % por tramo y rotulados como ilustración; borde inferior troquelado como un ticket.
+- **Características → "$0.00 en custodia"** en cifra display verde junto a una lista con reglas finas (sin cajas).
+- **4 pasos → riel punteado** (vertical en el teléfono, horizontal en escritorio) con la llamada real de cada paso (`changeTrust(TMXN)`, `GET → POST /auth`…).
+- **Stack SEP → extracto real de `stellar.toml`** con el puntaje de la suite oficial de SDF por estándar (5/5, 16/17, 38/38, 18/18) y la explicación de la prueba que falta.
+- En el hero, "Fondos en custodia $0" se cambió por "75/76 pruebas oficiales SDF" para no repetir la cifra.
+- **Demo**: el saldo en pesos (TMXN) es la cifra principal de la tarjeta de wallet, como en la app de un banco; XLM baja a una fila secundaria.
+
 ### Modo claro ("papel de estado de cuenta")
 
 Se activa con la preferencia del sistema. No hay tokens nuevos por componente: `@media (prefers-color-scheme: light)` redefine los mismos canales (`--navy-rgb` pasa a papel #F6F3EC, `--surface-rgb` a blanco, `--cream-rgb` a tinta marino #0C1E3A). El oro de marca (#C9A227) no llega a 4.5:1 sobre papel, así que en claro se usa un oro tinta (#856508) y el texto sobre botones oro pasa a papel (`--on-gold`). Las sombras bajan de opacidad y el brillo de los esqueletos usa `--shimmer`. El logo 3D, el diagrama de arquitectura y la hoja del anchor heredan el tema sin cambios de código. Se revisó con capturas a 320, 380 y 1280 px en ambos temas.
