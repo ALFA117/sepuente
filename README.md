@@ -62,19 +62,28 @@
 - El proyecto no tiene ESLint configurado ni tests unitarios; la cobertura es el script E2E y la suite `anchor-tests` de SDF.
 - `public/pitch.html` es una versión estática heredada, fuera del sistema de diseño.
 
+### Ronda de feedback de usuario (2026-09-26)
+
+| Observación | Qué se hizo |
+|---|---|
+| El proyecto asume que conoces Stellar (SEP, trustline, anchor, TMXN aparecen de inmediato) | El hero del landing explica el beneficio en lenguaje simple; nueva sección "En palabras simples" (3 pasos: banco → pesos digitales → de regreso); glosario desplegable `app/components/Glossary.tsx` en landing, demo y docs; pasos de la demo renombrados ("Obtén saldo de prueba", "Activa los pesos digitales", "Conéctate al anchor") con el término técnico como etiqueta secundaria. |
+| La demo abre una segunda ventana y rompe la continuidad | El flujo SEP-24 se abre en una hoja modal dentro de la wallet (`app/demo/AnchorSheet.tsx`, iframe de la misma origin, como permite SEP-24). Anchor y wallet se comunican por `postMessage` (origen y `source` validados): la pantalla del anchor avisa cambios de estado, pide cerrar, y en el retiro muestra "Enviar X TMXN desde mi wallet", que le pide a la wallet firmar el pago con su llave, sin salir del flujo. Verificado en producción: 0 ventanas nuevas. |
+| En la guía rápida aparece "THXN" en vez de "TMXN" | No existe la cadena "THXN" en el código ni en el HTML servido; el código del activo se mostraba en fuente monoespaciada pequeña, donde la "M" puede leerse como "H". Ahora se muestra con el componente `Token` (fuente de texto, negrita) y deletreado: "T-M-X-N: Test MXN". |
+
 ### Verificar en dos minutos en el celular
 
-1. Abre `sepuente.vercel.app` en el teléfono: el título serif y el botón oro "Probar la demo" se ven completos, nada se sale por los lados.
-2. Toca ☰ → el menú abre y cierra; toca **Demo**.
-3. **Usar faucet** → en ~5 s el saldo XLM muestra 10,000.00 y el paso 1 queda en verde.
-4. **Firmar trustline** → el saldo TMXN pasa de "—" a 0.00.
-5. **Firmar y entrar** → aparece "Sesión SEP-10 activa" y se desbloquean Depositar/Retirar.
-6. **Depositar** → se abre la pantalla del anchor. Escribe `250` (teclado numérico) → **Ver cotización** → **Confirmar operación**.
+1. Abre `sepuente.vercel.app` en el teléfono: el título serif, la vista previa animada del depósito y el botón oro "Probar la demo" se ven completos, nada se sale por los lados.
+2. Baja a "En palabras simples" y abre **¿Nuevo en Stellar?**: el glosario se despliega.
+3. Toca ☰ → **Demo**. **Obtener saldo de prueba** → en ~5 s el saldo XLM muestra 10,000.00 y el paso 1 queda en verde.
+4. **Activar pesos digitales** → el saldo TMXN pasa de "—" a 0.00.
+5. **Conectar mi wallet** → aparece "Sesión SEP-10 activa" y se desbloquean Depositar/Retirar.
+6. **Depositar** → se abre una hoja dentro de la misma página (no una ventana nueva). Escribe `250` → **Ver cotización** → **Confirmar operación**.
 7. **Simular SPEI recibido** → en ~5 s ves "TMXN acreditado"; toca **Ver en stellar.expert** y confirma la transacción.
-8. **Volver a la wallet** → el historial muestra el depósito "Completado" y el saldo TMXN ≈ 248.75.
-9. **Retirar** → `100`, toca **Usar CLABE de prueba** → confirma → **Volver a la wallet**.
-10. En el historial toca **Enviar 100.00 TMXN al anchor** → en ~10 s el retiro pasa a "Completado".
-11. Gira el teléfono: nada se desborda. Escribe un monto de `5`: aparece "El monto mínimo es $10 MXN".
+8. **Volver a la wallet** → la hoja se cierra; el historial muestra el depósito "Completado" y el saldo TMXN ≈ 248.75.
+9. **Retirar** → `100`, toca **Usar CLABE de prueba** → **Ver cotización** → **Confirmar operación**.
+10. Toca **Enviar 100.00 TMXN desde mi wallet** dentro de la hoja → en ~10 s ves "Retiro completado".
+11. Abre `/pitch`: con el botón dorado inferior avanzas capítulo por capítulo; la barra dorada superior marca el progreso.
+12. Gira el teléfono: nada se desborda. Escribe un monto de `5`: aparece "El monto mínimo es $10 MXN".
 
 ---
 
@@ -111,6 +120,10 @@ Alias heredados (`--navy`, `--s2`, `--accent`, `--error`, `--blue`, `--font-syne
 - **Móvil**: gutter mínimo de 16 px más safe-area; áreas táctiles ≥ 44 px (botones principales 48–52 px); inputs a 17 px para evitar el zoom de iOS; `inputMode` decimal/numérico; acciones del flujo SEP-24 en una barra fija inferior al alcance del pulgar (estática desde 560 px); direcciones y hashes en mono truncados en medio (`lib/format.ts`); bloques de código con su propio scroll horizontal.
 - **Estados**: esqueletos en saldos e historial, spinners en botones con `aria-busy` (sin verse deshabilitados), toasts con `aria-live`, estado vacío ilustrado, errores humanos con acción de recuperación.
 - **Accesibilidad**: enlace "Saltar al contenido", foco visible en oro, etiquetas en todos los campos, `aria-invalid` + mensaje junto al campo, contraste de texto ≥ 4.5:1 sobre marino, animaciones desactivadas con `prefers-reduced-motion`.
+- **Movimiento (Motion)**: se agregó `motion` (v12). Primitivas en `app/components/motion.tsx` (`Reveal`, `Stagger`, `Enter`, `Pressable`, `DrawCheck`) con un solo ritmo: entradas en tween ease-out (0.45–0.55 s, escalonado de 60 ms), interacciones en spring (stiffness 400, damping 24). Todas consultan `useReducedMotion()` y muestran el estado final sin animar cuando el sistema lo pide.
+- **Pitch (`/pitch`)**: reconstruido como narrativa por capítulos (patrón "scroll-triggered storytelling" de la guía de UI): en el teléfono es scroll vertical con barra de progreso y control flotante al alcance del pulgar; en escritorio agrega ajuste por capítulo, teclado (← → ↑ ↓, Espacio, Inicio/Fin) e índice lateral con indicador animado (`layoutId`).
+- **Hero del landing**: `TransferPreview` ilustra el flujo real (1,000 MXN → 995 TMXN con la comisión real de 0.5 %) y está rotulado como ilustración.
+- **Flujo SEP-24 dentro de la wallet**: hoja modal a pantalla completa en el teléfono (con safe-area) y panel centrado en escritorio; cierra con ✕, Escape o clic en el fondo, devuelve el foco y bloquea el scroll del fondo.
 
 ### Excepciones a "sin literales"
 
@@ -120,7 +133,8 @@ Alias heredados (`--navy`, `--s2`, `--accent`, `--error`, `--blue`, `--font-syne
 ### Pendientes visuales
 
 - `public/pitch.html` (estático) no usa el sistema.
-- El deck `/pitch` conserva su propio CSS en línea (ya con tokens); podría pasar a un CSS Module.
+- Menú del encabezado, toasts y cambios de paso de la pantalla SEP-24 aún usan transiciones CSS, no Motion.
+- `/devs` y la demo todavía no usan las entradas animadas de Motion; `app/components/ScrollReveal.tsx` sigue montado aunque landing y pitch ya no lo usan.
 
 ---
 

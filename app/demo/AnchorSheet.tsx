@@ -72,7 +72,7 @@ export function AnchorSheet({
               </span>
               <div className={styles.titles}>
                 <h2 id="sheet-title" className={styles.title}>{isDeposit ? "Depositar pesos" : "Retirar pesos"}</h2>
-                <p className={styles.sub}>Servicio del anchor SEPuente · sigues en tu wallet</p>
+                <p className={styles.sub}>Anchor SEPuente · en tu wallet</p>
               </div>
               <button ref={closeRef} type="button" className={styles.close} onClick={onClose} aria-label="Cerrar y volver a la wallet">
                 {Icon.x(18)}
