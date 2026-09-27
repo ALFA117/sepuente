@@ -10,6 +10,7 @@
     "setup-testnet": "tsx scripts/setup-testnet.ts"
   },
   "dependencies": {
+    "@pollar/core": "^0.11.3",
     "@stellar/stellar-sdk": "^12.3.0",
     "@supabase/supabase-js": "^2.45.4",
     "jose": "^5.9.6",

@@ -312,6 +312,7 @@ Todo el trabajo propio se construyó durante el hackathon (primer commit: 25 sep
 - **[three.js](https://threejs.org)** — logo 3D (extrusión del SVG, `SVGLoader` y `RoomEnvironment`)
 - **[Google Fonts vía next/font](https://fonts.google.com)** — Source Serif 4, Inter, JetBrains Mono
 - **[Etherfuse](https://etherfuse.com)** — API de rampa MXN (EtherfuseDriver, no probado sin API key)
+- **[Pollar](https://pollar.xyz) (`@pollar/core`, Apache-2.0)** — wallet de la demo con verificación de correo por código: crea la wallet Stellar del usuario, firma el reto SEP-10 (`stellar.sep10.sign`), agrega la trustline y envía el pago del retiro con comisiones patrocinadas. Es un modo opcional de `/demo`; el anchor no depende de Pollar y sigue funcionando con cualquier wallet SEP-24
 
 **Herramientas**
 - **[anchor-tests (SDF)](https://github.com/stellar/stellar-anchor-tests)** — suite oficial de pruebas para anchors
@@ -341,6 +342,7 @@ Todo el trabajo propio se construyó durante el hackathon (primer commit: 25 sep
 | `ETHERFUSE_API_KEY` | Solo si `DRIVER=etherfuse` |
 | `NEXT_PUBLIC_APP_URL` | URL del deploy (sin trailing slash, siempre HTTPS) |
 | `NEXT_PUBLIC_ASSET_CODE` / `NEXT_PUBLIC_ISSUER_PUBLIC_KEY` | Código y emisor del token para la wallet demo (públicos) |
+| `NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY` | Opcional. Llave publicable de Pollar (`pub_testnet_…`) para entrar a la demo con correo; sin ella solo aparece la wallet con llave en el navegador |
 
 ---
 

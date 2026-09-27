@@ -70,6 +70,49 @@
   gap: var(--sp-3);
 }
 
+.modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: rgb(var(--navy-deep-rgb) / 0.55);
+}
+.modeBtn {
+  position: relative;
+  min-height: 52px;
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  border-radius: calc(var(--radius-md) - 4px);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  text-align: left;
+}
+.modeBtn:disabled { cursor: not-allowed; }
+.modeBtn[aria-checked="true"] { color: var(--cream); }
+.modeBtn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.modePill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--surface2);
+  border: 1px solid var(--border-gold);
+}
+.modeText { position: relative; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.modeText strong { font-size: var(--fs-small); font-weight: 600; line-height: 1.3; }
+.modeText span { font-size: var(--fs-label); color: var(--subtle); }
+
+.identity {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+.identityMail { font-size: var(--fs-small); color: var(--muted); min-width: 0; overflow-wrap: anywhere; flex: 1; }
+
 .addrRow {
   display: flex;
   align-items: flex-end;
