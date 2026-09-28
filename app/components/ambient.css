@@ -37,8 +37,8 @@ body { isolation: isolate; }
 @media (max-width: 767px) {
   /* En el teléfono las monedas se asoman por los bordes para no tapar texto */
   .amb-coin { opacity: 0.45; }
-  .amb-coin-a { width: 64px; height: 64px; left: -26px; top: 42%; }
-  .amb-coin-b { width: 48px; height: 48px; right: -20px; top: 88%; }
+  .amb-coin-a { width: 64px; height: 64px; left: -42px; top: 42%; }
+  .amb-coin-b { width: 48px; height: 48px; right: -32px; top: 88%; }
 }
 .amb-coin-spin {
   position: absolute;
