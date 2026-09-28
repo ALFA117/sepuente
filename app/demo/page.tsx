@@ -377,7 +377,23 @@ export default function DemoPage() {
         { destination: dest, amount, asset: { type: "credit_alphanum4", code: ASSET_CODE, issuer: ISSUER } },
         { memo: { type: memoType, value: memo } },
       );
-      if (out.status === "error") throw new Error(out.details || out.message ? `Pollar: ${out.details || out.message}` : "Pollar no pudo enviar el pago del retiro.");
+      if (out.status === "error" && /not enabled/i.test(`${out.details ?? ""} ${out.message ?? ""}`)) {
+        // La app de Pollar no tiene TMXN en su lista de activos: armamos el mismo pago aquí,
+        // Pollar solo lo firma con la llave de la wallet y lo enviamos a Horizon. La wallet paga la comisión en XLM.
+        const account = await new Horizon.Server(HORIZON).loadAccount(pw.address!);
+        const unsigned = new TransactionBuilder(account, { fee: "100000", networkPassphrase: Networks.TESTNET })
+          .addOperation(Operation.payment({ destination: dest, asset: new Asset(ASSET_CODE, ISSUER), amount }))
+          .addMemo(memoType === "id" ? Memo.id(memo) : Memo.text(memo))
+          .setTimeout(120)
+          .build();
+        const signed = await pw.client.signTx(unsigned.toEnvelope().toXDR("base64"), { skipSponsorship: true });
+        if (signed.status !== "signed") {
+          throw new Error(`Pollar no firmó el pago (${signed.details ?? "TMXN no está habilitado en la app de Pollar"}).`);
+        }
+        await submit(TransactionBuilder.fromXDR(signed.signedXdr, Networks.TESTNET) as ReturnType<TransactionBuilder["build"]>, "No se pudo enviar el pago del retiro.");
+      } else if (out.status === "error") {
+        throw new Error(out.details || out.message ? `Pollar: ${out.details || out.message}` : "Pollar no pudo enviar el pago del retiro.");
+      }
       toast.success(`Enviaste ${formatAmount(amount)} ${ASSET_CODE} al anchor. Confirmando…`);
       await loadBalances();
       await loadTxs(jwt, true);
