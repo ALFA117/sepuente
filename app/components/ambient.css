@@ -1,0 +1,90 @@
+/* Fondo ambiental (ver AmbientBackground.tsx). Solo transform y opacity se animan. */
+body { isolation: isolate; }
+
+.amb-root {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--bg);
+}
+.amb-layer { position: absolute; inset: 0; }
+.amb-canvas { width: 100%; height: 100%; }
+.amb-calm .amb-canvas { opacity: 0.6; }
+
+/* Capa lejana: aurora oro/azul que deriva lento */
+.amb-aurora {
+  inset: -20%;
+  background:
+    radial-gradient(40% 35% at 30% 30%, rgb(var(--gold-rgb) / 0.16), transparent 70%),
+    radial-gradient(35% 30% at 75% 60%, rgb(var(--info-rgb) / 0.12), transparent 70%);
+  animation: amb-drift 26s ease-in-out infinite alternate;
+}
+.amb-calm .amb-aurora { opacity: 0.55; }
+@keyframes amb-drift {
+  from { transform: translate3d(-3%, -2%, 0) scale(1); }
+  to   { transform: translate3d(3%, 2%, 0) scale(1.08); }
+}
+
+/* Capa cercana: monedas de peso en CSS 3D */
+.amb-near { perspective: 900px; }
+.amb-coin { position: absolute; display: block; animation: amb-float 9s ease-in-out infinite; }
+.amb-coin-a { width: 84px; height: 84px; left: 6%; top: 22%; }
+.amb-coin-b { width: 58px; height: 58px; right: 8%; top: 64%; animation-delay: -3s; animation-duration: 11s; }
+.amb-coin-c { width: 44px; height: 44px; right: 22%; top: 14%; animation-delay: -6s; animation-duration: 13s; }
+.amb-coin { opacity: 0.75; }
+@media (max-width: 767px) {
+  /* En el teléfono las monedas se asoman por los bordes para no tapar texto */
+  .amb-coin { opacity: 0.45; }
+  .amb-coin-a { width: 64px; height: 64px; left: -22px; top: 30%; }
+  .amb-coin-b { width: 48px; height: 48px; right: -16px; top: 72%; }
+}
+.amb-coin-spin {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: amb-spin 12s linear infinite;
+}
+.amb-coin-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.34em;
+  color: rgb(var(--gold-rgb) / 0.9);
+  border: 2px solid rgb(var(--gold-rgb) / 0.55);
+  background: radial-gradient(circle at 35% 30%, rgb(var(--gold-rgb) / 0.28), rgb(var(--gold-rgb) / 0.08) 70%);
+  box-shadow: inset 0 0 0 5px rgb(var(--gold-rgb) / 0.12);
+  backface-visibility: hidden;
+  transform: translateZ(3px);
+}
+.amb-coin-a .amb-coin-face { font-size: 2rem; }
+.amb-coin-b .amb-coin-face { font-size: 0.8rem; letter-spacing: 0.04em; font-family: var(--font-mono); }
+.amb-coin-c .amb-coin-face { font-size: 1.1rem; }
+.amb-coin-back { transform: rotateY(180deg) translateZ(3px); }
+@keyframes amb-spin { to { transform: rotateY(360deg); } }
+@keyframes amb-float {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -14px, 0); }
+}
+
+/* Viñeta: separa el contenido del fondo para mantener el contraste del texto */
+.amb-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 120% 90% at 50% 40%, transparent 40%, rgb(var(--navy-rgb) / 0.85));
+}
+
+@media (prefers-color-scheme: light) {
+  .amb-coin { opacity: 0.45; }
+  .amb-aurora { opacity: 0.7; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .amb-aurora, .amb-coin, .amb-coin-spin { animation: none; }
+}

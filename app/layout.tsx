@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Source_Serif_4, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { AmbientBackground } from "./components/AmbientBackground";
+import { HelpChat } from "./components/HelpChat";
 
 const inter = Inter({ subsets: ["latin"], variable: "--nf-inter", weight: ["400", "500", "600", "700"], display: "swap" });
 const serif = Source_Serif_4({ subsets: ["latin"], variable: "--nf-serif", weight: ["500", "600", "700"], display: "swap" });
@@ -50,7 +52,9 @@ export default function RootLayout({
     <html lang="es" className={`${inter.variable} ${serif.variable} ${mono.variable}`}>
       <body>
         <a href="#main" className="skip-link">Saltar al contenido</a>
+        <AmbientBackground />
         {children}
+        <HelpChat />
       </body>
     </html>
   );
