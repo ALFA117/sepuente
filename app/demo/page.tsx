@@ -39,7 +39,7 @@ interface Tx {
   stellar_transaction_id?: string | null;
 }
 
-interface Balances { xlm: string | null; tmxn: string | null; exists: boolean; trust: boolean }
+interface Balances { xlm: string | null; tmxn: string | null; exists: boolean; trust: boolean; fees?: number | null; feeTxs?: number }
 
 type Busy = "faucet" | "trust" | "login" | "deposit" | "withdraw" | `pay:${string}` | null;
 
@@ -126,7 +126,14 @@ export default function DemoPage() {
       if (!r.ok) throw new Error("No pudimos leer tu saldo en Horizon.");
       const native = r.data.balances.find((b) => b.asset_type === "native");
       const token = r.data.balances.find((b) => b.asset_code === ASSET_CODE && b.asset_issuer === ISSUER);
-      setBal({ xlm: native?.balance ?? "0", tmxn: token?.balance ?? null, exists: true, trust: !!token });
+      // Comisiones reales: suma de fee_charged de las transacciones que pagó esta cuenta (no "10,000 − saldo",
+      // que no sirve para wallets que no empezaron con 10,000 ni cuando alguien más patrocina la comisión).
+      const txr = await fetchJson<{ _embedded: { records: { fee_charged: string; fee_account?: string; source_account: string }[] } }>(
+        `${HORIZON}/accounts/${pk}/transactions?limit=200&order=desc`
+      ).catch(() => null);
+      const paid = txr?.ok ? txr.data._embedded.records.filter((t) => (t.fee_account ?? t.source_account) === pk) : null;
+      const fees = paid ? paid.reduce((s, t) => s + Number(t.fee_charged), 0) / 1e7 : null;
+      setBal({ xlm: native?.balance ?? "0", tmxn: token?.balance ?? null, exists: true, trust: !!token, fees, feeTxs: paid?.length ?? 0 });
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -452,6 +459,18 @@ export default function DemoPage() {
   };
 
   const isEmail = mode === "email";
+
+  // Conciliación de TMXN con el historial del anchor: lo que entró por depósitos menos lo que la wallet envió en retiros.
+  const ledger = txs && txs.length
+    ? txs.reduce(
+        (acc, t) => {
+          if (t.kind === "deposit" && t.status === "completed") acc.inflow += parseFloat(t.amount_out ?? "0");
+          if (t.kind === "withdrawal" && (t.status === "completed" || !!t.stellar_transaction_id)) acc.outflow += parseFloat(t.amount_in ?? "0");
+          return acc;
+        },
+        { inflow: 0, outflow: 0 },
+      )
+    : null;
   const funded = !!bal?.exists;
   const trusted = !!bal?.trust;
   const ready = isEmail ? !!pw.address : funded;
@@ -562,6 +581,17 @@ export default function DemoPage() {
               <span className={styles.balHint}>
                 {bal?.trust ? "1 TMXN = 1 peso · comisión del anchor 0.5 %" : "Aún no activas los pesos digitales (paso 2)"}
               </span>
+              {bal?.trust && ledger && (
+                <span className={styles.ledger}>
+                  <span>Depósitos <b data-tone="in">+{formatAmount(ledger.inflow)}</b></span>
+                  <span>Retiros enviados <b data-tone="out">−{formatAmount(ledger.outflow)}</b></span>
+                  <span>
+                    {Math.abs(ledger.inflow - ledger.outflow - parseFloat(bal.tmxn ?? "0")) < 0.005
+                      ? "Cuadra con tu saldo"
+                      : `Diferencia ${formatAmount(parseFloat(bal.tmxn ?? "0") - (ledger.inflow - ledger.outflow))} (movimientos fuera de SEPuente o en curso)`}
+                  </span>
+                </span>
+              )}
             </div>
             <div className={styles.xlmRow}>
               <span className={styles.balLabel}>XLM</span>
@@ -569,9 +599,11 @@ export default function DemoPage() {
                 {balLoading && !bal ? "…" : <Swap k={bal?.exists ? bal.xlm ?? "0" : "0"}>{bal?.exists ? formatAmount(bal.xlm, 5) : pk ? "0.00000" : "—"}</Swap>}
               </span>
               <span className={styles.balHint}>
-                {isEmail ? "Para reservas y comisiones de red (Pollar patrocina lo que tu app tenga habilitado)" : bal?.exists && parseFloat(bal.xlm ?? "0") < 10000
-                  ? `Comisiones pagadas: ${formatAmount(10000 - parseFloat(bal.xlm ?? "0"), 5)}`
-                  : "Solo para la comisión de red"}
+                {bal?.exists && bal.fees != null
+                  ? bal.feeTxs
+                    ? `Comisiones de red pagadas por esta wallet: ${formatAmount(bal.fees, 5)} XLM en ${bal.feeTxs} ${bal.feeTxs === 1 ? "transacción" : "transacciones"}`
+                    : isEmail ? "Sin comisiones pagadas: hasta ahora las cubrió Pollar" : "Aún no pagas comisiones de red"
+                  : "Solo para reservas y comisiones de red"}
               </span>
             </div>
             <p className={styles.keyNote}>
