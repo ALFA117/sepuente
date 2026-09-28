@@ -1,3 +1,35 @@
+/* Globo de saludo (una vez por navegador) */
+.nudge {
+  position: fixed;
+  right: max(16px, var(--safe-right));
+  bottom: calc(80px + var(--safe-bottom));
+  z-index: 45;
+  min-height: 44px;
+  padding: 0 var(--sp-4);
+  border-radius: var(--radius-lg) var(--radius-lg) 4px var(--radius-lg);
+  border: 1px solid var(--border-gold);
+  background: var(--surface2);
+  color: var(--cream);
+  font-size: var(--fs-small);
+  font-weight: 600;
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+}
+.online {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--success);
+  border: 2px solid var(--surface2);
+}
+.avatar { position: relative; }
+.chipHot { border-color: var(--gold); background: var(--gold-dim); color: var(--gold-hover); font-weight: 600; }
+.msg strong { color: var(--cream); font-weight: 700; }
+.user strong { color: inherit; }
+
 .fab {
   position: fixed;
   right: max(16px, var(--safe-right));
@@ -67,7 +99,7 @@
 .titles { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .titles strong { font-family: var(--font-display); color: var(--cream); font-size: 1.0625rem; line-height: 1.2; }
 .titles span { font-size: var(--fs-label); color: var(--subtle); }
-.close {
+.iconBtn {
   width: 44px;
   height: 44px;
   flex-shrink: 0;
@@ -80,7 +112,7 @@
   color: var(--muted);
   cursor: pointer;
 }
-.close:hover { background: var(--surface-hover); color: var(--cream); }
+.iconBtn:hover { background: var(--surface-hover); color: var(--cream); }
 
 .list {
   flex: 1;
@@ -105,7 +137,7 @@
 .typing span:nth-child(3) { animation-delay: 0.3s; }
 @keyframes typingDot { 0%, 100% { opacity: 0.3; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
 
-.chips { display: flex; gap: var(--sp-2); padding: 0 var(--sp-4) var(--sp-3); overflow-x: auto; scrollbar-width: none; }
+.chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); padding: var(--sp-1) var(--sp-4) var(--sp-3); }
 .chips::-webkit-scrollbar { display: none; }
 .chip {
   flex-shrink: 0;
