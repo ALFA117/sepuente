@@ -6,6 +6,7 @@ import { TransferPreview } from "./components/TransferPreview";
 import { Glossary } from "./components/Glossary";
 import { Logo3D } from "./components/brand/Logo3D";
 import { ArchFlow } from "./components/ArchFlow";
+import { ArchUnderline } from "./components/ArchUnderline";
 import { LogoWord } from "./components/brand/Logo";
 import { pageMeta } from "@/lib/seo";
 
@@ -89,7 +90,7 @@ export default function LandingPage() {
                 Demo en vivo · red de prueba
               </Enter>
               <Enter as="h1" className={styles.title} delay={0.06}>
-                Pesos mexicanos en Stellar, <span className={styles.titleAccent}>sin custodia</span>
+                Pesos mexicanos en Stellar, <span className={styles.titleAccent}>sin custodia<ArchUnderline className={styles.titleArch} /></span>
               </Enter>
               <Enter as="p" className={styles.lead} delay={0.12}>
                 Manda pesos desde tu banco y recíbelos como <strong>pesos digitales</strong> en cualquier wallet de Stellar, y regrésalos a tu cuenta cuando quieras. <strong>SEPuente</strong> es el puente abierto entre SPEI y Stellar, y nunca guarda tu dinero.
