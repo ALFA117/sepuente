@@ -128,6 +128,9 @@
 }
 .addr:hover { color: var(--gold-hover); }
 
+/* Al saltar desde el riel, el título no queda debajo del encabezado + riel fijos */
+.main :global(h2[id]) { scroll-margin-top: calc(150px + var(--safe-top)); }
+
 /* Saldo principal: los pesos, como en la app de un banco */
 .pesos {
   display: flex;

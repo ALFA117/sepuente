@@ -22,6 +22,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Enter, Pressable, Swap } from "../components/motion";
 import { POLLAR_KEY, usePollarWallet } from "./pollar";
 import { EmailVerify, maskEmail } from "./EmailVerify";
+import { DemoRail } from "./DemoRail";
 
 type WalletMode = "email" | "local";
 
@@ -479,6 +480,14 @@ export default function DemoPage() {
   const trusted = !!bal?.trust;
   const ready = isEmail ? !!pw.address : funded;
   const step = jwt ? 4 : trusted ? 3 : ready ? 2 : 1;
+  const completedOps = txs?.filter((t) => t.status === "completed").length ?? 0;
+
+  // El chat de ayuda lee este estado para contestar "¿Qué hago ahora?" según el paso real.
+  useEffect(() => {
+    const detail = { step, isEmail, ops: completedOps, pending: hasPending, hasTmxn: parseFloat(bal?.tmxn ?? "0") > 0 };
+    (window as unknown as { __sepuenteDemo?: typeof detail }).__sepuenteDemo = detail;
+    return () => { delete (window as unknown as { __sepuenteDemo?: typeof detail }).__sepuenteDemo; };
+  }, [step, isEmail, completedOps, hasPending, bal?.tmxn]);
 
   const steps = [
     isEmail
@@ -526,6 +535,8 @@ export default function DemoPage() {
             <Glossary compact />
           </div>
         </Enter>
+
+        <DemoRail step={step} isEmail={isEmail} ops={completedOps} />
 
         <div className={styles.grid}>
           {/* ── Wallet ── */}
