@@ -200,7 +200,11 @@ Alias heredados (`--navy`, `--s2`, `--accent`, `--error`, `--blue`, `--font-syne
 
 ### Ayuda con respuestas predeterminadas
 
-`app/components/HelpChat.tsx`: botón "Ayuda" abajo a la derecha (solo ícono en pantallas de menos de 420 px) que abre un chat con 13 preguntas frecuentes: qué es, si es dinero real, TMXN, comisión, depositar, retirar, custodia, correo, trustline, SEPs, por qué Stellar, dónde ver la transacción e integración. Hay preguntas sugeridas como botones y un campo libre que busca por palabras clave (sin acentos); si no encuentra respuesta lo dice y enlaza a la documentación. Está rotulado **"Respuestas predeterminadas · no es IA"**: no llama a ningún servidor ni modelo. Cierra con ✕ o Escape y devuelve el foco al botón. Queda debajo de los avisos, de la hoja del anchor y del menú móvil.
+`app/components/HelpChat.tsx`: botón "Ayuda" abajo a la derecha (solo ícono en pantallas de menos de 420 px) que abre un chat con 19 respuestas: qué es, si es dinero real, TMXN, XLM, comisión, depositar, retirar, cuánto tarda, memo, custodia, correo, "no me llega el código", "me salió un error", trustline, SEPs, por qué Stellar, dónde ver la transacción e integración. **"¿Qué hago ahora?" depende del paso real en la demo**: la página de la demo publica su estado (paso, modo, operaciones completadas, si hay una en curso y si ya tiene TMXN) y el chat responde con la acción concreta. Cada respuesta sugiere preguntas de seguimiento; la conversación se conserva al cambiar de página (sessionStorage) y un globo "¿Dudas? Pregúntame" aparece una sola vez por navegador.
+
+### Riel de progreso en la demo
+
+`app/demo/DemoRail.tsx`: barra fija bajo el encabezado con las 4 paradas (Correo o Saldo → Pesos → Conexión → Operar). La línea se llena con resorte al avanzar, la parada actual tiene un halo que se desliza (`layoutId`) y las completadas dibujan su check; "Operar" cuenta las operaciones completadas. Cada parada lleva a su sección. Hay preguntas sugeridas como botones y un campo libre que busca por palabras clave (sin acentos); si no encuentra respuesta lo dice y enlaza a la documentación. Está rotulado **"Respuestas predeterminadas · no es IA"**: no llama a ningún servidor ni modelo. Cierra con ✕ o Escape y devuelve el foco al botón. Queda debajo de los avisos, de la hoja del anchor y del menú móvil.
 
 ### Landing sin rejillas de tarjetas iguales (27 sep)
 

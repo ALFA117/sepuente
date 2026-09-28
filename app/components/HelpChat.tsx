@@ -177,7 +177,7 @@ export function HelpChat() {
               </span>
               <div className={styles.titles}>
                 <strong>Ayuda SEPuente</strong>
-                <span>Respuestas predeterminadas · no es IA</span>
+                <span>Respuestas fijas · no es IA</span>
               </div>
               {msgs.length > 1 && (
                 <button type="button" className={styles.iconBtn} onClick={reset} aria-label="Empezar de nuevo" title="Empezar de nuevo">
