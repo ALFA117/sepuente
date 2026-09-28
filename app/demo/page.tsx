@@ -395,7 +395,11 @@ export default function DemoPage() {
           .build();
         const signed = await pw.client.signTx(unsigned.toEnvelope().toXDR("base64"), { skipSponsorship: true });
         if (signed.status !== "signed") {
-          throw new Error(`Pollar no firmó el pago (${signed.details ?? "TMXN no está habilitado en la app de Pollar"}).`);
+          throw new Error(
+            /not enabled/i.test(signed.details ?? "")
+              ? "Pollar todavía no permite mover TMXN desde wallets de correo en esta app. Mientras se habilita, usa «Llave en el navegador» para retirar."
+              : `Pollar no firmó el pago${signed.details ? `: ${signed.details}` : "."}`,
+          );
         }
         await submit(TransactionBuilder.fromXDR(signed.signedXdr, Networks.TESTNET) as ReturnType<TransactionBuilder["build"]>, "No se pudo enviar el pago del retiro.");
       } else if (out.status === "error") {

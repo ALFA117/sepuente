@@ -123,6 +123,7 @@
   line-height: 1.5;
 }
 .alert svg { flex-shrink: 0; margin-top: 2px; color: var(--danger); }
+.alert > span { min-width: 0; overflow-wrap: anywhere; }
 
 /* ── Campos ── */
 .field { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
