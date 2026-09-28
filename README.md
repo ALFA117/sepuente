@@ -144,6 +144,8 @@ Son de la corrida completa contra producción del 27 sep 2026. Para generar las 
 11. Abre `/pitch`: con el botón dorado inferior avanzas capítulo por capítulo; la barra dorada superior marca el progreso.
 12. Gira el teléfono: nada se desborda. Escribe un monto de `5`: aparece "El monto mínimo es $10 MXN".
 13. Cambia el teléfono a modo claro: todo pasa a fondo papel con texto marino y oro oscuro, sin textos ilegibles.
+14. En el landing, detrás del título se ven arcos de puente avanzando despacio; en la demo el mismo fondo es mucho más tenue.
+15. Toca el botón dorado de ayuda (abajo a la derecha) → **¿Cuánto cobra?** → responde con la comisión de 0.5 %. Escribe "es seguro" → responde sobre custodia.
 
 ---
 
@@ -185,6 +187,20 @@ Alias heredados (`--navy`, `--s2`, `--accent`, `--error`, `--blue`, `--font-syne
 - **Pitch (`/pitch`)**: reconstruido como narrativa por capítulos (patrón "scroll-triggered storytelling" de la guía de UI): en el teléfono es scroll vertical con barra de progreso y control flotante al alcance del pulgar; en escritorio agrega ajuste por capítulo, teclado (← → ↑ ↓, Espacio, Inicio/Fin) e índice lateral con indicador animado (`layoutId`).
 - **Hero del landing**: `TransferPreview` ilustra el flujo real (1,000 MXN → 995 TMXN con la comisión real de 0.5 %) y está rotulado como ilustración.
 - **Flujo SEP-24 dentro de la wallet**: hoja modal a pantalla completa en el teléfono (con safe-area) y panel centrado en escritorio; cierra con ✕, Escape o clic en el fondo, devuelve el foco y bloquea el scroll del fondo.
+
+### Fondo ambiental: túnel de arcos de puente (27 sep)
+
+- **Receta del dado: 4, "túnel warp de anillos".** Se adaptó al tema: en lugar de hexágonos, los anillos son **arcos de puente con tablero y tirantes** (el mismo trazo del logo) que avanzan hacia la cámara, como cruzar el puente. `app/components/AmbientBackground.tsx` + `ambient.css`, montado una vez en `app/layout.tsx` en una capa fija `z-index: -10` con `isolation: isolate` en `body`.
+- **Tres profundidades:** aurora oro/azul lejana (se mueve poco con el scroll), el túnel en canvas (su centro sigue al puntero y sube con el scroll) y, solo en el landing, monedas de peso en CSS 3D girando cerca de la cámara (más parallax).
+- **Completo en el landing, tranquilo en demo y docs** (menos arcos, más lentos, 60 % de opacidad, sin monedas). No se monta en `/pitch` (tiene su propio fondo) ni en `/sep24/*` (vive en un iframe).
+- **Legibilidad:** los arcos van a 22–30 % de opacidad y una viñeta oscurece los bordes; en el teléfono las monedas se asoman por los lados para no quedar detrás del texto.
+- **Rendimiento:** canvas con `requestAnimationFrame` que se detiene con la pestaña oculta, `devicePixelRatio` limitado a 2, la mitad de arcos en el teléfono, solo `transform` y `opacity` en CSS. Con "reducir movimiento" se dibuja una escena quieta sin parallax.
+- **Modo claro:** los colores salen de `--gold-rgb` e `--info-rgb`, así que cambian con el tema; además los arcos y monedas bajan de intensidad.
+- **Hero:** un arco de puente se dibuja bajo "sin custodia" al cargar (`ArchUnderline`, `pathLength`) y la vista previa del depósito flota suave.
+
+### Ayuda con respuestas predeterminadas
+
+`app/components/HelpChat.tsx`: botón "Ayuda" abajo a la derecha (solo ícono en pantallas de menos de 420 px) que abre un chat con 13 preguntas frecuentes: qué es, si es dinero real, TMXN, comisión, depositar, retirar, custodia, correo, trustline, SEPs, por qué Stellar, dónde ver la transacción e integración. Hay preguntas sugeridas como botones y un campo libre que busca por palabras clave (sin acentos); si no encuentra respuesta lo dice y enlaza a la documentación. Está rotulado **"Respuestas predeterminadas · no es IA"**: no llama a ningún servidor ni modelo. Cierra con ✕ o Escape y devuelve el foco al botón. Queda debajo de los avisos, de la hoja del anchor y del menú móvil.
 
 ### Landing sin rejillas de tarjetas iguales (27 sep)
 
