@@ -20,7 +20,7 @@
 .fabIcon { display: inline-flex; }
 .fabText { font-size: var(--fs-small); }
 @media (max-width: 420px) {
-  .fab { width: 52px; padding: 0; justify-content: center; }
+  .fab { width: 48px; min-height: 48px; padding: 0; justify-content: center; right: max(12px, var(--safe-right)); bottom: calc(12px + var(--safe-bottom)); }
   .fabText { display: none; }
 }
 

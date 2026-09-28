@@ -49,7 +49,6 @@ export function AmbientBackground() {
         <motion.div className="amb-layer amb-near" style={{ y: nearY, x: nearX }}>
           <Coin className="amb-coin amb-coin-a" label="$" />
           <Coin className="amb-coin amb-coin-b" label="MXN" />
-          {!mobile && <Coin className="amb-coin amb-coin-c" label="$" />}
         </motion.div>
       )}
       <div className="amb-vignette" />
@@ -90,8 +89,9 @@ function ArchTunnel({ reduce, full, mobile, px, py, scroll }: {
     const light = window.matchMedia("(prefers-color-scheme: light)").matches;
     const dim = (full ? 1 : 0.55) * (light ? 0.55 : 1);
     const speed = full ? 38 : 20; // unidades por segundo
-    const cx = w / 2 + px.get() * 70;
-    const cy = h * (full ? 0.46 : 0.5) + py.get() * 50 - scroll.get() * 80;
+    // El centro del túnel queda detrás del logo (derecha en escritorio, arriba en el teléfono), no detrás del texto.
+    const cx = (full && !mobile ? w * 0.74 : w / 2) + px.get() * 60;
+    const cy = h * (full ? (mobile ? 0.2 : 0.36) : 0.5) + py.get() * 40 - scroll.get() * 80;
     const base = Math.min(w, h) * (mobile ? 0.62 : 0.48);
     ctx.clearRect(0, 0, w, h);
     const list = rings.current;

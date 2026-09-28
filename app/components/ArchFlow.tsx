@@ -133,17 +133,18 @@ function Diagram({ layout, step, playing, reduce }: { layout: keyof typeof LAYOU
         );
       })}
 
+      {/* La partícula va antes que la etiqueta para pasar por debajo de ella y no tapar el texto. */}
+      <g ref={dotRef} className={styles.dot} aria-hidden="true">
+        <circle r={16} fill={`url(#dotglow-${layout})`} />
+        <circle r={5.5} className={styles.dotCore} />
+      </g>
+
       {tagPoint && (
         <g transform={`translate(${tagPoint.x} ${tagPoint.y})`} className={styles.tag}>
           <rect x={-(step.tag.length * 3.6 + 12)} y={-12} width={step.tag.length * 7.2 + 24} height={24} rx={12} />
           <text y={4}>{step.tag}</text>
         </g>
       )}
-
-      <g ref={dotRef} className={styles.dot} aria-hidden="true">
-        <circle r={16} fill={`url(#dotglow-${layout})`} />
-        <circle r={5.5} className={styles.dotCore} />
-      </g>
     </svg>
   );
 }

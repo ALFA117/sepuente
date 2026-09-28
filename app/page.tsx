@@ -50,6 +50,11 @@ const FEATURES = [
     icon: <path d="M12 22v-5M9 7V2M15 7V2M12 17a5 5 0 0 0 5-5V7H7v5a5 5 0 0 0 5 5z" />,
   },
   {
+    title: "Validado con la suite oficial",
+    desc: "75 de 76 pruebas de @stellar/anchor-tests de SDF contra producción, en los cuatro estándares.",
+    icon: <><path d="M9 12l2 2 4-4" /><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" /></>,
+  },
+  {
     title: "Estándar Stellar",
     desc: "SEP-1 · SEP-10 · SEP-24 · SEP-38 implementados como referencia completa.",
     icon: <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />,
@@ -124,6 +129,7 @@ export default function LandingPage() {
           <div className={styles.sectionInner}>
             <Reveal as="p" className={styles.eyebrow}>En palabras simples</Reveal>
             <Reveal as="h2" id="simple-title" className={styles.h2} delay={0.05}>Tu banco y tu wallet, conectados</Reveal>
+            <div className={styles.simpleGrid}>
             <Reveal className={styles.receipt} delay={0.08}>
               <div className={styles.receiptHead}>
                 <span>Comprobante de ejemplo</span>
@@ -146,7 +152,13 @@ export default function LandingPage() {
               </ol>
               <p className={styles.receiptFoot}>Ilustración con montos calculados · el SPEI de la demo es simulado</p>
             </Reveal>
-            <Reveal><Glossary /></Reveal>
+            <Reveal className={styles.simpleSide} delay={0.12}>
+              <p className={styles.sideNote}>
+                <strong>1 TMXN = 1 peso.</strong> Lo que ves en el comprobante es lo que cobra el anchor: 0.5 % al entrar y 0.5 % al salir. La red de Stellar cobra aparte 0.00001 XLM por transacción.
+              </p>
+              <Glossary />
+            </Reveal>
+            </div>
           </div>
         </section>
 

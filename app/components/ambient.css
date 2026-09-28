@@ -30,15 +30,15 @@ body { isolation: isolate; }
 /* Capa cercana: monedas de peso en CSS 3D */
 .amb-near { perspective: 900px; }
 .amb-coin { position: absolute; display: block; animation: amb-float 9s ease-in-out infinite; }
-.amb-coin-a { width: 84px; height: 84px; left: 6%; top: 22%; }
-.amb-coin-b { width: 58px; height: 58px; right: 8%; top: 64%; animation-delay: -3s; animation-duration: 11s; }
-.amb-coin-c { width: 44px; height: 44px; right: 22%; top: 14%; animation-delay: -6s; animation-duration: 13s; }
+/* Las monedas viven en los márgenes, asomándose por los bordes: nunca detrás de texto */
+.amb-coin-a { width: 84px; height: 84px; left: -30px; top: 62%; }
+.amb-coin-b { width: 58px; height: 58px; right: -18px; top: 84%; animation-delay: -3s; animation-duration: 11s; }
 .amb-coin { opacity: 0.75; }
 @media (max-width: 767px) {
   /* En el teléfono las monedas se asoman por los bordes para no tapar texto */
   .amb-coin { opacity: 0.45; }
-  .amb-coin-a { width: 64px; height: 64px; left: -22px; top: 30%; }
-  .amb-coin-b { width: 48px; height: 48px; right: -16px; top: 72%; }
+  .amb-coin-a { width: 64px; height: 64px; left: -26px; top: 42%; }
+  .amb-coin-b { width: 48px; height: 48px; right: -20px; top: 88%; }
 }
 .amb-coin-spin {
   position: absolute;
@@ -65,7 +65,6 @@ body { isolation: isolate; }
 }
 .amb-coin-a .amb-coin-face { font-size: 2rem; }
 .amb-coin-b .amb-coin-face { font-size: 0.8rem; letter-spacing: 0.04em; font-family: var(--font-mono); }
-.amb-coin-c .amb-coin-face { font-size: 1.1rem; }
 .amb-coin-back { transform: rotateY(180deg) translateZ(3px); }
 @keyframes amb-spin { to { transform: rotateY(360deg); } }
 @keyframes amb-float {

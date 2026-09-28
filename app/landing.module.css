@@ -434,6 +434,14 @@
 }
 
 /* ── En palabras simples: comprobante SPEI de ejemplo ── */
+.simpleGrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); align-items: start; }
+.simpleSide { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; }
+.sideNote { color: var(--muted); line-height: 1.6; padding-left: var(--sp-4); border-left: 3px solid var(--border-gold); }
+.sideNote strong { color: var(--cream); }
+@media (min-width: 960px) {
+  .simpleGrid { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: var(--sp-8); }
+  .simpleGrid .receipt { max-width: none; }
+}
 .receipt {
   position: relative;
   margin-top: var(--sp-2);
@@ -517,7 +525,7 @@
   gap: var(--sp-2);
   width: 100%;
   max-width: 360px;
-  margin: calc(-1 * var(--sp-6)) auto 0;
+  margin: calc(-1 * var(--sp-6)) auto var(--sp-3);
 }
 .brand3d { width: 100%; }
 .brandWord { width: 64%; height: auto; color: var(--cream); }
@@ -528,9 +536,9 @@
       "copy visual"
       "stats stats";
     grid-template-rows: auto 1fr auto;
-    row-gap: var(--sp-4);
+    row-gap: var(--sp-8);
   }
-  .brand { grid-area: brand; margin: 0 auto; max-width: 420px; }
+  .brand { grid-area: brand; margin: 0 auto; max-width: 400px; }
   .heroCopy { grid-area: copy; align-self: center; }
   .heroVisual { grid-area: visual; justify-content: center; align-self: start; }
   .stats { grid-area: stats; }
