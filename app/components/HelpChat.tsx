@@ -59,7 +59,7 @@ const FAQ: Faq[] = [
 ];
 const byId = (id: string) => FAQ.find((f) => f.id === id)!;
 // Temas que dependen de la base del anchor: si está en pausa, la respuesta lo dice.
-const PAUSED_TOPICS = ["depositar", "retirar", "tarda", "ver"];
+const PAUSED_TOPICS = ["depositar", "retirar", "tarda", "ver", "integrar"];
 const DEFAULT_CHIPS = ["ahora", "que", "real", "comision", "custodia", "codigo"];
 
 const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[¿?¡!.,]/g, " ");
