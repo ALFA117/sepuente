@@ -11,6 +11,7 @@ import { env } from "@/lib/env";
 import { clabeError } from "@/lib/clabe";
 import { amountError } from "@/lib/amount";
 import { describeError } from "@/lib/errors";
+import { DB_DOWN_MESSAGE, dbReachable, isDbConnError, markDbDown } from "@/lib/db-status";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +59,12 @@ async function handle(body: Record<string, string>) {
     return NextResponse.json({ error: "La sesión expiró. Vuelve a tu wallet e inicia la operación de nuevo." }, { status: 401 });
   }
 
-  const { data: tx } = await db.from("sep24_transactions").select("*").eq("id", txId).single();
+  if (!(await dbReachable())) return NextResponse.json({ error: DB_DOWN_MESSAGE }, { status: 503 });
+  const { data: tx, error: readError } = await db.from("sep24_transactions").select("*").eq("id", txId).single();
+  if (readError && isDbConnError(readError)) {
+    markDbDown();
+    return NextResponse.json({ error: DB_DOWN_MESSAGE }, { status: 503 });
+  }
   if (!tx) {
     return NextResponse.json({ error: "No encontramos esta transacción." }, { status: 404 });
   }

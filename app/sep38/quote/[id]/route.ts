@@ -3,6 +3,7 @@ import { jsonCors, optionsResponse } from "@/lib/cors";
 import { requireSep10 } from "@/lib/auth-middleware";
 import { db } from "@/lib/supabase";
 import { formatQuote } from "@/lib/sep38";
+import { dbReachable, dbUnavailable, isDbConnError, markDbDown } from "@/lib/db-status";
 
 export const dynamic = "force-dynamic";
 export async function OPTIONS() { return optionsResponse(); }
@@ -18,7 +19,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params;
   if (!UUID.test(id)) return jsonCors({ error: "Quote not found" }, 404);
 
-  const { data } = await db.from("sep38_quotes").select("*").eq("id", id).eq("stellar_account", claims.account).maybeSingle();
+  if (!(await dbReachable())) return dbUnavailable();
+
+  const { data, error } = await db.from("sep38_quotes").select("*").eq("id", id).eq("stellar_account", claims.account).maybeSingle();
+  if (error) {
+    console.error("[sep38/quote/:id]", error.message);
+    if (isDbConnError(error)) { markDbDown(); return dbUnavailable(); }
+    return jsonCors({ error: "Could not read the quote" }, 500);
+  }
   if (!data) return jsonCors({ error: "Quote not found" }, 404);
 
   return jsonCors(formatQuote(data));

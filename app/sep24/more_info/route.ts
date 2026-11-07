@@ -3,6 +3,7 @@ import { db } from "@/lib/supabase";
 import { env } from "@/lib/env";
 import { txStatus } from "@/lib/status";
 import { formatAmount, truncateMiddle, EXPLORER_TX } from "@/lib/format";
+import { dbReachable, isDbConnError, markDbDown } from "@/lib/db-status";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +48,17 @@ export async function GET(req: NextRequest) {
   const notFound = () => page("Operación no encontrada", `<h1>Operación no encontrada</h1><p class="note">Revisa el enlace que te dio tu wallet.</p>`, 404);
   if (!UUID.test(id)) return notFound();
 
-  const { data: tx } = await db.from("sep24_transactions").select("*").eq("id", id).maybeSingle();
+  // Sin base de datos no se puede saber si la operación existe: decirlo en vez de un "no encontrada" falso.
+  const unavailable = () =>
+    page(
+      "Detalle no disponible",
+      `<h1>Detalle no disponible por ahora</h1><p class="note">La base de datos del anchor está en pausa, así que no podemos mostrar esta operación. Las transacciones ya hechas en Stellar siguen visibles en stellar.expert.</p>`,
+      503,
+    );
+  if (!(await dbReachable())) return unavailable();
+
+  const { data: tx, error } = await db.from("sep24_transactions").select("*").eq("id", id).maybeSingle();
+  if (error && isDbConnError(error)) { markDbDown(); return unavailable(); }
   if (!tx) return notFound();
 
   const isDeposit = tx.kind === "deposit";

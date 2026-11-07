@@ -4,6 +4,7 @@ import { requireSep10 } from "@/lib/auth-middleware";
 import { db } from "@/lib/supabase";
 import { env } from "@/lib/env";
 import { formatSep24Tx, isSupportedAsset } from "@/lib/sep24";
+import { dbReachable, dbUnavailable, isDbConnError, markDbDown } from "@/lib/db-status";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,8 @@ export async function GET(req: NextRequest) {
   const limit = limitRaw ? parseInt(limitRaw, 10) : 50;
   if (!Number.isFinite(limit) || limit < 1) return jsonCors({ error: "Invalid 'limit'" }, 400);
 
+  if (!(await dbReachable())) return dbUnavailable();
+
   let query = db
     .from("sep24_transactions")
     .select("*")
@@ -56,7 +59,11 @@ export async function GET(req: NextRequest) {
   }
 
   const { data, error } = await query;
-  if (error) return jsonCors({ error: "Could not read transactions" }, 500);
+  if (error) {
+    console.error("[sep24/transactions]", error.message);
+    if (isDbConnError(error)) { markDbDown(); return dbUnavailable(); }
+    return jsonCors({ error: "Could not read transactions" }, 500);
+  }
 
   return jsonCors({ transactions: (data ?? []).map(formatSep24Tx) });
 }

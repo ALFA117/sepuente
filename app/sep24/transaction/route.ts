@@ -4,6 +4,7 @@ import { requireSep10 } from "@/lib/auth-middleware";
 import { db } from "@/lib/supabase";
 import { getDriver } from "@/lib/drivers";
 import { formatSep24Tx } from "@/lib/sep24";
+import { dbReachable, dbUnavailable, isDbConnError, markDbDown } from "@/lib/db-status";
 
 export const dynamic = "force-dynamic";
 
@@ -27,13 +28,19 @@ export async function GET(req: NextRequest) {
   }
   if (id && !UUID.test(id)) return jsonCors({ error: "Transaction not found" }, 404);
 
+  if (!(await dbReachable())) return dbUnavailable();
+
   let query = db.from("sep24_transactions").select("*").eq("stellar_account", claims.account);
   if (id) query = query.eq("id", id);
   else if (stellarTxId) query = query.eq("stellar_transaction_id", stellarTxId);
   else query = query.eq("spei_reference", externalId);
 
   const { data, error } = await query.limit(1).maybeSingle();
-  if (error) return jsonCors({ error: "Could not read the transaction" }, 500);
+  if (error) {
+    console.error("[sep24/transaction]", error.message);
+    if (isDbConnError(error)) { markDbDown(); return dbUnavailable(); }
+    return jsonCors({ error: "Could not read the transaction" }, 500);
+  }
   if (!data) return jsonCors({ error: "Transaction not found" }, 404);
   let row = data;
 

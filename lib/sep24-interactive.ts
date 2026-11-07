@@ -7,6 +7,7 @@ import { signSession } from "./jwt";
 import { env } from "./env";
 import { amountError } from "./amount";
 import { isSupportedAsset } from "./sep24";
+import { dbReachable, dbUnavailable, isDbConnError, markDbDown } from "./db-status";
 
 async function readBody(req: NextRequest): Promise<Record<string, string>> {
   const ct = req.headers.get("content-type") ?? "";
@@ -56,6 +57,8 @@ export async function startInteractive(req: NextRequest, kind: "deposit" | "with
   }
   const amount = body.amount ?? "";
 
+  if (!(await dbReachable())) return dbUnavailable();
+
   const txId = crypto.randomUUID();
   const now = new Date().toISOString();
   const { error } = await db.from("sep24_transactions").insert({
@@ -72,9 +75,7 @@ export async function startInteractive(req: NextRequest, kind: "deposit" | "with
   if (error) {
     console.error(`[sep24/${kind}] insert`, error);
     // Sin conexión con la base (p. ej. proyecto pausado): decirlo claro en vez de "intenta de nuevo".
-    if (/fetch failed|ENOTFOUND|ECONNREFUSED|timeout/i.test(`${error.message} ${error.details ?? ""}`)) {
-      return jsonCors({ error: "La base de datos del anchor no está disponible: los depósitos y retiros de la demo están en pausa por ahora." }, 503);
-    }
+    if (isDbConnError(error)) { markDbDown(); return dbUnavailable(); }
     return jsonCors({ error: "No se pudo crear la transacción. Intenta de nuevo en unos segundos." }, 500);
   }
 

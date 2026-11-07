@@ -3,6 +3,7 @@ import { jsonCors, optionsResponse } from "@/lib/cors";
 import { requireSep10 } from "@/lib/auth-middleware";
 import { db } from "@/lib/supabase";
 import { formatQuote, priceFor, QUOTE_CONTEXTS } from "@/lib/sep38";
+import { dbReachable, dbUnavailable, isDbConnError, markDbDown } from "@/lib/db-status";
 
 export const dynamic = "force-dynamic";
 export async function OPTIONS() { return optionsResponse(); }
@@ -29,6 +30,9 @@ export async function POST(req: NextRequest) {
     return jsonCors({ error: (e as Error).message }, 400);
   }
 
+  // La cotización firme se guarda para poder consultarla y respetarla después.
+  if (!(await dbReachable())) return dbUnavailable();
+
   const row = {
     id: crypto.randomUUID(),
     sell_asset,
@@ -45,6 +49,7 @@ export async function POST(req: NextRequest) {
   const { error } = await db.from("sep38_quotes").insert(row);
   if (error) {
     console.error("[sep38/quote] insert", error);
+    if (isDbConnError(error)) { markDbDown(); return dbUnavailable(); }
     return jsonCors({ error: "Could not store the quote" }, 500);
   }
 
