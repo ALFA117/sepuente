@@ -78,6 +78,17 @@ export default function DemoPage() {
   const [busy, setBusy] = useState<Busy>(null);
   const busyRef = useRef<Busy>(null);
   const [sheet, setSheet] = useState<SheetState | null>(null);
+  // false = la base del anchor no responde: depósitos y retiros en pausa (SEP-1/SEP-10 siguen).
+  const [dbUp, setDbUp] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/health")
+      .then((r) => (r.ok ? r.json() : { db: false }))
+      .then((d: { db?: boolean }) => { if (alive) setDbUp(d.db !== false); })
+      .catch(() => { if (alive) setDbUp(true); });
+    return () => { alive = false; };
+  }, []);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const run = async (key: NonNullable<Busy>, fn: () => Promise<void>) => {
@@ -536,6 +547,17 @@ export default function DemoPage() {
           </div>
         </Enter>
 
+        {dbUp === false && (
+          <div className={ui.alert} role="status">
+            {Icon.alert(16)}
+            <span>
+              <strong>Depósitos y retiros en pausa.</strong> La base de datos de la demo no está disponible por ahora,
+              así que el anchor no puede registrar operaciones nuevas. Puedes crear tu wallet, recibir XLM de prueba e
+              iniciar sesión con SEP-10; el resto vuelve en cuanto se reactive la base.
+            </span>
+          </div>
+        )}
+
         <DemoRail step={step} isEmail={isEmail} ops={completedOps} />
 
         <div className={styles.grid}>
@@ -672,10 +694,12 @@ export default function DemoPage() {
         <section className={styles.ops} aria-labelledby="ops-title">
           <div className={styles.sectionHead}>
             <h2 id="ops-title" className={styles.h2}>Operar</h2>
-            {!jwt && <span className={styles.lockHint}>Completa los 3 pasos para desbloquear</span>}
+            {dbUp === false
+              ? <span className={styles.lockHint}>En pausa: la base de datos no responde</span>
+              : !jwt && <span className={styles.lockHint}>Completa los 3 pasos para desbloquear</span>}
           </div>
           <div className={styles.opsGrid}>
-            <Pressable type="button" className={`${styles.op} ${styles.opDeposit}`} onClick={() => openInteractive("deposit")} disabled={!jwt || !!busy}>
+            <Pressable type="button" className={`${styles.op} ${styles.opDeposit}`} onClick={() => openInteractive("deposit")} disabled={!jwt || !!busy || dbUp === false}>
               <span className={styles.opIcon}>{busy === "deposit" ? <Spinner /> : Icon.down(22)}</span>
               <span className={styles.opText}>
                 <span className={styles.opTitle}>Depositar</span>
@@ -683,7 +707,7 @@ export default function DemoPage() {
               </span>
               <span className={styles.opArrow}>{Icon.arrow(18)}</span>
             </Pressable>
-            <Pressable type="button" className={`${styles.op} ${styles.opWithdraw}`} onClick={() => openInteractive("withdraw")} disabled={!jwt || !!busy}>
+            <Pressable type="button" className={`${styles.op} ${styles.opWithdraw}`} onClick={() => openInteractive("withdraw")} disabled={!jwt || !!busy || dbUp === false}>
               <span className={styles.opIcon}>{busy === "withdraw" ? <Spinner /> : Icon.up(22)}</span>
               <span className={styles.opText}>
                 <span className={styles.opTitle}>Retirar</span>

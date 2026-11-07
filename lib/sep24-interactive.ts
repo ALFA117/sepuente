@@ -71,6 +71,10 @@ export async function startInteractive(req: NextRequest, kind: "deposit" | "with
   });
   if (error) {
     console.error(`[sep24/${kind}] insert`, error);
+    // Sin conexión con la base (p. ej. proyecto pausado): decirlo claro en vez de "intenta de nuevo".
+    if (/fetch failed|ENOTFOUND|ECONNREFUSED|timeout/i.test(`${error.message} ${error.details ?? ""}`)) {
+      return jsonCors({ error: "La base de datos del anchor no está disponible: los depósitos y retiros de la demo están en pausa por ahora." }, 503);
+    }
     return jsonCors({ error: "No se pudo crear la transacción. Intenta de nuevo en unos segundos." }, 500);
   }
 
