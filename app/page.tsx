@@ -92,7 +92,7 @@ export default function LandingPage() {
             <div className={styles.heroCopy}>
               <Enter as="p" className={styles.chip}>
                 <span className={styles.chipDot} aria-hidden="true" />
-                Demo en vivo · red de prueba
+                Demo · red de prueba (Stellar testnet)
               </Enter>
               <Enter as="h1" className={styles.title} delay={0.06}>
                 Pesos mexicanos en Stellar, <span className={styles.titleAccent}>sin custodia<ArchUnderline className={styles.titleArch} /></span>
