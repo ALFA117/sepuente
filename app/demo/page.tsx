@@ -23,6 +23,7 @@ import { Enter, Pressable, Swap } from "../components/motion";
 import { POLLAR_KEY, usePollarWallet } from "./pollar";
 import { EmailVerify, maskEmail } from "./EmailVerify";
 import { DemoRail } from "./DemoRail";
+import { fetchDbUp } from "../components/DbStatus";
 
 type WalletMode = "email" | "local";
 
@@ -81,14 +82,13 @@ export default function DemoPage() {
   // false = la base del anchor no responde: depósitos y retiros en pausa (SEP-1/SEP-10 siguen).
   const [dbUp, setDbUp] = useState<boolean | null>(null);
 
+  // null = aún no se sabe o no hubo red: no se bloquea nada y, si la base está caída, el anchor responde 503.
   useEffect(() => {
     let alive = true;
-    fetch("/api/health")
-      .then((r) => (r.ok ? r.json() : { db: false }))
-      .then((d: { db?: boolean }) => { if (alive) setDbUp(d.db !== false); })
-      .catch(() => { if (alive) setDbUp(true); });
+    fetchDbUp().then((v) => { if (alive && v !== null) setDbUp(v); });
     return () => { alive = false; };
   }, []);
+  const paused = dbUp === false;
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const run = async (key: NonNullable<Busy>, fn: () => Promise<void>) => {
@@ -163,7 +163,19 @@ export default function DemoPage() {
         toast.error("Tu sesión SEP-10 expiró. Vuelve a iniciar sesión.");
         return;
       }
-      if (!r.ok) throw new Error(errorText(r, "No pudimos cargar el historial"));
+      if (r.status === 503) {
+        setDbUp(false);
+        setTxs([]);
+        setTxError("");
+        return;
+      }
+      if (!r.ok) {
+        throw new Error(
+          r.status >= 500
+            ? `No pudimos cargar el historial: el anchor respondió con un error (código ${r.status}).`
+            : errorText(r, "No pudimos cargar el historial"),
+        );
+      }
       const list = r.data.transactions ?? [];
       // Pull-on-read: consultar cada operación pendiente hace que el anchor detecte pagos en Stellar.
       const pending = list.filter((t) => PENDING_STATUSES.includes(t.status)).slice(0, 5);
@@ -205,11 +217,12 @@ export default function DemoPage() {
   }, [loadBalances]);
 
   useEffect(() => { if (pk) loadBalances(); }, [pk, loadBalances]);
-  useEffect(() => { if (jwt) loadTxs(jwt); }, [jwt, loadTxs]);
+  // El historial vive en la base del anchor: si está en pausa no se pide.
+  useEffect(() => { if (jwt && !paused) loadTxs(jwt); }, [jwt, paused, loadTxs]);
 
   // Al volver de la pestaña/ventana del anchor, refresca estado y saldos.
   useEffect(() => {
-    if (!jwt) return;
+    if (!jwt || paused) return;
     const onVisible = () => {
       if (document.visibilityState === "visible") { loadTxs(jwt, true); loadBalances(); }
     };
@@ -219,7 +232,7 @@ export default function DemoPage() {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", onVisible);
     };
-  }, [jwt, loadTxs, loadBalances]);
+  }, [jwt, paused, loadTxs, loadBalances]);
 
   // Mientras haya operaciones en curso, sondea cada 6 s.
   const hasPending = !!txs?.some((t) => PENDING_STATUSES.includes(t.status));
@@ -359,6 +372,7 @@ export default function DemoPage() {
       });
       if (!r.ok || !r.data.url) {
         if (r.status === 403) saveJwt("");
+        if (r.status === 503) setDbUp(false);
         throw new Error(errorText(r, "El anchor no devolvió la URL interactiva"));
       }
       // Misma origin: ruta relativa para que funcione también en previews y localhost.
@@ -495,10 +509,10 @@ export default function DemoPage() {
 
   // El chat de ayuda lee este estado para contestar "¿Qué hago ahora?" según el paso real.
   useEffect(() => {
-    const detail = { step, isEmail, ops: completedOps, pending: hasPending, hasTmxn: parseFloat(bal?.tmxn ?? "0") > 0 };
+    const detail = { step, isEmail, ops: completedOps, pending: hasPending, hasTmxn: parseFloat(bal?.tmxn ?? "0") > 0, paused };
     (window as unknown as { __sepuenteDemo?: typeof detail }).__sepuenteDemo = detail;
     return () => { delete (window as unknown as { __sepuenteDemo?: typeof detail }).__sepuenteDemo; };
-  }, [step, isEmail, completedOps, hasPending, bal?.tmxn]);
+  }, [step, isEmail, completedOps, hasPending, bal?.tmxn, paused]);
 
   const steps = [
     isEmail
@@ -532,11 +546,13 @@ export default function DemoPage() {
           </div>
           <div className={styles.introText}>
             <p className={ui.eyebrow}>Wallet de prueba · SEP-24</p>
-            <h1 className={styles.title}>Prueba el puente en 2 minutos</h1>
+            <h1 className={styles.title}>{paused ? "Prueba el puente" : "Prueba el puente en 2 minutos"}</h1>
             <p className={styles.lead}>
-              {POLLAR_KEY
-                ? "Esta página es una wallet de prueba: entra con tu correo (o con una llave generada en tu navegador) y deposita y retira pesos digitales con SEPuente, sin instalar nada."
-                : "Esta página es una wallet de prueba: crea una cuenta en tu navegador para que deposites y retires pesos digitales con SEPuente, sin instalar nada."}
+              {paused
+                ? `Esta página es una wallet de prueba: ${POLLAR_KEY ? "entra con tu correo (o con una llave generada en tu navegador)" : "crea una cuenta en tu navegador"}, activa los pesos digitales y conéctate al anchor. Depositar y retirar vuelve cuando se reactive la base de datos.`
+                : POLLAR_KEY
+                  ? "Esta página es una wallet de prueba: entra con tu correo (o con una llave generada en tu navegador) y deposita y retira pesos digitales con SEPuente, sin instalar nada."
+                  : "Esta página es una wallet de prueba: crea una cuenta en tu navegador para que deposites y retires pesos digitales con SEPuente, sin instalar nada."}
             </p>
           </div>
           <div className={styles.introNotes}>
@@ -547,18 +563,18 @@ export default function DemoPage() {
           </div>
         </Enter>
 
-        {dbUp === false && (
+        {paused && (
           <div className={ui.alert} role="status">
             {Icon.alert(16)}
             <span>
               <strong>Depósitos y retiros en pausa.</strong> La base de datos de la demo no está disponible por ahora,
-              así que el anchor no puede registrar operaciones nuevas. Puedes crear tu wallet, recibir XLM de prueba e
-              iniciar sesión con SEP-10; el resto vuelve en cuanto se reactive la base.
+              así que el anchor no puede registrar operaciones ni mostrar tu historial. Puedes crear tu wallet, activar
+              los pesos digitales y conectarte con SEP-10; depositar y retirar vuelve en cuanto se reactive la base.
             </span>
           </div>
         )}
 
-        <DemoRail step={step} isEmail={isEmail} ops={completedOps} />
+        <DemoRail step={step} isEmail={isEmail} ops={completedOps} paused={paused} />
 
         <div className={styles.grid}>
           {/* ── Wallet ── */}
@@ -694,12 +710,12 @@ export default function DemoPage() {
         <section className={styles.ops} aria-labelledby="ops-title">
           <div className={styles.sectionHead}>
             <h2 id="ops-title" className={styles.h2}>Operar</h2>
-            {dbUp === false
+            {paused
               ? <span className={styles.lockHint}>En pausa: la base de datos no responde</span>
               : !jwt && <span className={styles.lockHint}>Completa los 3 pasos para desbloquear</span>}
           </div>
           <div className={styles.opsGrid}>
-            <Pressable type="button" className={`${styles.op} ${styles.opDeposit}`} onClick={() => openInteractive("deposit")} disabled={!jwt || !!busy || dbUp === false}>
+            <Pressable type="button" className={`${styles.op} ${styles.opDeposit}`} onClick={() => openInteractive("deposit")} disabled={!jwt || !!busy || paused}>
               <span className={styles.opIcon}>{busy === "deposit" ? <Spinner /> : Icon.down(22)}</span>
               <span className={styles.opText}>
                 <span className={styles.opTitle}>Depositar</span>
@@ -707,7 +723,7 @@ export default function DemoPage() {
               </span>
               <span className={styles.opArrow}>{Icon.arrow(18)}</span>
             </Pressable>
-            <Pressable type="button" className={`${styles.op} ${styles.opWithdraw}`} onClick={() => openInteractive("withdraw")} disabled={!jwt || !!busy || dbUp === false}>
+            <Pressable type="button" className={`${styles.op} ${styles.opWithdraw}`} onClick={() => openInteractive("withdraw")} disabled={!jwt || !!busy || paused}>
               <span className={styles.opIcon}>{busy === "withdraw" ? <Spinner /> : Icon.up(22)}</span>
               <span className={styles.opText}>
                 <span className={styles.opTitle}>Retirar</span>
@@ -723,12 +739,15 @@ export default function DemoPage() {
           <section className={`${ui.card} ${styles.history}`} aria-labelledby="hist-title">
             <div className={styles.walletHead}>
               <h2 id="hist-title" className={ui.cardTitle}>Historial</h2>
-              <button type="button" className={`${ui.btn} ${ui.ghost} ${ui.btnSm}`} onClick={() => loadTxs(jwt)} disabled={txLoading} aria-label="Actualizar historial">
+              <button type="button" className={`${ui.btn} ${ui.ghost} ${ui.btnSm}`} onClick={() => loadTxs(jwt)} disabled={txLoading || paused} aria-label="Actualizar historial">
                 {txLoading ? <Spinner /> : Icon.refresh(16)}
                 <span className={styles.hideXs}>Actualizar</span>
               </button>
             </div>
 
+            {paused ? (
+              <EmptyState title="Historial en pausa" text="El historial de operaciones vive en la base de datos del anchor, que no está disponible por ahora. Tu saldo de arriba se lee directo de Stellar y cada pago sigue visible en stellar.expert." />
+            ) : <>
             {txError && (
               <div className={ui.alert} role="alert">
                 {Icon.alert(16)}
@@ -802,6 +821,7 @@ export default function DemoPage() {
                 </AnimatePresence>
               </ul>
             )}
+            </>}
           </section>
         )}
       </main>
