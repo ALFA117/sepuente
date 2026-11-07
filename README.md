@@ -4,21 +4,23 @@
 
 Cualquier wallet compatible con Stellar puede ofrecer depósitos y retiros en pesos mexicanos sin integrar APIs bancarias propietarias ni custodiar fondos de los usuarios.
 
+> **Estado (nov 2026):** la base de datos de producción (Supabase) está apagada, así que en https://sepuente.vercel.app **los depósitos y retiros están en pausa**. La demo lo avisa y desactiva esos botones, `/sep24/info` los anuncia deshabilitados y los endpoints que dependen de la base responden `503`. Siguen funcionando SEP-1 (`stellar.toml`), SEP-10 (login), las cotizaciones indicativas de SEP-38 (`/sep38/info`, `/price`, `/prices`), el faucet de XLM de testnet y la trustline de TMXN. Todo lo de abajo describe el proyecto tal como se entregó y se verificó el 27 sep 2026; para correrlo completo basta una base nueva con `supabase/` y las variables de entorno.
+
 ## GOYA HACK · CriptoUNAM 2026
 
 | | |
 |---|---|
 | **Track** | Blockchain |
 | **Sponsors** | Stellar · BAF · Pollar (login por correo, trustline, firma SEP-10 y pago del retiro en la demo) |
-| **Demo en vivo** | https://sepuente.vercel.app (wallet de prueba en `/demo`, pitch en `/pitch`, docs en `/devs`) |
+| **Demo** | https://sepuente.vercel.app (wallet de prueba en `/demo`, pitch en `/pitch`, docs en `/devs`). Depósitos y retiros en pausa desde nov 2026, ver *Estado* arriba |
 | **Repositorio** | https://github.com/ALFA117/sepuente |
 | **Red** | Stellar Testnet · activo `TMXN` (1 TMXN = 1 peso de prueba) |
 | **Equipo** | [ALFA117](https://github.com/ALFA117) |
 
 **En una frase:** mandas pesos desde tu banco por SPEI y los recibes como pesos digitales en cualquier wallet de Stellar (y de regreso), sin que SEPuente custodie tu dinero ni tus llaves.
 
-**Qué funciona hoy, verificable:**
-- Flujo completo de depósito y retiro en testnet, con transacciones reales visibles en stellar.expert (`node scripts/e2e-testnet.mjs https://sepuente.vercel.app`).
+**Qué se verificó en producción el 27 sep 2026:**
+- Flujo completo de depósito y retiro en testnet, con transacciones reales visibles en stellar.expert (`node scripts/e2e-testnet.mjs https://sepuente.vercel.app`; hoy se detiene en el depósito con `503` porque la base está apagada).
 - **75 de 76 pruebas oficiales de SDF (`@stellar/anchor-tests`) en SEP-1, 10, 24 y 38** contra producción (27 sep 2026). La única restante mide la hora del reto SEP-10 contra el reloj de la computadora que corre la prueba; ver [Validación con anchor-tests](#validación-con-anchor-tests).
 - SPEI simulado y marcado como "Modo prueba" en toda la interfaz (`DRIVER=mock`); el driver de Etherfuse está escrito pero no probado sin API key.
 
@@ -34,7 +36,7 @@ Cualquier wallet compatible con Stellar puede ofrecer depósitos y retiros en pe
 | Cuenta de distribución del anchor | [`GC2UNTIN…IS3MGE2`](https://stellar.expert/explorer/testnet/account/GC2UNTINTDLHZE6UYO5JPTT5DAJ3Y6GYF7TPE2V5KCO2BJFX3IS3MGE2) |
 | Descubrimiento SEP-1 | [`/.well-known/stellar.toml`](https://sepuente.vercel.app/.well-known/stellar.toml) |
 
-Son de la corrida completa contra producción del 27 sep 2026. Para generar las tuyas: abre [`/demo`](https://sepuente.vercel.app/demo), completa los 3 pasos y haz un depósito; el historial enlaza cada pago a stellar.expert. La suite oficial de SDF da 75/76 ([detalle](#validación-con-anchor-tests)).
+Son de la corrida completa contra producción del 27 sep 2026. Con la base de datos activa, para generar las tuyas abres [`/demo`](https://sepuente.vercel.app/demo), completas los 3 pasos y haces un depósito; el historial enlaza cada pago a stellar.expert. La suite oficial de SDF dio 75/76 ([detalle](#validación-con-anchor-tests)).
 
 **2 · Ajuste producto-problema: por qué Stellar.**
 - **Usuario:** una wallet o app de Stellar que quiere ofrecer pesos mexicanos (remesas, pagos a freelancers). **Tarea:** agregar depósito y retiro por SPEI sin integrar la API de cada banco ni custodiar fondos.
