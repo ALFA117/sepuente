@@ -77,6 +77,8 @@
 @media (max-width: 420px) {
   .fab { width: 48px; min-height: 48px; padding: 0; justify-content: center; right: max(12px, var(--safe-right)); bottom: calc(12px + var(--safe-bottom)); }
   .fabText { display: none; }
+  /* En el teléfono el globo va junto al botón, no encima: así no tapa los botones del contenido. */
+  .nudge { bottom: calc(12px + var(--safe-bottom)); right: calc(max(12px, var(--safe-right)) + 56px); min-height: 48px; border-radius: var(--radius-lg) 4px var(--radius-lg) var(--radius-lg); }
 }
 
 .panel {
