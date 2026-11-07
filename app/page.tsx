@@ -9,6 +9,7 @@ import { ArchFlow } from "./components/ArchFlow";
 import { ArchUnderline } from "./components/ArchUnderline";
 import { LogoWord } from "./components/brand/Logo";
 import { pageMeta } from "@/lib/seo";
+import { DbPauseNote } from "./components/DbStatus";
 
 export const metadata = pageMeta(
   "/",
@@ -51,7 +52,7 @@ const FEATURES = [
   },
   {
     title: "Validado con la suite oficial",
-    desc: "75 de 76 pruebas de @stellar/anchor-tests de SDF contra producción, en los cuatro estándares.",
+    desc: "75 de 76 pruebas de @stellar/anchor-tests de SDF contra producción (corrida del 27 sep 2026), en los cuatro estándares.",
     icon: <><path d="M9 12l2 2 4-4" /><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" /></>,
   },
   {
@@ -110,6 +111,7 @@ export default function LandingPage() {
                   <a href="https://github.com/ALFA117/sepuente" target="_blank" rel="noreferrer" className={styles.ctaGhost}>GitHub</a>
                 </div>
               </Enter>
+              <DbPauseNote />
             </div>
 
             <Enter className={styles.heroVisual} delay={0.28} y={24}>
@@ -118,7 +120,7 @@ export default function LandingPage() {
 
             <Enter as="dl" className={styles.stats} delay={0.34}>
               <div className={styles.stat}><dt>SEPs implementados</dt><dd>4</dd></div>
-              <div className={styles.stat}><dt>Pruebas oficiales SDF</dt><dd className={styles.statGreen}>75/76</dd></div>
+              <div className={styles.stat}><dt>Pruebas SDF · sep 2026</dt><dd className={styles.statGreen}>75/76</dd></div>
               <div className={styles.stat}><dt>Comisión</dt><dd>0.5&nbsp;%</dd></div>
             </Enter>
           </div>
@@ -234,7 +236,7 @@ export default function LandingPage() {
             <Reveal className={styles.toml} delay={0.12}>
               <div className={styles.tomlBar}>
                 <a href="/.well-known/stellar.toml" target="_blank" rel="noreferrer" className={styles.tomlPath}>/.well-known/stellar.toml</a>
-                <span className={styles.tomlTotal}>75/76 pruebas</span>
+                <span className={styles.tomlTotal}>75/76 · 27 sep 2026</span>
               </div>
               <ul className={styles.tomlLines}>
                 {TOML.map((t) => (
@@ -258,6 +260,7 @@ export default function LandingPage() {
           <Reveal className={styles.ctaInner}>
             <h2 className={styles.h2}>Pruébalo ahora</h2>
             <p className={styles.sectionLead}>Entra con tu correo y un código, o con una llave generada en tu navegador. Sin instalar nada, en menos de dos minutos.</p>
+            <DbPauseNote className={styles.ctaNote} />
             <Link href="/demo" className={styles.ctaPrimary}>
               Abrir la demo
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>

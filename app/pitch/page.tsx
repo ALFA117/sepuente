@@ -7,6 +7,7 @@ import { SiteHeader } from "../components/SiteHeader";
 import { Reveal, Stagger, StaggerItem, Enter, EASE_OUT } from "../components/motion";
 import { Logo3D } from "../components/brand/Logo3D";
 import { LogoWord } from "../components/brand/Logo";
+import { DbPauseNote } from "../components/DbStatus";
 
 const CHAPTERS = [
   { id: "portada", label: "Portada" },
@@ -94,7 +95,7 @@ const STACK = [
   { n: "Tokens de sesión", r: "Librería jose · JWT HS256" },
   { n: "TypeScript", r: "Tipos de punta a punta" },
   { n: "MockDriver", r: "Testnet · 1 TMXN = 1 MXN" },
-  { n: "Etherfuse", r: "Driver sandbox SPEI" },
+  { n: "Etherfuse", r: "Driver SPEI escrito · sin probar" },
 ];
 
 function Chapter({ id, n, eyebrow, title, children, className = "" }: { id: string; n: number; eyebrow: string; title: React.ReactNode; children: React.ReactNode; className?: string }) {
@@ -183,7 +184,7 @@ export default function PitchPage() {
         <section id="portada" className={`${styles.chapter} ${styles.cover}`} aria-labelledby="portada-t">
           <div className={styles.coverGlow} aria-hidden="true" />
           <div className={`${styles.inner} ${styles.coverGrid}`}>
-            <Enter as="p" className={`${styles.chip} ${styles.coverChip}`}><span className={styles.chipDot} aria-hidden="true" />Stellar Testnet · en vivo</Enter>
+            <Enter as="p" className={`${styles.chip} ${styles.coverChip}`}><span className={styles.chipDot} aria-hidden="true" />Stellar Testnet · SPEI simulado</Enter>
             <h1 id="portada-t" className="sr-only">SEPuente</h1>
             <Enter className={styles.coverLogo} delay={0.06} y={20}>
               <Logo3D className={styles.cover3d} />
@@ -201,6 +202,7 @@ export default function PitchPage() {
               <Link href="/demo" className={styles.btnPrimary}>Ver la demo {I.arrow}</Link>
               <button type="button" className={styles.btnGhost} onClick={() => goTo(1)}>Empezar el pitch {I.down}</button>
             </Enter>
+            <DbPauseNote className={styles.coverNote} />
           </div>
         </section>
 
@@ -291,7 +293,7 @@ export default function PitchPage() {
             <StaggerItem className={styles.split}>
               <div className={styles.branch}>
                 <div className={styles.edge}><span>RampDriver</span></div>
-                <div className={styles.node}><strong>Proveedor SPEI</strong><span>MockDriver en la demo · Etherfuse (sandbox)</span></div>
+                <div className={styles.node}><strong>Proveedor SPEI</strong><span>MockDriver en la demo · driver de Etherfuse escrito, sin probar</span></div>
                 <div className={styles.edge}><span>SPEI</span></div>
                 <div className={styles.node}><strong>Banco</strong><span>CLABE + referencia</span></div>
               </div>
@@ -317,7 +319,7 @@ export default function PitchPage() {
             ))}
           </Stagger>
           <Reveal as="p" className={styles.note}>
-            <strong>75 de 76 pruebas oficiales de <code>@stellar/anchor-tests</code></strong> contra producción. La restante compara la hora del reto de login con el reloj de la máquina que corre la prueba.
+            <strong>75 de 76 pruebas oficiales de <code>@stellar/anchor-tests</code></strong> contra producción (corrida del 27 sep 2026). La restante compara la hora del reto de login con el reloj de la máquina que corre la prueba.
           </Reveal>
         </Chapter>
 
@@ -352,7 +354,7 @@ export default function PitchPage() {
         {/* ── 10. Verifícalo en la red ── */}
         <Chapter id="prueba" n={10} eyebrow="Verifícalo" title={<>Transacciones reales en <span className={styles.gold}>Stellar testnet</span></>}>
           <Reveal as="p" className={styles.lead} delay={0.1}>
-            Cada enlace abre stellar.expert. Son pagos de la corrida completa contra producción; puedes generar los tuyos en la demo en dos minutos.
+            Cada enlace abre stellar.expert. Son pagos de la corrida completa contra producción del 27 sep 2026 y siguen en la red de prueba aunque la demo esté en pausa.
           </Reveal>
           <Stagger as="ul" className={styles.proof}>
             {PROOF.map((p) => (

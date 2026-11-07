@@ -329,6 +329,7 @@
 }
 .railBtn {
   display: flex;
+  width: 100%; /* sin esto cada botón mide lo que su etiqueta y los puntos quedan en zigzag */
   align-items: center;
   justify-content: flex-end;
   gap: var(--sp-3);
@@ -403,6 +404,7 @@
 .coverGrid .coverLead { grid-area: lead; }
 .coverGrid .coverTags { grid-area: tags; }
 .coverGrid .coverCtas { grid-area: ctas; }
+.coverNote { grid-column: 1; max-width: 560px; }
 @media (min-width: 900px) {
   .coverGrid {
     grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);

@@ -3,6 +3,7 @@ import Link from "next/link";
 import styles from "./page.module.css";
 import { SiteHeader, SiteFooter } from "../components/SiteHeader";
 import { ui, CopyButton, Icon } from "../components/ui";
+import { DbPauseNote } from "../components/DbStatus";
 import { truncateMiddle } from "@/lib/format";
 import { Glossary, Token } from "../components/Glossary";
 import { Enter, Reveal, Stagger, StaggerItem } from "../components/motion";
@@ -153,6 +154,7 @@ export default function DevsPage() {
         </Section>
 
         <Section n="04" title="Prueba rápida sin código">
+          <DbPauseNote />
           <ol className={styles.steps}>
             <li><strong>Abre la Demo Wallet de SDF</strong><span>Entra a <a href={DEMO_WALLET} target="_blank" rel="noreferrer">demo-wallet.stellar.org</a>, ya apuntando a este anchor.</span></li>
             <li><strong>Crea y fondea una cuenta</strong><span>Genera un keypair de testnet y usa “Fund with Friendbot”.</span></li>

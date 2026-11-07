@@ -423,6 +423,7 @@
 }
 .ctaInner .h2 { max-width: none; }
 .ctaInner .ctaPrimary { width: 100%; max-width: 360px; }
+.ctaNote { max-width: 560px; text-align: left; }
 
 /* ── Hero con vista previa ── */
 .heroCopy { display: flex; flex-direction: column; gap: var(--sp-5); min-width: 0; }
