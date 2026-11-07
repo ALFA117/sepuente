@@ -3,10 +3,11 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import styles from "./HelpChat.module.css";
+import { fetchDbUp } from "./DbStatus";
 
 type Link = { href: string; label: string };
 interface Faq { id: string; q: string; keys: string[]; a: string; links?: Link[]; next?: string[] }
-interface DemoState { step: number; isEmail: boolean; ops: number; pending: boolean; hasTmxn: boolean }
+interface DemoState { step: number; isEmail: boolean; ops: number; pending: boolean; hasTmxn: boolean; paused?: boolean }
 
 // Respuestas predeterminadas: no hay IA ni servidor; todo se resuelve en el navegador.
 // **texto** se muestra en negritas.
@@ -42,11 +43,11 @@ const FAQ: Faq[] = [
   { id: "codigo", q: "No me llega el código", keys: ["no llega", "no me llega", "codigo", "spam", "no recibo"],
     a: "Revisa **spam o promociones** y espera un minuto. Luego usa **Reenviar código** (se activa a los 30 s) o **Cambiar correo** si lo escribiste mal. Si sigue sin llegar, usa **Llave en el navegador**: funciona igual sin correo.", next: ["correo"] },
   { id: "error", q: "Me salió un error", keys: ["error", "fallo", "no funciona", "insufficient", "no se pudo", "falla"],
-    a: "La mayoría se arregla reintentando: la demo espera a que la red confirme tu cuenta y, si Pollar no cubre una reserva, te envía XLM de prueba sola. Si el error sigue, usa **Llave en el navegador**, que no depende de terceros. El faucet permite 3 solicitudes por día por cuenta.", next: ["ahora"] },
+    a: "La mayoría se arregla reintentando: la demo espera a que la red confirme tu cuenta y, si Pollar no cubre una reserva, te envía XLM de prueba sola. Si el error sigue, usa **Llave en el navegador**, que no depende de terceros. El faucet permite 3 solicitudes por día por cuenta. Si ves **Depósitos y retiros en pausa**, no es tu wallet: la base de datos de la demo está apagada.", next: ["ahora"] },
   { id: "trustline", q: "¿Qué es una trustline?", keys: ["trustline", "linea de confianza", "activar"],
     a: "Es el permiso que da tu wallet para recibir un token específico, aquí TMXN. Se activa **una sola vez** y reserva 0.5 XLM en tu cuenta.", next: ["xlm"] },
   { id: "sep", q: "¿Qué son SEP-10 y SEP-24?", keys: ["sep", "sep-10", "sep-24", "sep-38", "estandar", "protocolo"],
-    a: "Estándares de Stellar. **SEP-10**: tu wallet firma un reto para iniciar sesión sin contraseña. **SEP-24**: la pantalla interactiva de depósito y retiro. **SEP-38**: cotizaciones. SEPuente pasa **75 de 76** pruebas oficiales de SDF.",
+    a: "Estándares de Stellar. **SEP-10**: tu wallet firma un reto para iniciar sesión sin contraseña. **SEP-24**: la pantalla interactiva de depósito y retiro. **SEP-38**: cotizaciones. En la corrida del 27 sep 2026, SEPuente pasó **75 de 76** pruebas oficiales de SDF.",
     links: [{ href: "/devs", label: "Ver documentación" }], next: ["integrar"] },
   { id: "stellar", q: "¿Por qué Stellar?", keys: ["por que stellar", "stellar", "blockchain", "red", "otra cadena"],
     a: "Porque Stellar ya tiene un **estándar de rampas** (anchors y SEP-24): una wallet integra una vez y funciona con cualquier anchor. Además, emitir el peso es nativo y cada pago tarda unos 5 segundos y cuesta una fracción de centavo.", next: ["sep", "integrar"] },
@@ -57,6 +58,8 @@ const FAQ: Faq[] = [
     links: [{ href: "/devs", label: "Documentación" }, { href: "https://github.com/ALFA117/sepuente", label: "GitHub" }], next: ["sep"] },
 ];
 const byId = (id: string) => FAQ.find((f) => f.id === id)!;
+// Temas que dependen de la base del anchor: si está en pausa, la respuesta lo dice.
+const PAUSED_TOPICS = ["depositar", "retirar", "tarda", "ver"];
 const DEFAULT_CHIPS = ["ahora", "que", "real", "comision", "custodia", "codigo"];
 
 const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[¿?¡!.,]/g, " ");
@@ -72,12 +75,24 @@ function match(text: string): Faq | null {
 }
 
 // "¿Qué hago ahora?" depende de en qué paso va la persona en la demo.
-function answerNow(): { text: string; links?: Link[] } {
+const PAUSE_NOTE = "Ahora mismo los **depósitos y retiros de la demo están en pausa**: la base de datos del anchor no está disponible.";
+
+function answerNow(dbDown: boolean): { text: string; links?: Link[] } {
   const d = (typeof window !== "undefined" ? (window as unknown as { __sepuenteDemo?: DemoState }).__sepuenteDemo : undefined);
-  if (!d) return { text: "Abre la demo: en 2 minutos creas una wallet de prueba, recibes pesos digitales y los regresas a tu banco (simulado).", links: [{ href: "/demo", label: "Abrir la demo" }] };
+  if (!d) {
+    return dbDown
+      ? { text: `Abre la demo: creas una wallet de prueba, activas los pesos digitales y te conectas al anchor con SEP-10. ${PAUSE_NOTE}`, links: [{ href: "/demo", label: "Abrir la demo" }] }
+      : { text: "Abre la demo: en 2 minutos creas una wallet de prueba, recibes pesos digitales y los regresas a tu banco (simulado).", links: [{ href: "/demo", label: "Abrir la demo" }] };
+  }
   if (d.step === 1) return { text: d.isEmail ? "Estás en el **paso 1**: escribe tu correo, toca **Enviar código** y escribe los 6 dígitos que te lleguen." : "Estás en el **paso 1**: toca **Obtener saldo de prueba** para recibir XLM de testnet." };
   if (d.step === 2) return { text: "Vas en el **paso 2**: toca **Activar pesos digitales** para que tu wallet pueda recibir TMXN." };
   if (d.step === 3) return { text: "Vas en el **paso 3**: toca **Conectar mi wallet**. Tu wallet firma un reto y quedas conectado al anchor." };
+  if (d.paused) {
+    return {
+      text: `Ya estás conectado al anchor con SEP-10. ${PAUSE_NOTE} Mientras vuelve, puedes revisar tu wallet en stellar.expert o ver cómo se integra el anchor en la documentación.`,
+      links: [{ href: "/devs", label: "Documentación" }],
+    };
+  }
   if (d.pending) return { text: "Tienes una **operación en curso**. Revisa el Historial: si es un retiro esperando pago, toca **Enviar TMXN al anchor**." };
   if (!d.hasTmxn) return { text: "¡Listo para operar! Empieza con un **Depósito**: escribe 250, confirma y toca **Simular SPEI recibido**." };
   return { text: d.ops ? `Ya completaste **${d.ops} operación${d.ops === 1 ? "" : "es"}**. Prueba un **Retiro** a tu CLABE, o revisa cada pago en stellar.expert desde el Historial.` : "Ya tienes TMXN. Prueba un **Retiro**: toca Retirar, usa la CLABE de prueba y envía los TMXN desde tu wallet." };
@@ -99,6 +114,7 @@ export function HelpChat() {
   const [typing, setTyping] = useState(false);
   const [input, setInput] = useState("");
   const [nudge, setNudge] = useState(false);
+  const [dbDown, setDbDown] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -113,15 +129,40 @@ export function HelpChat() {
   }, []);
   useEffect(() => { try { sessionStorage.setItem(STORE, JSON.stringify(msgs.slice(-30))); } catch { /* ignorar */ } }, [msgs]);
 
-  // Un saludo discreto una sola vez por navegador, a los 4 s.
+  // Un saludo discreto una sola vez por navegador. En el teléfono espera a que la persona haga scroll,
+  // para no tapar el botón principal del hero, y en cualquier pantalla se va solo a los 12 s.
   useEffect(() => {
     let seen = false;
     try { seen = localStorage.getItem("sp_helpchat_seen") === "1"; } catch { /* ignorar */ }
     if (seen) return;
-    const t = setTimeout(() => setNudge(true), 4000);
-    return () => clearTimeout(t);
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const small = window.matchMedia("(max-width: 560px)").matches;
+    if (!small) {
+      t = setTimeout(() => setNudge(true), 4000);
+      return () => clearTimeout(t);
+    }
+    const onScroll = () => {
+      if (window.scrollY < 320) return;
+      window.removeEventListener("scroll", onScroll);
+      t = setTimeout(() => setNudge(true), 800);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => { window.removeEventListener("scroll", onScroll); clearTimeout(t); };
   }, []);
   const dismissNudge = () => { setNudge(false); try { localStorage.setItem("sp_helpchat_seen", "1"); } catch { /* ignorar */ } };
+  useEffect(() => {
+    if (!nudge) return;
+    const t = setTimeout(dismissNudge, 12000);
+    return () => clearTimeout(t);
+  }, [nudge]);
+
+  // Las respuestas sobre depositar y retirar avisan si la base del anchor está en pausa.
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    fetchDbUp().then((v) => { if (alive) setDbDown(v === false); });
+    return () => { alive = false; };
+  }, [open]);
 
   useEffect(() => { listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: reduce ? "auto" : "smooth" }); }, [msgs, typing, open, reduce]);
   useEffect(() => {
@@ -145,8 +186,8 @@ export function HelpChat() {
     const reply: Omit<Msg, "id"> = !f
       ? { from: "bot", text: "No tengo una respuesta para eso todavía. Prueba con una de estas preguntas o revisa la documentación.", links: [{ href: "/devs", label: "Documentación" }], next: ["ahora", "que", "error"] }
       : f.id === "ahora"
-        ? { from: "bot", ...answerNow(), next: f.next }
-        : { from: "bot", text: f.a, links: f.links, next: f.next };
+        ? { from: "bot", ...answerNow(dbDown), next: f.next }
+        : { from: "bot", text: dbDown && PAUSED_TOPICS.includes(f.id) ? `${f.a} ${PAUSE_NOTE}` : f.a, links: f.links, next: f.next };
     const delay = reduce ? 0 : Math.min(900, 300 + reply.text.length * 3);
     setTimeout(() => { setTyping(false); setMsgs((m) => [...m, { id: nextId.current++, ...reply }]); }, delay);
   };
@@ -251,17 +292,20 @@ export function HelpChat() {
 
       <AnimatePresence>
         {nudge && !open && (
-          <motion.button
-            type="button"
+          <motion.div
             className={styles.nudge}
-            onClick={() => { dismissNudge(); setOpen(true); }}
             initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={reduce ? { opacity: 0 } : { opacity: 0, y: 6, transition: { duration: 0.12 } }}
             transition={{ type: "spring", stiffness: 320, damping: 26 }}
           >
-            ¿Dudas? Pregúntame
-          </motion.button>
+            <button type="button" className={styles.nudgeText} onClick={() => { dismissNudge(); setOpen(true); }}>
+              ¿Dudas? Pregúntame
+            </button>
+            <button type="button" className={styles.nudgeClose} onClick={dismissNudge} aria-label="Cerrar sugerencia de ayuda">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+            </button>
+          </motion.div>
         )}
       </AnimatePresence>
 

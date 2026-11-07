@@ -4,17 +4,40 @@
   right: max(16px, var(--safe-right));
   bottom: calc(80px + var(--safe-bottom));
   z-index: 45;
+  display: flex;
+  align-items: center;
   min-height: 44px;
-  padding: 0 var(--sp-4);
   border-radius: var(--radius-lg) var(--radius-lg) 4px var(--radius-lg);
   border: 1px solid var(--border-gold);
   background: var(--surface2);
   color: var(--cream);
+  box-shadow: var(--shadow-md);
+}
+.nudgeText {
+  min-height: 44px;
+  padding: 0 var(--sp-2) 0 var(--sp-4);
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
   font-size: var(--fs-small);
   font-weight: 600;
-  box-shadow: var(--shadow-md);
   cursor: pointer;
 }
+.nudgeClose {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  min-height: 44px;
+  margin-right: 4px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.nudgeText:focus-visible, .nudgeClose:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; border-radius: var(--radius-md); }
+.nudgeClose:hover { color: var(--cream); }
 .online {
   position: absolute;
   right: -1px;
