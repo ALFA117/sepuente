@@ -370,7 +370,7 @@
   justify-items: start;
 }
 .coverChip { grid-area: chip; }
-.coverWordWrap { grid-area: word; width: 100%; max-width: 420px; display: flex; }
+.coverWordWrap { grid-area: word; width: 88%; max-width: 420px; display: flex; }
 .coverWord { width: 100%; height: auto; color: var(--cream); }
 .coverGrid .coverLead { grid-area: lead; }
 .coverGrid .coverCtas { grid-area: ctas; }
