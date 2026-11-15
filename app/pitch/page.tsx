@@ -5,7 +5,6 @@ import { motion, useReducedMotion, useScroll, useSpring, AnimatePresence } from 
 import styles from "./page.module.css";
 import { SiteHeader } from "../components/SiteHeader";
 import { Reveal, Stagger, StaggerItem, Enter, EASE_OUT } from "../components/motion";
-import { Logo3D } from "../components/brand/Logo3D";
 import { LogoWord } from "../components/brand/Logo";
 import { DbPauseNote } from "../components/DbStatus";
 
@@ -85,6 +84,17 @@ const COMPARE = [
   { who: "StellarMesh", what: "SEP-24 para saldos de exchanges", sep24: true, adapts: false, kyc: false },
   { who: "Anchor Platform (SDF)", what: "Ser anchor desde cero", sep24: true, adapts: false, kyc: false },
   { who: "SEPuente", what: "Adaptador sobre rampas reguladas", sep24: true, adapts: true, kyc: true, hl: true },
+];
+
+// Ficha de la portada: solo datos que ya están en el repo y en el resto del pitch.
+const FACTS: { k: string; v: string; tone?: "ok" }[] = [
+  { k: "Estándares", v: "SEP-1 · 10 · 24 · 38" },
+  { k: "Suite oficial SDF", v: "75 / 76", tone: "ok" },
+  { k: "Fondos en custodia", v: "$0.00", tone: "ok" },
+  { k: "Comisión por tramo", v: "0.5 %" },
+  { k: "Red", v: "Stellar testnet" },
+  { k: "SPEI", v: "Simulado (MockDriver)" },
+  { k: "Licencia", v: "MIT" },
 ];
 
 const STACK = [
@@ -182,27 +192,26 @@ export default function PitchPage() {
       <main id="main">
         {/* ── 1. Portada ── */}
         <section id="portada" className={`${styles.chapter} ${styles.cover}`} aria-labelledby="portada-t">
-          <div className={styles.coverGlow} aria-hidden="true" />
           <div className={`${styles.inner} ${styles.coverGrid}`}>
-            <Enter as="p" className={`${styles.chip} ${styles.coverChip}`}><span className={styles.chipDot} aria-hidden="true" />Stellar Testnet · SPEI simulado</Enter>
+            <Enter as="p" className={`${styles.chip} ${styles.coverChip}`}><span className={styles.chipDot} aria-hidden="true" />Stellar testnet · SPEI simulado</Enter>
             <h1 id="portada-t" className="sr-only">SEPuente</h1>
-            <Enter className={styles.coverLogo} delay={0.06} y={20}>
-              <Logo3D className={styles.cover3d} />
-            </Enter>
-            <Enter className={styles.coverWordWrap} delay={0.08}>
+            <Enter className={styles.coverWordWrap} delay={0.06}>
               <LogoWord className={styles.coverWord} />
             </Enter>
             <Enter as="p" className={styles.coverLead} delay={0.12}>
               El anchor open source que conecta <strong>SPEI</strong> con <strong>Stellar</strong>, sin custodiar un solo peso.
-            </Enter>
-            <Enter className={styles.coverTags} delay={0.18}>
-              {["SEP-1 · 10 · 24 · 38", "No custodial", "MIT", "Serverless"].map((t) => <span key={t}>{t}</span>)}
             </Enter>
             <Enter className={styles.coverCtas} delay={0.24}>
               <Link href="/demo" className={styles.btnPrimary}>Ver la demo {I.arrow}</Link>
               <button type="button" className={styles.btnGhost} onClick={() => goTo(1)}>Empezar el pitch {I.down}</button>
             </Enter>
             <DbPauseNote className={styles.coverNote} />
+            <Enter as="dl" className={styles.sheet} delay={0.2} y={16}>
+              <div className={styles.sheetHead}><dt>Ficha técnica</dt><dd>sepuente.vercel.app</dd></div>
+              {FACTS.map((f) => (
+                <div key={f.k} className={styles.sheetRow}><dt>{f.k}</dt><dd data-tone={f.tone}>{f.v}</dd></div>
+              ))}
+            </Enter>
           </div>
         </section>
 
@@ -368,7 +377,6 @@ export default function PitchPage() {
 
         {/* ── 9. Empezar ── */}
         <section id="empezar" className={`${styles.chapter} ${styles.closing}`} aria-labelledby="empezar-t">
-          <div className={styles.coverGlow} aria-hidden="true" />
           <div className={styles.inner}>
             <Reveal as="p" className={styles.eyebrow}><span className={styles.eyebrowNum}>11</span> Empezar</Reveal>
             <Reveal as="h2" id="empezar-t" className={styles.closingTitle} delay={0.05}>Listo para usar en <span className={styles.gold}>testnet hoy</span></Reveal>

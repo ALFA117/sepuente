@@ -81,8 +81,9 @@
   border: 1px solid var(--border-strong);
   background: var(--surface);
 }
-.baseLabel { grid-column: 1 / -1; font-size: var(--fs-small); font-weight: 600; color: var(--muted); }
-.baseVal { font-family: var(--font-mono); color: var(--cream); font-size: 0.9375rem; min-width: 0; overflow-wrap: normal; }
+.baseLabel { grid-column: 1; grid-row: 1; font-size: var(--fs-small); font-weight: 600; color: var(--muted); }
+.baseRow > :last-child { grid-column: 2; grid-row: 1; }
+.baseVal { grid-column: 1 / -1; grid-row: 2; font-family: var(--font-mono); color: var(--cream); font-size: 0.9375rem; min-width: 0; overflow-wrap: normal; }
 
 .list {
   list-style: none;
