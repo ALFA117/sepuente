@@ -17,7 +17,6 @@ import { truncateMiddle, formatAmount, EXPLORER_TX, EXPLORER_ACCOUNT } from "@/l
 import { PENDING_STATUSES } from "@/lib/status";
 import { AnchorSheet, type SheetState } from "./AnchorSheet";
 import { Glossary } from "../components/Glossary";
-import { Logo3D } from "../components/brand/Logo3D";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Enter, Pressable, Swap } from "../components/motion";
 import { POLLAR_KEY, usePollarWallet } from "./pollar";
@@ -541,9 +540,6 @@ export default function DemoPage() {
 
       <main id="main" className={styles.main}>
         <Enter as="section" className={styles.intro}>
-          <div className={styles.introBrand}>
-            <Logo3D />
-          </div>
           <div className={styles.introText}>
             <p className={ui.eyebrow}>Wallet de prueba · SEP-24</p>
             <h1 className={styles.title}>{paused ? "Prueba el puente" : "Prueba el puente en 2 minutos"}</h1>

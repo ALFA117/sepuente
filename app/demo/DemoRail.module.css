@@ -1,14 +1,12 @@
 .rail {
   position: sticky;
-  top: calc(60px + var(--safe-top));
   z-index: 20;
   padding: var(--sp-3) var(--sp-4) var(--sp-2);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  background: rgb(var(--surface-rgb) / 0.88);
-  backdrop-filter: saturate(1.2) blur(10px);
-  -webkit-backdrop-filter: saturate(1.2) blur(10px);
-  box-shadow: var(--shadow-sm);
+  top: calc(64px + var(--safe-top));
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
 }
 .track {
   position: absolute;
@@ -22,7 +20,7 @@
 .fill {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, var(--success), var(--gold));
+  background: var(--gold);
   border-radius: inherit;
   transform-origin: 0 50%;
 }

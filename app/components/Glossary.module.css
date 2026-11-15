@@ -1,7 +1,8 @@
 .box {
   border-radius: var(--radius-lg);
-  border: 1px solid rgb(var(--info-rgb) / 0.35);
-  background: linear-gradient(160deg, var(--info-dim), transparent 55%), var(--surface);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--info);
+  background: var(--surface);
   overflow: hidden;
 }
 .summary {

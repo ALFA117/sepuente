@@ -2,8 +2,7 @@
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  background:
-    radial-gradient(100% 40% at 0% 0%, rgb(var(--gold-rgb) / 0.08), transparent 60%);
+  background: var(--bg);
 }
 
 .main {
@@ -24,7 +23,7 @@
 .tags { list-style: none; display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-2); }
 .tags li {
   padding: 4px 10px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-strong);
   background: var(--surface);
   font-family: var(--font-mono);

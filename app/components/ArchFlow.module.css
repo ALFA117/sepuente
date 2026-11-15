@@ -4,11 +4,11 @@
   gap: var(--sp-4);
   margin-top: var(--sp-4);
   padding: var(--sp-4);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background:
-    radial-gradient(70% 60% at 50% 55%, rgb(var(--gold-rgb) / 0.08), transparent 70%),
-    var(--bg-deep);
+    var(--surface);
+  border-color: var(--border-strong);
   max-width: 900px;
 }
 @media (min-width: 720px) { .wrap { padding: var(--sp-6); } }
@@ -18,7 +18,7 @@
 .modes {
   display: inline-flex;
   padding: 4px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--surface);
 }
@@ -27,7 +27,7 @@
   min-height: 40px;
   padding: 0 var(--sp-4);
   border: 0;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
   background: none;
   color: var(--muted);
   font: inherit;

@@ -23,17 +23,17 @@
 .btn:active:not(:disabled) { transform: scale(0.98); }
 .btn:disabled { cursor: not-allowed; opacity: 0.5; }
 .btn[aria-busy="true"] { cursor: progress; opacity: 1; }
-.primary[aria-busy="true"] { background: var(--gold); color: var(--on-gold); }
+.primary[aria-busy="true"] { background: var(--primary); color: var(--on-primary); }
 .btnBlock { width: 100%; }
 .btnSm { min-height: var(--tap); padding: 0 var(--sp-4); font-size: var(--fs-small); border-radius: var(--radius-sm); }
 
-.primary { background: var(--gold); color: var(--on-gold); box-shadow: var(--shadow-sm); }
-.primary:hover:not(:disabled) { background: var(--gold-hover); box-shadow: var(--shadow-gold); }
-.primary:active:not(:disabled) { background: var(--gold-active); }
-.primary:disabled { background: var(--gold-disabled); opacity: 1; color: rgb(var(--navy-rgb) / 0.7); }
+.primary { background: var(--primary); color: var(--on-primary); border-color: var(--primary); box-shadow: 3px 3px 0 var(--primary-edge); }
+.primary:hover:not(:disabled) { background: var(--primary-hover); }
+.primary:active:not(:disabled) { box-shadow: 1px 1px 0 var(--primary-edge); transform: translate(1px, 1px); }
+.primary:disabled { background: rgb(var(--muted-rgb) / 0.18); border-color: var(--border); box-shadow: none; opacity: 1; color: var(--subtle); }
 
 .secondary { background: var(--surface2); color: var(--cream); border-color: var(--border-strong); }
-.secondary:hover:not(:disabled) { background: var(--surface3); border-color: var(--border-gold); }
+.secondary:hover:not(:disabled) { background: var(--surface3); border-color: var(--cream); }
 
 .ghost { background: transparent; color: var(--muted); border-color: var(--border); }
 .ghost:hover:not(:disabled) { color: var(--cream); background: var(--surface-hover); }
@@ -43,10 +43,10 @@
 /* ── Tarjetas ── */
 .card {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: var(--sp-5);
-  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--sp-6);
+  box-shadow: var(--shadow-md);
   min-width: 0;
 }
 
@@ -60,10 +60,9 @@
 
 .eyebrow {
   font-family: var(--font-mono);
-  font-size: var(--fs-label);
+  font-size: var(--fs-small);
   font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--gold);
 }
 
@@ -75,7 +74,7 @@
   align-items: center;
   gap: 6px;
   padding: 3px 10px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
   font-size: var(--fs-label);
   font-weight: 600;
   white-space: nowrap;
@@ -100,8 +99,9 @@
   gap: var(--sp-3);
   align-items: flex-start;
   padding: var(--sp-3) var(--sp-4);
-  border-radius: var(--radius-md);
-  border: 1px solid rgb(var(--warning-rgb) / 0.3);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgb(var(--warning-rgb) / 0.35);
+  border-left: 3px solid var(--warning);
   background: var(--warning-dim);
   color: var(--cream);
   font-size: var(--fs-small);
@@ -115,8 +115,9 @@
   gap: var(--sp-3);
   align-items: flex-start;
   padding: var(--sp-3) var(--sp-4);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   border: 1px solid rgb(var(--danger-rgb) / 0.35);
+  border-left: 3px solid var(--danger);
   background: var(--danger-dim);
   color: var(--cream);
   font-size: var(--fs-small);

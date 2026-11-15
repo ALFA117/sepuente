@@ -2,16 +2,15 @@
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  background:
-    radial-gradient(120% 60% at 50% -10%, rgb(var(--gold-rgb) / 0.08), transparent 60%);
+  background: var(--bg);
 }
 
 .main {
   flex: 1;
   width: 100%;
-  max-width: 1040px;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: var(--sp-6) max(var(--gutter), var(--safe-left)) var(--sp-12) max(var(--gutter), var(--safe-right));
+  padding: var(--sp-10) max(var(--gutter), var(--safe-left)) var(--sp-16) max(var(--gutter), var(--safe-right));
   display: flex;
   flex-direction: column;
   gap: var(--sp-6);
@@ -20,25 +19,14 @@
 /* ── Intro ── */
 .intro { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); }
 .introText, .introNotes { display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
-.introBrand { width: 100%; max-width: 300px; margin: calc(-1 * var(--sp-4)) auto calc(-1 * var(--sp-2)); }
-@media (min-width: 880px) {
-  .intro {
-    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-    grid-template-areas: "text brand" "notes notes";
-    column-gap: var(--sp-8);
-    align-items: center;
-  }
-  .introText { grid-area: text; }
-  .introNotes { grid-area: notes; }
-  .introBrand { grid-area: brand; max-width: 360px; margin: 0 auto; }
-}
+.intro { padding-bottom: var(--sp-6); border-bottom: 1px solid var(--border-strong); gap: var(--sp-5); }
 .title {
   font-family: var(--font-display);
-  font-size: var(--fs-h1);
-  font-weight: 700;
-  line-height: var(--lh-tight);
+  font-size: clamp(2rem, 1.5rem + 2.4vw, 3rem);
+  font-weight: 600;
+  line-height: 1.08;
   color: var(--cream);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 .lead { color: var(--muted); max-width: 60ch; line-height: 1.6; }
 
@@ -56,10 +44,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
-  background:
-    linear-gradient(160deg, rgb(var(--gold-rgb) / 0.08), transparent 45%),
-    var(--surface);
-  border-color: rgb(var(--gold-rgb) / 0.22);
+  background: var(--surface);
+  border-top: 3px solid var(--gold);
 }
 
 .walletHead {
@@ -138,15 +124,16 @@
   gap: var(--sp-1);
   padding: var(--sp-4) var(--sp-5);
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, rgb(var(--gold-rgb) / 0.14), transparent 70%), rgb(var(--navy-deep-rgb) / 0.55);
-  border: 1px solid var(--border-gold);
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
   min-width: 0;
 }
-.pesosLabel { font-family: var(--font-mono); font-size: var(--fs-label); letter-spacing: 0.06em; text-transform: uppercase; color: var(--gold); }
+.pesosLabel { font-size: var(--fs-small); font-weight: 600; color: var(--muted); }
 .pesosValue {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-size: clamp(2.25rem, 1.8rem + 2.4vw, 3rem);
-  font-weight: 700;
+  font-weight: 500;
+  letter-spacing: -0.03em;
   line-height: 1.1;
   color: var(--cream);
   font-variant-numeric: tabular-nums;
@@ -162,7 +149,7 @@
   gap: 2px var(--sp-4);
   margin-top: var(--sp-2);
   padding-top: var(--sp-2);
-  border-top: 1px dashed var(--border);
+  border-top: 1px solid var(--border);
   font-size: var(--fs-label);
   color: var(--subtle);
 }
@@ -264,7 +251,7 @@
   display: inline-block;
   margin-left: 4px;
   padding: 1px 7px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   font-family: var(--font-body);
   font-size: var(--fs-label);

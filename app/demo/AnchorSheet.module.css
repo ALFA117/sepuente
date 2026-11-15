@@ -27,7 +27,7 @@
     width: min(480px, 100%);
     height: min(820px, calc(100dvh - 2 * var(--sp-6)));
     padding-top: 0;
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-md);
     border: 1px solid var(--border-strong);
     box-shadow: var(--shadow-lg);
   }

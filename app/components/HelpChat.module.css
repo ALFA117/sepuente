@@ -7,9 +7,9 @@
   display: flex;
   align-items: center;
   min-height: 44px;
-  border-radius: var(--radius-lg) var(--radius-lg) 4px var(--radius-lg);
-  border: 1px solid var(--border-gold);
-  background: var(--surface2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
   color: var(--cream);
   box-shadow: var(--shadow-md);
 }
@@ -61,15 +61,15 @@
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
-  min-height: 52px;
+  min-height: 48px;
   padding: 0 var(--sp-4) 0 var(--sp-3);
-  border-radius: var(--radius-full);
-  border: 1px solid var(--border-gold);
-  background: var(--gold);
-  color: var(--on-gold);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
   font-weight: 600;
   cursor: pointer;
-  box-shadow: var(--shadow-md), var(--shadow-gold);
+  box-shadow: 3px 3px 0 var(--primary-edge);
 }
 .fab:focus-visible { outline: 2px solid var(--cream); outline-offset: 3px; }
 .fabIcon { display: inline-flex; }
@@ -90,7 +90,7 @@
   max-height: min(560px, calc(100dvh - 120px - var(--safe-top) - var(--safe-bottom)));
   display: flex;
   flex-direction: column;
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-strong);
   background: var(--surface);
   box-shadow: var(--shadow-lg);
@@ -107,7 +107,7 @@
   gap: var(--sp-3);
   padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
   border-bottom: 1px solid var(--border);
-  background: linear-gradient(135deg, rgb(var(--gold-rgb) / 0.12), transparent 70%), var(--surface2);
+  background: var(--bg-deep);
 }
 .avatar {
   width: 36px;
@@ -168,7 +168,7 @@
   flex-shrink: 0;
   min-height: 40px;
   padding: 0 var(--sp-3);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-gold);
   background: transparent;
   color: var(--cream);
