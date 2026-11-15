@@ -4,10 +4,7 @@ import { SiteHeader, SiteFooter } from "./components/SiteHeader";
 import { Reveal, Stagger, StaggerItem, Enter } from "./components/motion";
 import { TransferPreview } from "./components/TransferPreview";
 import { Glossary } from "./components/Glossary";
-import { Logo3D } from "./components/brand/Logo3D";
 import { ArchFlow } from "./components/ArchFlow";
-import { ArchUnderline } from "./components/ArchUnderline";
-import { LogoWord } from "./components/brand/Logo";
 import { pageMeta } from "@/lib/seo";
 import { DbPauseNote } from "./components/DbStatus";
 
@@ -86,17 +83,13 @@ export default function LandingPage() {
         {/* ── Hero ── */}
         <section className={styles.hero}>
           <div className={styles.heroInner}>
-            <Enter className={styles.brand} y={20}>
-              <Logo3D className={styles.brand3d} />
-              <LogoWord className={styles.brandWord} />
-            </Enter>
             <div className={styles.heroCopy}>
               <Enter as="p" className={styles.chip}>
                 <span className={styles.chipDot} aria-hidden="true" />
                 Demo · red de prueba (Stellar testnet)
               </Enter>
               <Enter as="h1" className={styles.title} delay={0.06}>
-                Pesos mexicanos en Stellar, <span className={styles.titleAccent}>sin custodia<ArchUnderline className={styles.titleArch} /></span>
+                Pesos mexicanos en Stellar, <span className={styles.titleAccent}>sin custodia</span>
               </Enter>
               <Enter as="p" className={styles.lead} delay={0.12}>
                 Manda pesos desde tu banco y recíbelos como <strong>pesos digitales</strong> en cualquier wallet de Stellar, y regrésalos a tu cuenta cuando quieras. <strong>SEPuente</strong> es el puente abierto entre SPEI y Stellar, y nunca guarda tu dinero.
@@ -121,7 +114,8 @@ export default function LandingPage() {
             <Enter as="dl" className={styles.stats} delay={0.34}>
               <div className={styles.stat}><dt>SEPs implementados</dt><dd>4</dd></div>
               <div className={styles.stat}><dt>Pruebas SDF · sep 2026</dt><dd className={styles.statGreen}>75/76</dd></div>
-              <div className={styles.stat}><dt>Comisión</dt><dd>0.5&nbsp;%</dd></div>
+              <div className={styles.stat}><dt>Comisión por tramo</dt><dd>0.5&nbsp;%</dd></div>
+              <div className={styles.stat}><dt>Licencia</dt><dd>MIT</dd></div>
             </Enter>
           </div>
         </section>
@@ -129,7 +123,7 @@ export default function LandingPage() {
         {/* ── En palabras simples ── */}
         <section className={`${styles.section} ${styles.sectionAlt}`} aria-labelledby="simple-title">
           <div className={styles.sectionInner}>
-            <Reveal as="p" className={styles.eyebrow}>En palabras simples</Reveal>
+            <Reveal as="p" className={styles.eyebrow}><span className={styles.eyebrowNum}>01</span>En palabras simples</Reveal>
             <Reveal as="h2" id="simple-title" className={styles.h2} delay={0.05}>Tu banco y tu wallet, conectados</Reveal>
             <div className={styles.simpleGrid}>
             <Reveal className={styles.receipt} delay={0.08}>
@@ -167,7 +161,7 @@ export default function LandingPage() {
         {/* ── Características ── */}
         <section className={styles.section} aria-labelledby="features-title">
           <div className={styles.sectionInner}>
-            <Reveal as="p" className={styles.eyebrow}>Protocolo</Reveal>
+            <Reveal as="p" className={styles.eyebrow}><span className={styles.eyebrowNum}>02</span>Protocolo</Reveal>
             <Reveal as="h2" id="features-title" className={styles.h2} delay={0.05}>Infraestructura abierta para el peso en Stellar</Reveal>
             <div className={styles.featureSplit}>
               <Reveal className={styles.zero} delay={0.08}>
@@ -195,7 +189,7 @@ export default function LandingPage() {
         {/* ── Flujo ── */}
         <section className={`${styles.section} ${styles.sectionAlt}`} aria-labelledby="flow-title">
           <div className={styles.sectionInner}>
-            <Reveal as="p" className={styles.eyebrow}>Flujo completo</Reveal>
+            <Reveal as="p" className={styles.eyebrow}><span className={styles.eyebrowNum}>03</span>Flujo completo</Reveal>
             <Reveal as="h2" id="flow-title" className={styles.h2} delay={0.05}>De pesos a Stellar en 4 pasos</Reveal>
             <Stagger as="ol" className={styles.flow}>
               {FLOW.map((s) => (
@@ -215,7 +209,7 @@ export default function LandingPage() {
         {/* ── Arquitectura ── */}
         <section className={styles.section} aria-labelledby="arch-title">
           <div className={styles.sectionInner}>
-            <Reveal as="p" className={styles.eyebrow}>Arquitectura</Reveal>
+            <Reveal as="p" className={styles.eyebrow}><span className={styles.eyebrowNum}>04</span>Arquitectura</Reveal>
             <Reveal as="h2" id="arch-title" className={styles.h2} delay={0.05}>Cómo fluye el protocolo</Reveal>
             <Reveal as="p" className={styles.sectionLead} delay={0.1}>SEPuente actúa como adaptador sin custodia entre el sistema bancario mexicano y la red Stellar.</Reveal>
 
@@ -228,7 +222,7 @@ export default function LandingPage() {
         {/* ── Protocolos ── */}
         <section className={`${styles.section} ${styles.sectionAlt}`} aria-labelledby="proto-title">
           <div className={styles.sectionInner}>
-            <Reveal as="p" className={styles.eyebrow}>Estándares implementados</Reveal>
+            <Reveal as="p" className={styles.eyebrow}><span className={styles.eyebrowNum}>05</span>Estándares implementados</Reveal>
             <Reveal as="h2" id="proto-title" className={styles.h2} delay={0.05}>Stack SEP completo</Reveal>
             <Reveal as="p" className={styles.sectionLead} delay={0.08}>
               Cualquier wallet lee este archivo y sabe cómo hablar con el anchor. Al lado, el resultado de la suite oficial <code className={styles.inlineCode}>@stellar/anchor-tests</code> de SDF por cada estándar.
