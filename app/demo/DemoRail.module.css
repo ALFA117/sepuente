@@ -10,9 +10,9 @@
 }
 .track {
   position: absolute;
-  left: calc(var(--sp-4) + 18px);
-  right: calc(var(--sp-4) + 18px);
-  top: calc(var(--sp-3) + 17px);
+  left: calc(var(--sp-4) + 16px);
+  right: calc(var(--sp-4) + 16px);
+  top: calc(var(--sp-3) + 15px);
   height: 2px;
   background: var(--border);
   border-radius: 2px;
@@ -47,26 +47,25 @@
 .stop:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; border-radius: var(--radius-sm); }
 .dot {
   position: relative;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-mono);
-  font-size: var(--fs-small);
-  font-weight: 700;
-  background: var(--bg-deep);
-  border: 2px solid var(--border-strong);
+  font-size: var(--fs-label);
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
   transition: background var(--transition-base), border-color var(--transition-base), color var(--transition-base), transform var(--transition-fast);
 }
-.halo { position: absolute; inset: -6px; border-radius: 50%; border: 2px solid rgb(var(--gold-rgb) / 0.45); }
 .stop[data-state="done"] { color: var(--success); }
-.stop[data-state="done"] .dot { background: var(--success); border-color: var(--success); color: var(--bg); }
-.stop[data-state="active"] { color: var(--gold); }
-.stop[data-state="active"] .dot { border-color: var(--gold); color: var(--gold); }
-@media (hover: hover) and (pointer: fine) { .stop:hover .dot { transform: scale(1.08); } }
-.stop:active .dot { transform: scale(0.94); }
+.stop[data-state="done"] .dot { background: var(--success-dim); border-color: rgb(var(--success-rgb) / 0.6); color: var(--success); }
+.stop[data-state="active"] { color: var(--cream); }
+.stop[data-state="active"] .dot { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+@media (hover: hover) and (pointer: fine) { .stop:hover .dot { border-color: var(--cream); } }
 .text { display: flex; flex-direction: column; line-height: 1.2; }
 .text strong { font-size: var(--fs-small); font-weight: 600; color: inherit; }
 .text span { font-family: var(--font-mono); font-size: var(--fs-label); color: var(--subtle); }

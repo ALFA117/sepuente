@@ -27,9 +27,9 @@
 .btnBlock { width: 100%; }
 .btnSm { min-height: var(--tap); padding: 0 var(--sp-4); font-size: var(--fs-small); border-radius: var(--radius-sm); }
 
-.primary { background: var(--primary); color: var(--on-primary); border-color: var(--primary); box-shadow: 3px 3px 0 var(--primary-edge); }
-.primary:hover:not(:disabled) { background: var(--primary-hover); }
-.primary:active:not(:disabled) { box-shadow: 1px 1px 0 var(--primary-edge); transform: translate(1px, 1px); }
+.primary { background: var(--primary); color: var(--on-primary); border-color: var(--primary); box-shadow: var(--shadow-sm); }
+.primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
+.primary:active:not(:disabled) { transform: translateY(1px); }
 .primary:disabled { background: rgb(var(--muted-rgb) / 0.18); border-color: var(--border); box-shadow: none; opacity: 1; color: var(--subtle); }
 
 .secondary { background: var(--surface2); color: var(--cream); border-color: var(--border-strong); }

@@ -64,10 +64,10 @@
   justify-content: center;
   font-family: var(--font-mono);
   font-size: var(--fs-label);
-  font-weight: 700;
+  font-weight: 600;
   color: var(--gold);
-  background: var(--gold-dim);
-  border: 1px solid var(--border-gold);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
 }
 .h2 { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 700; color: var(--cream); line-height: var(--lh-tight); }
 
@@ -78,11 +78,11 @@
   gap: var(--sp-1) var(--sp-3);
   padding: var(--sp-3) var(--sp-4);
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-gold);
-  background: var(--gold-dim);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
 }
-.baseLabel { grid-column: 1 / -1; font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--gold); }
-.baseVal { color: var(--cream); font-size: 0.9375rem; }
+.baseLabel { grid-column: 1 / -1; font-size: var(--fs-small); font-weight: 600; color: var(--muted); }
+.baseVal { font-family: var(--font-mono); color: var(--cream); font-size: 0.9375rem; min-width: 0; overflow-wrap: normal; }
 
 .list {
   list-style: none;
@@ -118,7 +118,8 @@
   font-family: var(--font-mono);
   font-size: 0.875rem;
   color: var(--cream);
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 .epNote { font-size: var(--fs-small); color: var(--muted); line-height: 1.5; }
 .envKey { font-family: var(--font-mono); font-size: 0.8125rem; color: var(--cream); overflow-wrap: anywhere; min-width: 0; }
@@ -179,16 +180,16 @@
   top: var(--sp-3);
   width: 28px;
   height: 28px;
-  border-radius: 50%;
+  border-radius: var(--radius-sm);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-mono);
   font-size: var(--fs-label);
-  font-weight: 700;
-  color: var(--success);
-  background: var(--success-dim);
-  border: 1px solid rgb(var(--success-rgb) / 0.35);
+  font-weight: 600;
+  color: var(--cream);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
 }
 .steps strong { color: var(--cream); font-size: var(--fs-body); }
 .steps a { color: var(--gold); text-decoration: underline; text-underline-offset: 3px; }

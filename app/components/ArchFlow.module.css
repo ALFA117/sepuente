@@ -9,7 +9,6 @@
   background:
     var(--surface);
   border-color: var(--border-strong);
-  max-width: 900px;
 }
 @media (min-width: 720px) { .wrap { padding: var(--sp-6); } }
 
@@ -35,8 +34,8 @@
   font-weight: 600;
   cursor: pointer;
 }
-.modeBtn[aria-selected="true"] { color: var(--on-gold); }
-.modePill { position: absolute; inset: 0; border-radius: inherit; background: var(--gold); }
+.modeBtn[aria-selected="true"] { color: var(--on-primary); }
+.modePill { position: absolute; inset: 0; border-radius: inherit; background: var(--primary); }
 .modeText { position: relative; z-index: 1; }
 .counter { font-family: var(--font-mono); font-size: var(--fs-label); color: var(--subtle); letter-spacing: 0.08em; }
 
@@ -60,10 +59,9 @@
 }
 .edgeActive {
   stroke: var(--gold);
-  stroke-width: 3;
+  stroke-width: 2;
   stroke-dasharray: 10 8;
   animation: flow 900ms linear infinite;
-  filter: drop-shadow(0 0 6px rgb(var(--gold-rgb) / 0.55));
 }
 @keyframes flow { to { stroke-dashoffset: -18; } }
 
@@ -74,7 +72,7 @@
   transition: fill 300ms var(--ease-out), stroke 300ms var(--ease-out);
 }
 .nodeAnchor rect { fill: rgb(var(--surface-2-rgb)); stroke: var(--border-gold); }
-.nodeActive rect { stroke: var(--gold); fill: rgb(var(--surface-2-rgb)); filter: drop-shadow(0 0 12px rgb(var(--gold-rgb) / 0.35)); }
+.nodeActive rect { stroke: var(--gold); stroke-width: 2; fill: rgb(var(--surface-2-rgb)); }
 .nodeLabel {
   font-family: var(--font-display);
   font-size: 17px;
@@ -82,14 +80,14 @@
   fill: var(--cream);
   text-anchor: middle;
 }
-.nodeAnchor .nodeLabel, .nodeActive .nodeLabel { fill: var(--gold-hover); }
+.nodeActive .nodeLabel { fill: var(--gold); }
 .nodeSub { font-family: var(--font-mono); font-size: 12px; fill: var(--muted); text-anchor: middle; }
 
 .tag rect { fill: var(--bg); stroke: var(--border-gold); stroke-width: 1; }
-.tag text { font-family: var(--font-mono); font-size: 12px; font-weight: 600; fill: var(--gold-hover); text-anchor: middle; }
+.tag text { font-family: var(--font-mono); font-size: 12px; font-weight: 600; fill: var(--gold); text-anchor: middle; }
 
 .dot { pointer-events: none; }
-.dotCore { fill: var(--gold-hover); stroke: var(--bg); stroke-width: 2; }
+.dotCore { fill: var(--gold); stroke: var(--bg); stroke-width: 2; }
 
 /* ── Leyenda del paso ── */
 .caption { min-height: 76px; }

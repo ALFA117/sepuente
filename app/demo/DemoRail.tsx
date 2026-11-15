@@ -53,7 +53,6 @@ export function DemoRail({ step, isEmail, ops, paused = false }: { step: number;
                       <motion.path d="M5 12.5l4.5 4.5L19 7.5" initial={reduce ? false : { pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.3 }} />
                     </svg>
                   ) : i + 1}
-                  {active && !reduce && <motion.span layoutId="rail-halo" className={styles.halo} transition={{ type: "spring", stiffness: 300, damping: 26 }} />}
                 </span>
                 <span className={styles.text}>
                   <strong>{it.label}</strong>

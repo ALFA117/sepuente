@@ -153,6 +153,11 @@
   background: var(--bg-deep);
   padding-bottom: var(--safe-bottom);
 }
+/* En el teléfono el botón de Ayuda flota abajo a la derecha: el pie deja ese espacio libre
+   para que la última línea nunca quede tapada. */
+@media (max-width: 719px) {
+  .footer { padding-bottom: calc(72px + var(--safe-bottom)); }
+}
 
 .footerInner {
   max-width: 1200px;

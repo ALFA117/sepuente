@@ -10,6 +10,12 @@ import { Enter, Reveal, Stagger, StaggerItem } from "../components/motion";
 
 const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "https://sepuente.vercel.app").trim().replace(/\/$/, "");
 const HOME_DOMAIN = APP_URL.replace(/^https?:\/\//, "");
+
+// Rutas largas: solo se permite cortar antes de cada "/" o ".", nunca a media palabra.
+function BreakPath({ value }: { value: string }) {
+  const parts = value.split(/(?=[/.])/);
+  return <>{parts.map((p, i) => <span key={i}>{i > 0 && <wbr />}{p}</span>)}</>;
+}
 const ASSET = (process.env.NEXT_PUBLIC_ASSET_CODE ?? "TMXN").trim();
 const ISSUER = (process.env.NEXT_PUBLIC_ISSUER_PUBLIC_KEY ?? "").trim();
 
@@ -118,7 +124,7 @@ export default function DevsPage() {
         <Section n="01" title="Endpoints">
           <div className={styles.baseRow}>
             <span className={styles.baseLabel}>URL base</span>
-            <code className={`addr ${styles.baseVal}`}>{APP_URL}</code>
+            <code className={styles.baseVal}><BreakPath value={APP_URL} /></code>
             <CopyButton value={APP_URL} label="URL base" />
           </div>
           <ul className={styles.list}>
@@ -128,7 +134,7 @@ export default function DevsPage() {
                   <span className={`${styles.method} ${e.method === "GET" ? styles.get : styles.post}`}>{e.method}</span>
                   <span className={styles.epSep}>{e.sep}</span>
                 </div>
-                <code className={styles.epPath}>{e.path}</code>
+                <code className={styles.epPath}><BreakPath value={e.path} /></code>
                 <span className={styles.epNote}>{e.note}</span>
               </li>
             ))}

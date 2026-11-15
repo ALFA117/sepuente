@@ -93,13 +93,6 @@ function Diagram({ layout, step, playing, reduce }: { layout: keyof typeof LAYOU
 
   return (
     <svg className={`${styles.svg} ${styles[layout]}`} viewBox={L.vb} role="img" aria-label={`${step.title}: ${NODES[step.from].label} hacia ${NODES[step.to].label}`}>
-      <defs>
-        <radialGradient id={`dotglow-${layout}`}>
-          <stop offset="0%" stopColor="var(--gold-hover)" stopOpacity="0.9" />
-          <stop offset="100%" stopColor="var(--gold)" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-
       {(Object.keys(L.edges) as EdgeId[]).map((id) => {
         const active = id === step.edge;
         return (
@@ -122,11 +115,11 @@ function Diagram({ layout, step, playing, reduce }: { layout: keyof typeof LAYOU
           <motion.g
             key={id}
             className={`${styles.node} ${isAnchor ? styles.nodeAnchor : ""} ${active ? styles.nodeActive : ""}`}
-            animate={{ scale: active && !reduce ? 1.04 : 1 }}
+            animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 300, damping: 22 }}
             style={{ transformBox: "fill-box", transformOrigin: "center" }}
           >
-            <rect x={x - L.w / 2} y={y - L.h / 2} width={L.w} height={L.h} rx={14} />
+            <rect x={x - L.w / 2} y={y - L.h / 2} width={L.w} height={L.h} rx={6} />
             <text x={x} y={y - 3} className={styles.nodeLabel}>{NODES[id].label}</text>
             <text x={x} y={y + 16} className={styles.nodeSub}>{NODES[id].sub}</text>
           </motion.g>
@@ -135,13 +128,12 @@ function Diagram({ layout, step, playing, reduce }: { layout: keyof typeof LAYOU
 
       {/* La partícula va antes que la etiqueta para pasar por debajo de ella y no tapar el texto. */}
       <g ref={dotRef} className={styles.dot} aria-hidden="true">
-        <circle r={16} fill={`url(#dotglow-${layout})`} />
-        <circle r={5.5} className={styles.dotCore} />
+        <circle r={5} className={styles.dotCore} />
       </g>
 
       {tagPoint && (
         <g transform={`translate(${tagPoint.x} ${tagPoint.y})`} className={styles.tag}>
-          <rect x={-(step.tag.length * 3.6 + 12)} y={-12} width={step.tag.length * 7.2 + 24} height={24} rx={12} />
+          <rect x={-(step.tag.length * 3.6 + 12)} y={-12} width={step.tag.length * 7.2 + 24} height={24} rx={4} />
           <text y={4}>{step.tag}</text>
         </g>
       )}

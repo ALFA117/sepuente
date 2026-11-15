@@ -6,8 +6,7 @@
   gap: var(--sp-4);
   padding: var(--sp-5);
   border-radius: var(--radius-md);
-  border: 1px solid var(--cream);
-  border-top: 3px solid var(--gold);
+  border: 1px solid var(--border-strong);
   background: var(--surface);
   box-shadow: var(--shadow-lg);
   width: 100%;
@@ -56,10 +55,10 @@
 
 .status { min-height: 48px; }
 .statusRow { display: flex; align-items: center; gap: var(--sp-3); }
-.dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.statusRow[data-tone="info"] .dot { background: var(--info); box-shadow: 0 0 0 4px var(--info-dim); }
-.statusRow[data-tone="warning"] .dot { background: var(--warning); box-shadow: 0 0 0 4px var(--warning-dim); }
-.statusRow[data-tone="success"] .dot { background: var(--success); box-shadow: 0 0 0 4px var(--success-dim); }
+.dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.statusRow[data-tone="info"] .dot { background: var(--info); }
+.statusRow[data-tone="warning"] .dot { background: var(--warning); }
+.statusRow[data-tone="success"] .dot { background: var(--success); }
 .statusText { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .statusText strong { color: var(--cream); font-weight: 600; }
 .statusText span { font-family: var(--font-mono); font-size: var(--fs-label); color: var(--muted); }

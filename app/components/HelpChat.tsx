@@ -129,25 +129,15 @@ export function HelpChat() {
   }, []);
   useEffect(() => { try { sessionStorage.setItem(STORE, JSON.stringify(msgs.slice(-30))); } catch { /* ignorar */ } }, [msgs]);
 
-  // Un saludo discreto una sola vez por navegador. En el teléfono espera a que la persona haga scroll,
-  // para no tapar el botón principal del hero, y en cualquier pantalla se va solo a los 12 s.
+  // Un saludo discreto una sola vez por navegador, solo en pantallas anchas; se va solo a los 12 s.
   useEffect(() => {
     let seen = false;
     try { seen = localStorage.getItem("sp_helpchat_seen") === "1"; } catch { /* ignorar */ }
     if (seen) return;
-    let t: ReturnType<typeof setTimeout> | undefined;
-    const small = window.matchMedia("(max-width: 560px)").matches;
-    if (!small) {
-      t = setTimeout(() => setNudge(true), 4000);
-      return () => clearTimeout(t);
-    }
-    const onScroll = () => {
-      if (window.scrollY < 320) return;
-      window.removeEventListener("scroll", onScroll);
-      t = setTimeout(() => setNudge(true), 800);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => { window.removeEventListener("scroll", onScroll); clearTimeout(t); };
+    // En el teléfono no se muestra: el globo tapaba el contenido y el botón ya es visible.
+    if (window.matchMedia("(max-width: 719px)").matches) return;
+    const t = setTimeout(() => setNudge(true), 4000);
+    return () => clearTimeout(t);
   }, []);
   const dismissNudge = () => { setNudge(false); try { localStorage.setItem("sp_helpchat_seen", "1"); } catch { /* ignorar */ } };
   useEffect(() => {
