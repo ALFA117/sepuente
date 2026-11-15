@@ -1,12 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Source_Serif_4, JetBrains_Mono } from "next/font/google";
+import { IBM_Plex_Sans, IBM_Plex_Mono, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
-import { AmbientBackground } from "./components/AmbientBackground";
 import { HelpChat } from "./components/HelpChat";
 
-const inter = Inter({ subsets: ["latin"], variable: "--nf-inter", weight: ["400", "500", "600", "700"], display: "swap" });
+const sans = IBM_Plex_Sans({ subsets: ["latin"], variable: "--nf-sans", weight: ["400", "500", "600", "700"], display: "swap" });
 const serif = Source_Serif_4({ subsets: ["latin"], variable: "--nf-serif", weight: ["500", "600", "700"], display: "swap" });
-const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--nf-mono", weight: ["400", "500", "700"], display: "swap" });
+const mono = IBM_Plex_Mono({ subsets: ["latin"], variable: "--nf-mono", weight: ["400", "500", "600"], display: "swap" });
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -49,10 +48,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={`${inter.variable} ${serif.variable} ${mono.variable}`}>
+    <html lang="es" className={`${sans.variable} ${serif.variable} ${mono.variable}`}>
       <body>
         <a href="#main" className="skip-link">Saltar al contenido</a>
-        <AmbientBackground />
         {children}
         <HelpChat />
       </body>
