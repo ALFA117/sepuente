@@ -1,0 +1,202 @@
+# Notas de desarrollo de SEPuente
+
+[← Volver al README](../README.md)
+
+Bitácora de auditoría, arreglos y diseño durante GOYA HACK · CriptoUNAM 2026. Se movió aquí desde el README principal sin cambios de contenido.
+
+## Arreglos y auditoría móvil (FIX_NOTES)
+
+*Auditoría y reparación con foco móvil — 2026-09-26. Evaluado en viewport de 380 px contra producción (`sepuente.vercel.app`, Stellar testnet).*
+
+### Inventario: estado encontrado → estado actual
+
+| Pantalla / flujo | Antes | Ahora |
+|---|---|---|
+| Landing `/` | Funciona; en móvil los números del hero tocaban los bordes, título con degradado y glifo tipo logo, diagrama SVG ilegible (texto de ~5 px) | ✅ Rediseñada mobile-first, diagrama en HTML que se apila |
+| Wallet demo `/demo` — faucet | A medias: decía "fondeada" aunque Friendbot fallara | ✅ Verifica que la cuenta exista; error claro si Friendbot no responde |
+| Demo — trustline | Funciona | ✅ Errores de Horizon traducidos a mensajes humanos |
+| Demo — SEP-10 | Funciona, pero la sesión se perdía al recargar | ✅ JWT en sessionStorage con verificación de expiración; "Cerrar sesión" |
+| Demo — abrir depósito/retiro | **Roto en móvil**: `window.open` se llamaba después de un `fetch`, y Safari/Chrome móvil lo bloquean | ✅ La ventana se abre dentro del gesto; si el navegador la bloquea, navega en la misma pestaña |
+| Demo — historial | A medias: no se actualizaba solo; montos con la moneda equivocada; sin estado de error | ✅ Sondeo cada 6 s mientras haya operaciones pendientes, refresco al volver a la pestaña, esqueleto, vacío y error con "Reintentar" |
+| Depósito SEP-24 — "Simular SPEI" | **Roto en producción**: Horizon devolvía `tx_bad_auth`, la ruta relanzaba la excepción y Next respondía 500 con cuerpo vacío → *"Unexpected end of JSON input"* | ✅ Envía TMXN real en testnet, verificable en stellar.expert |
+| Retiro SEP-24 | **Roto**: nadie enviaba los TMXN al anchor (la wallet demo no tenía ese paso) y el sondeo del popup solo leía la BD, nunca consultaba Horizon | ✅ Botón "Enviar TMXN al anchor" en el historial (firma la wallet, no el anchor); el sondeo detecta el pago en Horizon y completa |
+| SPEI simulado | Simulado **sin avisar** en varios textos ("El pago SPEI fue procesado. Revisa tu cuenta bancaria") | ✅ Marcado como *Modo prueba* en toda la UI (flag `sandbox` que devuelve el servidor cuando `DRIVER=mock`) |
+| `/devs` | Funciona; tarjeta "Demo interactivo" apuntaba a `/`; afirmaba "todos los tests pasan" y "cotización firmada / precios en tiempo real" (el mock usa precio fijo) | ✅ Enlaces y textos corregidos; tablas anchas → listas legibles |
+| `/pitch` | Funciona y ya era responsivo | ✅ Colores y tipografía migrados a tokens; verificado sin desbordes en las 9 diapositivas |
+| 404 | Funciona | ✅ Rediseñada con encabezado/pie compartidos |
+| SEP-1 / SEP-10 / SEP-38 | Funcionan | ✅ Sin cambios de comportamiento; validación de cuentas con `StrKey` |
+
+### Bugs corregidos (en orden de criticidad)
+
+| # | Bug | Causa | Arreglo | Archivos |
+|---|---|---|---|---|
+| 1 | "Simular SPEI" → *Unexpected end of JSON input* | Variables de entorno de Vercel con espacios/saltos de línea (p. ej. `DRIVER` no era `"mock"` exacto y la firma de distribución fallaba con `tx_bad_auth`) + excepción relanzada dentro de la ruta | `lib/env.ts` recorta todas las variables; la ruta siempre responde JSON; `lib/errors.ts` traduce códigos de Horizon; chequeo explícito de que `DISTRIBUTION_SECRET_KEY` corresponda a `DISTRIBUTION_PUBLIC_KEY` | `lib/env.ts`, `app/api/sep24/route.ts`, `lib/errors.ts`, `lib/stellar.ts` |
+| 2 | Retiro nunca se completaba | Faltaba el pago de la wallet y el sondeo no llamaba a `driver.getStatus` | Paso de pago en la demo + `status` consulta al driver en estados pendientes + `/sep24/transaction` expone `withdraw_anchor_account`, `withdraw_memo`, `withdraw_memo_type` (spec SEP-24) | `app/demo/page.tsx`, `app/api/sep24/route.ts`, `app/sep24/transaction/route.ts` |
+| 3 | Doble clic en "Simular" podía enviar TMXN dos veces | Sin idempotencia | Reclamo atómico `pending_user_transfer_start → pending_stellar` con `UPDATE … WHERE status=…`; si Stellar falla, se revierte | `lib/drivers/mock.ts` |
+| 4 | Reintentar "Confirmar" creaba instrucciones nuevas | Sin idempotencia | `start_deposit`/`start_withdraw` devuelven las mismas instrucciones si ya existen; 409 si ya se procesó | `app/api/sep24/route.ts` |
+| 5 | Inserts de Supabase fallaban en silencio | No se revisaba `error` | 500 con mensaje claro y log de servidor | `app/sep24/transactions/*/interactive/route.ts` |
+| 6 | Montos sin validar en servidor | — | `lib/amount.ts` (10–50 000, máx. 2 decimales) en cliente y servidor; `asset_code` validado; URL interactiva con `encodeURIComponent` | `lib/amount.ts`, rutas interactivas |
+| 7 | Retiro aceptaba cualquier pago con el memo | No se comparaba el monto | Se exige monto ≥ al solicitado; se registran `amount_fee` y `amount_out` | `lib/drivers/mock.ts` |
+| 8 | `JWT_SECRET` con valor por defecto si faltaba | Fallback inseguro | En producción falla si no está configurado | `lib/jwt.ts` |
+| 9 | Popup bloqueado en móvil | `window.open` fuera del gesto | Ver inventario | `app/demo/page.tsx` |
+| 10 | "Volver a la wallet" cerraba la pestaña aunque no fuera popup | `window.close()` incondicional | Solo cierra si existe `window.opener`; si no, navega a `/demo` | `app/sep24/interactive/page.tsx` |
+| 11 | Recargar la pantalla interactiva reiniciaba el flujo | Sin restauración | Al montar consulta `status` y retoma instrucciones o resultado | `app/sep24/interactive/page.tsx` |
+| 12 | Intervalos de sondeo que nunca se limpiaban | `setInterval` sin cleanup | Sondeo en `useEffect` con limpieza y aviso tras 3 fallos seguidos | `app/sep24/interactive/page.tsx` |
+| 13 | Contenido invisible si el scroll-reveal no se disparaba | Dependía solo de IntersectionObserver | Lo visible al cargar no se oculta; respaldo por scroll y a los 4 s | `app/components/ScrollReveal.tsx` |
+
+### Seguridad
+
+- Ningún secreto llega al navegador: solo se leen `NEXT_PUBLIC_*` en componentes cliente (verificado con búsqueda de `process.env` en archivos `"use client"`).
+- La llave privada de la wallet demo vive en `sessionStorage` del usuario; SEPuente nunca la recibe (la wallet firma trustline, SEP-10 y el pago del retiro).
+- CORS abierto en todos los endpoints SEP (sin cambios). `/api/sep24` y `/api/faucet` son internos.
+- Validación de direcciones con `StrKey.isValidEd25519PublicKey`, montos con `lib/amount.ts`, CLABE con dígito verificador en cliente y servidor.
+
+### Cómo verificarlo
+
+`node scripts/e2e-testnet.mjs https://sepuente.vercel.app` recorre faucet → trustline → SEP-10 → depósito (con doble "simular" para probar idempotencia) → retiro con pago real → historial. Última corrida: **E2E OK** (depósito `1d7b2389…f839d`, retiro `8f20367c…6b1f8` en stellar.expert/testnet).
+
+### Pendientes
+
+- Supabase de producción no está accesible desde este entorno; el esquema se asumió igual a `supabase/migrations/001_initial.sql`.
+- `EtherfuseDriver` no se probó (requiere `ETHERFUSE_API_KEY`).
+- El proyecto no tiene ESLint configurado ni tests unitarios; la cobertura es el script E2E y la suite `anchor-tests` de SDF (75/76, ver abajo).
+
+### Ronda de feedback de usuario (2026-09-26)
+
+| Observación | Qué se hizo |
+|---|---|
+| El proyecto asume que conoces Stellar (SEP, trustline, anchor, TMXN aparecen de inmediato) | El hero del landing explica el beneficio en lenguaje simple; nueva sección "En palabras simples" (3 pasos: banco → pesos digitales → de regreso); glosario desplegable `app/components/Glossary.tsx` en landing, demo y docs; pasos de la demo renombrados ("Obtén saldo de prueba", "Activa los pesos digitales", "Conéctate al anchor") con el término técnico como etiqueta secundaria. |
+| La demo abre una segunda ventana y rompe la continuidad | El flujo SEP-24 se abre en una hoja modal dentro de la wallet (`app/demo/AnchorSheet.tsx`, iframe de la misma origin, como permite SEP-24). Anchor y wallet se comunican por `postMessage` (origen y `source` validados): la pantalla del anchor avisa cambios de estado, pide cerrar, y en el retiro muestra "Enviar X TMXN desde mi wallet", que le pide a la wallet firmar el pago con su llave, sin salir del flujo. Verificado en producción: 0 ventanas nuevas. |
+| En la guía rápida aparece "THXN" en vez de "TMXN" | No existe la cadena "THXN" en el código ni en el HTML servido; el código del activo se mostraba en fuente monoespaciada pequeña, donde la "M" puede leerse como "H". Ahora se muestra con el componente `Token` (fuente de texto, negrita) y deletreado: "T-M-X-N: Test MXN". |
+
+### Ronda 27 sep 2026: correo con Pollar, modo claro y SEO
+
+| Qué | Por qué | Arreglo | Archivos |
+|---|---|---|---|
+| Entrar a la demo con correo | Pedido de usuario: verificación de correo "más completa" | Modo "Con mi correo" con Pollar: correo → código de 6 dígitos (pegar, autocompletar del teléfono, reenviar con espera de 30 s, cambiar correo, errores en español) → wallet creada. Trustline, firma SEP-10 y pago del retiro los hace Pollar con comisión patrocinada. La wallet con llave en el navegador sigue como alternativa | `app/demo/pollar.ts`, `app/demo/EmailVerify.tsx`, `app/demo/page.tsx` |
+| "Account … not found on network" al activar TMXN | Pollar fondea la cuenta unos segundos después del login y la trustline se pedía antes | La demo espera a que Horizon vea la cuenta (hasta 30 s) y reintenta una vez si Pollar responde "not found" | `app/demo/page.tsx` |
+| Solo existía modo oscuro | El sistema de diseño pide ambos temas | Modo claro por `prefers-color-scheme` redefiniendo los mismos tokens; `themeColor` por tema | `app/globals.css`, `app/layout.tsx` |
+| Sin `robots.txt`, `sitemap.xml` ni manifest; todas las páginas compartían título y sin canonical | SEO y vista previa al compartir | `app/robots.ts`, `app/sitemap.ts`, `app/manifest.ts`; metadatos por página (título, descripción, canonical, OG, X) con `lib/seo.ts`; `noindex` en `/sep24/interactive` | `lib/seo.ts`, `app/*/layout.tsx` |
+| Texto por debajo de 12 px | `<code>` en línea a 0.8 em (≈11 px) en docs y pitch; subtítulos del diagrama a 11 px | Piso de 12 px | `app/devs/page.module.css`, `app/pitch/page.module.css`, `app/components/ArchFlow.module.css` |
+
+### Verificar en dos minutos en el celular
+
+1. Abre `sepuente.vercel.app` en el teléfono: el título serif, la vista previa animada del depósito y el botón oro "Probar la demo" se ven completos, nada se sale por los lados.
+2. Baja a "En palabras simples" y abre **¿Nuevo en Stellar?**: el glosario se despliega.
+3. Toca ☰ → **Demo**. Con **Con mi correo** seleccionado, escribe tu correo → **Enviar código** → escribe el código de 6 dígitos que llega: el paso 1 queda "Correo verificado" y aparece tu dirección. (Alternativa: **Llave en el navegador** → **Obtener saldo de prueba** → en ~5 s el saldo XLM muestra 10,000.00.)
+4. **Activar pesos digitales** → el saldo TMXN pasa de "—" a 0.00 (con correo, sin pagar comisión).
+5. **Conectar mi wallet** → aparece "Sesión SEP-10 activa" y se desbloquean Depositar/Retirar.
+6. **Depositar** → se abre una hoja dentro de la misma página (no una ventana nueva). Escribe `250` → **Ver cotización** → **Confirmar operación**.
+7. **Simular SPEI recibido** → en ~5 s ves "TMXN acreditado"; toca **Ver en stellar.expert** y confirma la transacción.
+8. **Volver a la wallet** → la hoja se cierra; el historial muestra el depósito "Completado" y el saldo TMXN ≈ 248.75.
+9. **Retirar** → `100`, toca **Usar CLABE de prueba** → **Ver cotización** → **Confirmar operación**.
+10. Toca **Enviar 100.00 TMXN desde mi wallet** dentro de la hoja → en ~10 s ves "Retiro completado".
+11. Abre `/pitch`: con el botón dorado inferior avanzas capítulo por capítulo; la barra dorada superior marca el progreso.
+12. Gira el teléfono: nada se desborda. Escribe un monto de `5`: aparece "El monto mínimo es $10 MXN".
+13. Cambia el teléfono a modo claro: todo pasa a fondo papel con texto marino y oro oscuro, sin textos ilegibles.
+14. En el landing, detrás del título se ven arcos de puente avanzando despacio; en la demo el mismo fondo es mucho más tenue.
+15. Toca el botón dorado de ayuda (abajo a la derecha) → **¿Cuánto cobra?** → responde con la comisión de 0.5 %. Escribe "es seguro" → responde sobre custodia.
+
+---
+
+## Notas de diseño (DESIGN_NOTES)
+
+### Tokens (`app/globals.css`, única fuente de verdad)
+
+Todos los componentes consumen variables CSS; no hay colores, tamaños, radios ni sombras literales fuera de `globals.css` (excepciones justificadas abajo). Las transparencias usan canales: `rgb(var(--gold-rgb) / 0.12)`.
+
+| Grupo | Tokens |
+|---|---|
+| Superficies | `--bg` #0A1A33 · `--bg-deep` #061123 · `--surface` #11284D · `--surface2` #173564 · `--surface3` #1E427A · `--scrim` |
+| Acento | `--gold` #C9A227 · `--gold-hover` #E0C35A · `--gold-active` #B08D1F · `--gold-disabled` · `--gold-dim` · `--on-gold` |
+| Texto | `--cream` #F5F1E6 · `--text` (crema 92 %) · `--muted` #B8C2D6 · `--subtle` (secundario 72 %) |
+| Semánticos | `--success` #4FB280 · `--danger` #E56660 · `--warning` #E2A848 · `--info` #8FB3E0, cada uno con `-dim` |
+| Bordes | `--border` · `--border-strong` · `--border-gold` |
+| Tipografía | `--font-display` Source Serif 4 · `--font-body` Inter · `--font-mono` JetBrains Mono (todas vía `next/font`) |
+| Escala tipográfica | `--fs-display` · `--fs-h1` · `--fs-h2` (fluidas con `clamp`) · `--fs-h3` 20px · `--fs-body` 16px · `--fs-small` 14px · `--fs-label` 12px · `--fs-mono` 13px |
+| Espaciado | `--sp-1…--sp-16` (base 4 px) · `--gutter` clamp(16px, 4vw, 32px) · `--tap` 44px |
+| Radios | `--radius-sm` 8 · `--radius-md` 12 · `--radius-lg` 16 · `--radius-xl` 22 · `--radius-full` |
+| Sombras | `--shadow-sm/md/lg` tintadas de marino · `--shadow-gold` · `--focus-ring` |
+| Movimiento | `--ease-out` · `--transition-fast/base/slow` (150/250/400 ms) |
+| Áreas seguras | `--safe-top/bottom/left/right` = `env(safe-area-inset-*)` |
+
+Alias heredados (`--navy`, `--s2`, `--accent`, `--error`, `--blue`, `--font-syne`) apuntan a los tokens nuevos para no romper código existente.
+
+### Decisiones
+
+- **Sin Tailwind.** El brief pedía tokens "consumidos por Tailwind", pero el proyecto usa CSS Modules y no tiene Tailwind instalado. Migrar todo habría sido un cambio de alcance y de riesgo; se centralizaron los tokens como variables CSS consumidas por CSS Modules, que cumple el objetivo (una sola fuente de verdad). Si se agrega Tailwind, basta mapear `theme.extend.colors` a estas variables.
+- **Paleta UNAM** según el brief; se reemplazó la paleta ámbar/morado de la iteración anterior. El morado se mapeó a `--info` (azul derivado del secundario #B8C2D6).
+- **Serif para títulos**: Source Serif 4 (buena legibilidad en pantallas pequeñas, pesos 500–700). Inter para cuerpo. Mono para direcciones, hashes, montos y CLABE.
+- **Logo**: el logo de SEPuente (símbolo de puente con flecha ascendente + texto) se vectorizó con potrace desde el arte original y vive en `app/components/brand/paths.ts`; se recoloreó a la paleta (símbolo oro, texto crema). Componentes: `LogoMark`, `LogoWord`, `LogoLockup` (encabezado y pie, con contorno extra para que las líneas finas se lean a 26 px) y `LogoStacked`. El favicon (`app/icon.svg`) y la imagen OpenGraph usan el mismo trazo.
+- **Logo 3D** (`app/components/brand/Logo3D.tsx`): el símbolo se extruye con three.js (profundidad y bisel), material de oro metálico con reflejos de entorno (`RoomEnvironment`) y luz de contorno azul. Se balancea suave, sigue el cursor en escritorio y en táctil se gira deslizando de lado (el scroll vertical se conserva con `touch-action: pan-y`). three.js se descarga aparte (import dinámico, fuera de la primera carga), solo dibuja cuando está en pantalla y la pestaña visible, limita el DPR a 2 y libera la GPU al desmontarse. Mientras carga, sin WebGL o si se pierde el contexto, se muestra el símbolo vectorial plano sin salto de layout; con reduced-motion queda estático en un ángulo fijo. Aparece en el hero del landing (arriba en móvil, columna derecha en escritorio) y en la portada del pitch.
+- **Componentes compartidos**: `app/components/SiteHeader.tsx` (encabezado sticky con safe-area, menú móvil accesible con Escape y clic fuera, pie) y `app/components/ui.tsx` + `ui.module.css` (botones, tarjetas, badges de estado, aviso de modo prueba, campos, copiar, estado vacío, esqueleto, toasts).
+- **Móvil**: gutter mínimo de 16 px más safe-area; áreas táctiles ≥ 44 px (botones principales 48–52 px); inputs a 17 px para evitar el zoom de iOS; `inputMode` decimal/numérico; acciones del flujo SEP-24 en una barra fija inferior al alcance del pulgar (estática desde 560 px); direcciones y hashes en mono truncados en medio (`lib/format.ts`); bloques de código con su propio scroll horizontal.
+- **Estados**: esqueletos en saldos e historial, spinners en botones con `aria-busy` (sin verse deshabilitados), toasts con `aria-live`, estado vacío ilustrado, errores humanos con acción de recuperación.
+- **Accesibilidad**: enlace "Saltar al contenido", foco visible en oro, etiquetas en todos los campos, `aria-invalid` + mensaje junto al campo, contraste de texto ≥ 4.5:1 sobre marino, animaciones desactivadas con `prefers-reduced-motion`.
+- **Movimiento (Motion)**: se agregó `motion` (v12). Primitivas en `app/components/motion.tsx` (`Reveal`, `Stagger`, `Enter`, `Pressable`, `DrawCheck`) con un solo ritmo: entradas en tween ease-out (0.45–0.55 s, escalonado de 60 ms), interacciones en spring (stiffness 400, damping 24). Todas consultan `useReducedMotion()` y muestran el estado final sin animar cuando el sistema lo pide.
+- **Pitch (`/pitch`)**: reconstruido como narrativa por capítulos (patrón "scroll-triggered storytelling" de la guía de UI): en el teléfono es scroll vertical con barra de progreso y control flotante al alcance del pulgar; en escritorio agrega ajuste por capítulo, teclado (← → ↑ ↓, Espacio, Inicio/Fin) e índice lateral con indicador animado (`layoutId`).
+- **Hero del landing**: `TransferPreview` ilustra el flujo real (1,000 MXN → 995 TMXN con la comisión real de 0.5 %) y está rotulado como ilustración.
+- **Flujo SEP-24 dentro de la wallet**: hoja modal a pantalla completa en el teléfono (con safe-area) y panel centrado en escritorio; cierra con ✕, Escape o clic en el fondo, devuelve el foco y bloquea el scroll del fondo.
+
+### Fondo ambiental: túnel de arcos de puente (27 sep)
+
+- **Receta del dado: 4, "túnel warp de anillos".** Se adaptó al tema: en lugar de hexágonos, los anillos son **arcos de puente con tablero y tirantes** (el mismo trazo del logo) que avanzan hacia la cámara, como cruzar el puente. `app/components/AmbientBackground.tsx` + `ambient.css`, montado una vez en `app/layout.tsx` en una capa fija `z-index: -10` con `isolation: isolate` en `body`.
+- **Tres profundidades:** aurora oro/azul lejana (se mueve poco con el scroll), el túnel en canvas (su centro sigue al puntero y sube con el scroll) y, solo en el landing, monedas de peso en CSS 3D girando cerca de la cámara (más parallax).
+- **Completo en el landing, tranquilo en demo y docs** (menos arcos, más lentos, 60 % de opacidad, sin monedas). No se monta en `/pitch` (tiene su propio fondo) ni en `/sep24/*` (vive en un iframe).
+- **Legibilidad:** los arcos van a 22–30 % de opacidad y una viñeta oscurece los bordes; en el teléfono las monedas se asoman por los lados para no quedar detrás del texto.
+- **Rendimiento:** canvas con `requestAnimationFrame` que se detiene con la pestaña oculta, `devicePixelRatio` limitado a 2, la mitad de arcos en el teléfono, solo `transform` y `opacity` en CSS. Con "reducir movimiento" se dibuja una escena quieta sin parallax.
+- **Modo claro:** los colores salen de `--gold-rgb` e `--info-rgb`, así que cambian con el tema; además los arcos y monedas bajan de intensidad.
+- **Hero:** un arco de puente se dibuja bajo "sin custodia" al cargar (`ArchUnderline`, `pathLength`) y la vista previa del depósito flota suave.
+
+### Ayuda con respuestas predeterminadas
+
+`app/components/HelpChat.tsx`: botón "Ayuda" abajo a la derecha (solo ícono en pantallas de menos de 420 px) que abre un chat con 19 respuestas: qué es, si es dinero real, TMXN, XLM, comisión, depositar, retirar, cuánto tarda, memo, custodia, correo, "no me llega el código", "me salió un error", trustline, SEPs, por qué Stellar, dónde ver la transacción e integración. **"¿Qué hago ahora?" depende del paso real en la demo**: la página de la demo publica su estado (paso, modo, operaciones completadas, si hay una en curso y si ya tiene TMXN) y el chat responde con la acción concreta. Cada respuesta sugiere preguntas de seguimiento; la conversación se conserva al cambiar de página (sessionStorage) y un globo "¿Dudas? Pregúntame" aparece una sola vez por navegador.
+
+### Riel de progreso en la demo
+
+`app/demo/DemoRail.tsx`: barra fija bajo el encabezado con las 4 paradas (Correo o Saldo → Pesos → Conexión → Operar). La línea se llena con resorte al avanzar, la parada actual tiene un halo que se desliza (`layoutId`) y las completadas dibujan su check; "Operar" cuenta las operaciones completadas. Cada parada lleva a su sección. Hay preguntas sugeridas como botones y un campo libre que busca por palabras clave (sin acentos); si no encuentra respuesta lo dice y enlaza a la documentación. Está rotulado **"Respuestas predeterminadas · no es IA"**: no llama a ningún servidor ni modelo. Cierra con ✕ o Escape y devuelve el foco al botón. Queda debajo de los avisos, de la hoja del anchor y del menú móvil.
+
+### Landing sin rejillas de tarjetas iguales (27 sep)
+
+Cada sección del landing era "eyebrow + título + rejilla de tarjetas con el mismo borde y sombra". Se reemplazó cada rejilla por un objeto propio del tema:
+
+- **En palabras simples → comprobante SPEI de ejemplo**: filas con montos en mono (−1,000.00 MXN → +995.00 TMXN → +497.50 MXN por 500 TMXN), calculados con la comisión real de 0.5 % por tramo y rotulados como ilustración; borde inferior troquelado como un ticket.
+- **Características → "$0.00 en custodia"** en cifra display verde junto a una lista con reglas finas (sin cajas).
+- **4 pasos → riel punteado** (vertical en el teléfono, horizontal en escritorio) con la llamada real de cada paso (`changeTrust(TMXN)`, `GET → POST /auth`…).
+- **Stack SEP → extracto real de `stellar.toml`** con el puntaje de la suite oficial de SDF por estándar (5/5, 16/17, 38/38, 18/18) y la explicación de la prueba que falta.
+- En el hero, "Fondos en custodia $0" se cambió por "75/76 pruebas oficiales SDF" para no repetir la cifra.
+- **Demo**: el saldo en pesos (TMXN) es la cifra principal de la tarjeta de wallet, como en la app de un banco; XLM baja a una fila secundaria.
+
+### Modo claro ("papel de estado de cuenta")
+
+Se activa con la preferencia del sistema. No hay tokens nuevos por componente: `@media (prefers-color-scheme: light)` redefine los mismos canales (`--navy-rgb` pasa a papel #F6F3EC, `--surface-rgb` a blanco, `--cream-rgb` a tinta marino #0C1E3A). El oro de marca (#C9A227) no llega a 4.5:1 sobre papel, así que en claro se usa un oro tinta (#856508) y el texto sobre botones oro pasa a papel (`--on-gold`). Las sombras bajan de opacidad y el brillo de los esqueletos usa `--shimmer`. El logo 3D, el diagrama de arquitectura y la hoja del anchor heredan el tema sin cambios de código. Se revisó con capturas a 320, 380 y 1280 px en ambos temas.
+
+### Verificación por correo (Pollar)
+
+- Tres pasos visibles (Correo → Código → Wallet) con su propia barra de progreso dentro del paso 1 de la demo; las transiciones entre pasos son de 220 ms (entra desde la derecha y sale hacia la izquierda), y el check final se dibuja con resorte.
+- El código son 6 casillas de 52 px de alto; la primera acepta `one-time-code` para que el teléfono lo autocomplete, pegar el código completo llena todas y al completarse se verifica solo.
+- La tarjeta de la wallet muestra "Correo verificado" con el correo enmascarado (`el••••••@gmail.com`) y "Salir"; el saldo XLM dice "Comisiones de red pagadas por Pollar" en vez de un número que no aplica.
+- Honestidad: la nota de la wallet explica que Pollar resguarda la llave (MPC) y que SEPuente solo recibe la dirección pública y las firmas.
+
+### Excepciones a "sin literales"
+
+- `app/layout.tsx` y `app/manifest.ts` → `themeColor` y los colores del manifest necesitan valores literales.
+- `app/icon.svg` y `app/opengraph-image.tsx` → se renderizan fuera del DOM (Satori no resuelve variables CSS); usan una constante que replica los tokens.
+
+### Pendientes visuales
+
+- Ninguno conocido. La versión estática `public/pitch.html` se eliminó; el pitch vive solo en `/pitch`.
+
+### Dónde hay movimiento (Motion)
+
+| Lugar | Qué anima |
+|---|---|
+| Encabezado | Menú móvil con resorte y ítems escalonados (sale más rápido de lo que entra); ícono ☰ ↔ ✕ con rotación; en escritorio, indicador de la página activa que se desliza (`layoutId`). |
+| Avisos (toasts) | Entran con resorte desde abajo, salen en 150 ms y los restantes se reacomodan (`layout`). |
+| Pantalla SEP-24 | Cada paso entra desde la derecha y sale hacia la izquierda (`AnimatePresence mode="wait"`); al completar, el círculo aparece con resorte y el check se dibuja (`pathLength`). |
+| Demo | Entrada escalonada de la pantalla; el número del paso se convierte en check con resorte; saldos y estados cambian con fundido; filas nuevas del historial entran desde arriba; tarjetas de operación con escala al tocar. |
+| Hoja del anchor | Sube con resorte sobre un fondo desenfocado; se cierra con salida corta. |
+| Landing, pitch y docs | Entradas al cargar y apariciones al hacer scroll (escalonado 60 ms); vista previa del depósito y barra de progreso del pitch. |
+
+Con "reducir movimiento" activado en el sistema, todo se muestra en su estado final al instante. Se verificó con Chrome emulando `prefers-reduced-motion: reduce` (0 elementos ocultos en landing, docs, pitch y demo) y con scroll completo en modo normal. Se eliminó `ScrollReveal.tsx` y sus reglas CSS.
+
